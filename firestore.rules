@@ -1,0 +1,227 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    function isSignedIn() { 
+      return request.auth != null && request.auth.token.email_verified == true; 
+    }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource == null ? null : resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    
+    function isValidFeedback(data) {
+      return data.keys().hasAll(['userId', 'analysisType', 'isPositive', 'createdAt'])
+        && data.keys().size() == 4
+        && data.userId == request.auth.uid
+        && data.analysisType is string
+        && (data.analysisType == 'identify' || data.analysisType == 'diagnose')
+        && data.isPositive is bool
+        && data.createdAt == request.time;
+    }
+
+    match /feedback/{feedbackId} {
+      allow create: if isSignedIn() && isValidId(feedbackId) && isValidFeedback(incoming());
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    function isValidPlantCreate(data) {
+      return data.keys().hasAll(['userId', 'name', 'scientificName', 'createdAt'])
+        && (data.keys().size() >= 4 && data.keys().size() <= 8)
+        && data.userId == request.auth.uid
+        && data.name is string && data.name.size() > 0 && data.name.size() <= 200
+        && (!('nickname' in data) || (data.nickname == null || (data.nickname is string && data.nickname.size() <= 100)))
+        && data.scientificName is string && data.scientificName.size() <= 200
+        && data.createdAt == request.time
+        && (!('healthScore' in data) || data.healthScore is int)
+        && (!('mood' in data) || data.mood is string)
+        && (!('predictedNeeds' in data) || data.predictedNeeds is map);
+    }
+
+    match /plants/{plantId} {
+      allow create: if isSignedIn() && isValidId(plantId) && isValidPlantCreate(incoming());
+      allow update: if isSignedIn() && existing().userId == request.auth.uid
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasAny(['healthScore', 'mood', 'updatedAt', 'nickname']);
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+      match /healthHistory/{historyId} {
+        allow read: if isSignedIn() && get(/databases/$(database)/documents/plants/$(plantId)).data.userId == request.auth.uid;
+        allow create: if isSignedIn() && get(/databases/$(database)/documents/plants/$(plantId)).data.userId == request.auth.uid
+          && incoming().keys().hasAll(['healthScore', 'createdAt'])
+          && incoming().healthScore is int
+          && incoming().createdAt == request.time
+          && (!('mood' in incoming()) || incoming().mood is string)
+          && (!('note' in incoming()) || (incoming().note == null || incoming().note is string))
+          && (!('photoUrl' in incoming()) || (incoming().photoUrl == null || incoming().photoUrl is string));
+      }
+    }
+
+    function isValidReminderCreate(data) {
+      return data.keys().hasAll(['userId', 'plantId', 'type', 'dueDate', 'createdAt'])
+        && (data.keys().size() == 5 || (data.keys().size() == 6 && data.keys().hasAll(['notified'])))
+        && data.userId == request.auth.uid
+        && data.plantId is string
+        && data.type is string
+        && (data.type == 'water' || data.type == 'fertilize' || data.type == 'prune' || data.type == 'other')
+        && data.dueDate is timestamp
+        && data.createdAt == request.time
+        && exists(/databases/$(database)/documents/plants/$(data.plantId))
+        && get(/databases/$(database)/documents/plants/$(data.plantId)).data.userId == request.auth.uid;
+    }
+
+    match /reminders/{reminderId} {
+      allow create: if isSignedIn() && isValidId(reminderId) && isValidReminderCreate(incoming());
+      allow update: if isSignedIn() 
+        && existing().userId == request.auth.uid 
+        && incoming().diff(existing()).affectedKeys().hasOnly(['notified'])
+        && incoming().notified is bool;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn() && userId == request.auth.uid;
+      allow write: if isSignedIn() && userId == request.auth.uid 
+        && incoming().keys().hasOnly(['fcmToken'])
+        && (incoming().fcmToken == null || incoming().fcmToken is string);
+    }
+
+    function isValidCareLogCreate(data) {
+      return data.keys().hasAll(['userId', 'plantId', 'type', 'createdAt'])
+        && data.keys().size() == 4
+        && data.userId == request.auth.uid
+        && data.plantId is string
+        && data.type is string
+        && (data.type == 'water' || data.type == 'fertilize' || data.type == 'prune' || data.type == 'other')
+        && data.createdAt == request.time
+        && exists(/databases/$(database)/documents/plants/$(data.plantId))
+        && get(/databases/$(database)/documents/plants/$(data.plantId)).data.userId == request.auth.uid;
+    }
+
+    match /careLogs/{logId} {
+      allow create: if isSignedIn() && isValidId(logId) && isValidCareLogCreate(incoming());
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    function isValidNotification(data) {
+      return data.keys().hasAll(['userId', 'title', 'body', 'read', 'createdAt'])
+        && (data.keys().size() >= 5 && data.keys().size() <= 6)
+        && data.userId == request.auth.uid
+        && data.title is string && data.title.size() <= 200
+        && data.body is string && data.body.size() <= 1000
+        && data.read is bool
+        && data.createdAt == request.time
+        && (!('type' in data) || (data.type in ['info', 'success', 'warning', 'error', 'reminder']));
+    }
+
+    match /notifications/{notificationId} {
+      allow create: if isSignedIn() && isValidId(notificationId) && isValidNotification(incoming());
+      allow update: if isSignedIn() && existing().userId == request.auth.uid
+        && incoming().diff(existing()).affectedKeys().hasOnly(['read'])
+        && incoming().read is bool;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    function isValidCommunityTip(data) {
+      return data.keys().hasAll(['userId', 'tip', 'createdAt'])
+        && (data.keys().size() >= 3 && data.keys().size() <= 9)
+        && data.userId == request.auth.uid
+        && data.tip is string && data.tip.size() > 0 && data.tip.size() <= 1000
+        && data.createdAt == request.time
+        && (!('userName' in data) || (data.userName == null || data.userName is string))
+        && (!('plantCategory' in data) || (data.plantCategory == null || data.plantCategory is string))
+        && (!('title' in data) || (data.title == null || data.title is string))
+        && (!('isCurated' in data) || data.isCurated is bool)
+        && (!('upvotes' in data) || data.upvotes is int)
+        && (!('downvotes' in data) || data.downvotes is int);
+    }
+
+    match /communityTips/{tipId} {
+      allow create: if isSignedIn() && isValidId(tipId) && isValidCommunityTip(incoming())
+        && (!('isCurated' in incoming()) || incoming().isCurated == false)
+        && (!('upvotes' in incoming()) || incoming().upvotes == 0)
+        && (!('downvotes' in incoming()) || incoming().downvotes == 0);
+      allow read: if isSignedIn();
+      allow update: if isSignedIn() 
+        && incoming().diff(existing()).affectedKeys().hasOnly(['upvotes', 'downvotes'])
+        && (
+          (incoming().upvotes == existing().upvotes + 1 && incoming().downvotes == existing().downvotes) ||
+          (incoming().downvotes == existing().downvotes + 1 && incoming().upvotes == existing().upvotes)
+        );
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    function isValidChatMessage(data) {
+      return data.keys().hasAll(['userId', 'role', 'text', 'createdAt'])
+        && (data.keys().size() >= 4 && data.keys().size() <= 7)
+        && data.userId == request.auth.uid
+        && (data.role == 'user' || data.role == 'model')
+        && data.text is string && data.text.size() <= 10000
+        && (!('image' in data) || (data.image == null || (data.image is string && data.image.size() <= 10000000)))
+        && (!('threadId' in data) || (data.threadId == null || data.threadId is string))
+        && (!('feedback' in data) || (data.feedback == null || data.feedback in ['like', 'dislike']))
+        && data.createdAt == request.time;
+    }
+
+    match /chatHistory/{chatId} {
+      allow create: if isSignedIn() && isValidId(chatId) && isValidChatMessage(incoming());
+      allow update: if isSignedIn() && existing().userId == request.auth.uid
+        && incoming().userId == existing().userId
+        && incoming().role == existing().role
+        && incoming().text == existing().text
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['feedback'])
+        && (incoming().feedback == null || incoming().feedback in ['like', 'dislike']);
+      allow get: if isSignedIn() && (resource == null || existing().userId == request.auth.uid);
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+      allow delete: if isSignedIn() && (resource == null || existing().userId == request.auth.uid);
+    }
+
+    match /chatThreads/{threadId} {
+      allow create: if isSignedIn() && isValidId(threadId) 
+        && incoming().keys().hasAll(['userId', 'title', 'createdAt', 'updatedAt'])
+        && incoming().userId == request.auth.uid
+        && incoming().title is string && incoming().title.size() <= 200
+        && (!('snippet' in incoming()) || (incoming().snippet is string && incoming().snippet.size() <= 300))
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow get: if isSignedIn() && (resource == null || existing().userId == request.auth.uid);
+      allow list: if isSignedIn() && existing().userId == request.auth.uid;
+      allow update: if isSignedIn() && existing() != null && existing().userId == request.auth.uid
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (!('snippet' in incoming()) || (incoming().snippet is string && incoming().snippet.size() <= 300))
+        && (!('title' in incoming()) || (incoming().title is string && incoming().title.size() <= 200));
+      allow delete: if isSignedIn() && (resource == null || existing().userId == request.auth.uid);
+    }
+
+    function isValidUserPreferences(data) {
+      return data.keys().hasAll(['userId', 'updatedAt'])
+        && (data.keys().size() >= 2 && data.keys().size() <= 6)
+        && data.userId == request.auth.uid
+        && data.updatedAt == request.time
+        && (!('expertise' in data) || (data.expertise in ['beginner', 'intermediate', 'expert']))
+        && (!('gardeningStyle' in data) || data.gardeningStyle is string)
+        && (!('sageTone' in data) || (data.sageTone in ['Clinical', 'Friendly', 'Supportive', 'Direct']))
+        && (!('specialInterests' in data) || data.specialInterests is list);
+    }
+
+    match /userPreferences/{userId} {
+      allow get, list: if isSignedIn() && userId == request.auth.uid;
+      allow create, update: if isSignedIn() && userId == request.auth.uid && isValidUserPreferences(incoming());
+    }
+  }
+}

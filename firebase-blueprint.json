@@ -1,0 +1,184 @@
+{
+  "entities": {
+    "Feedback": {
+      "title": "Feedback",
+      "description": "User feedback on AI analysis",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "analysisType": { "type": "string", "enum": ["identify", "diagnose"] },
+        "isPositive": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "analysisType", "isPositive", "createdAt"]
+    },
+    "Plant": {
+      "title": "Plant",
+      "description": "User's saved plant",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "nickname": { "type": "string" },
+        "scientificName": { "type": "string" },
+        "healthScore": { "type": "integer" },
+        "mood": { "type": "string" },
+        "predictedNeeds": {
+          "type": "object",
+          "properties": {
+            "watering": { "type": "string" },
+            "light": { "type": "string" },
+            "fertilizing": { "type": "string" }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "scientificName", "createdAt"]
+    },
+    "Reminder": {
+      "title": "Reminder",
+      "description": "Plant care reminder",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "plantId": { "type": "string" },
+        "type": { "type": "string", "enum": ["water", "fertilize", "prune", "other"] },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "notified": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "plantId", "type", "dueDate", "createdAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile config",
+      "type": "object",
+      "properties": {
+        "fcmToken": { "type": "string" }
+      }
+    },
+    "CareLog": {
+      "title": "Care Log",
+      "description": "Log of past care actions",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "plantId": { "type": "string" },
+        "type": { "type": "string", "enum": ["water", "fertilize", "prune", "other"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "plantId", "type", "createdAt"]
+    },
+    "CommunityTip": {
+      "title": "Community Tip",
+      "description": "User-submitted plant care tips",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "plantCategory": { "type": "string" },
+        "title": { "type": "string" },
+        "tip": { "type": "string" },
+        "isCurated": { "type": "boolean" },
+        "upvotes": { "type": "integer" },
+        "downvotes": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "tip", "createdAt"]
+    },
+    "ChatMessage": {
+      "title": "Chat Message",
+      "description": "A message in the chat history with Sage",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "model"] },
+        "text": { "type": "string" },
+        "image": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "role", "text", "createdAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Real-time in-app notification",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "type": { "type": "string", "enum": ["info", "success", "warning", "error", "reminder"] },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "title", "body", "read", "createdAt"]
+    },
+    "UserPreferences": {
+      "title": "User Preferences",
+      "description": "User's botanical experience preferences",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "gardeningStyle": { "type": "string" },
+        "expertise": { "type": "string", "enum": ["beginner", "intermediate", "expert"] },
+        "specialInterests": { "type": "array", "items": { "type": "string" } },
+        "sageTone": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/userPreferences/{userId}": {
+      "schema": { "$ref": "#/entities/UserPreferences" },
+      "description": "Individualized user preference stack for memory generation"
+    },
+    "/feedback/{feedbackId}": {
+      "schema": { "$ref": "#/entities/Feedback" },
+      "description": "User feedback entries"
+    },
+    "/communityTips/{tipId}": {
+      "schema": { "$ref": "#/entities/CommunityTip" },
+      "description": "Plant care tips submitted by the community"
+    },
+    "/plants/{plantId}": {
+      "schema": { "$ref": "#/entities/Plant" },
+      "description": "User saved plants"
+    },
+    "/plants/{plantId}/healthHistory/{historyId}": {
+      "schema": {
+        "title": "HealthUpdate",
+        "type": "object",
+        "properties": {
+          "healthScore": { "type": "integer" },
+          "mood": { "type": "string" },
+          "note": { "type": "string" },
+          "photoUrl": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["healthScore", "createdAt"]
+      },
+      "description": "Historical health data for a specific plant"
+    },
+    "/reminders/{reminderId}": {
+      "schema": { "$ref": "#/entities/Reminder" },
+      "description": "User reminders for their plants"
+    },
+    "/careLogs/{careLogId}": {
+      "schema": { "$ref": "#/entities/CareLog" },
+      "description": "Care logs for user plants"
+    },
+    "/chatHistory/{chatId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "User chat records with Sage"
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "Real-time notifications for the user"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profile with push token"
+    }
+  }
+}

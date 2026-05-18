@@ -1,0 +1,5 @@
+{
+  "name": "Floravia",
+  "description": "The AI-Powered Plant Intelligence Platform. Identify plants, diagnose diseases, and get expert gardening advice.",
+  "requestFramePermissions": ["camera", "geolocation", "microphone"]
+}
