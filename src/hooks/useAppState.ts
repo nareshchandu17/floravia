@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { analyzePlantImage, diagnosePlantDisease, PlantAnalysis as PlantAnalysisType, DiseaseDiagnosis } from '../services/gemini';
+import { compressImage } from '../utils/imageCompressor';
 
 export function useAppState() {
   const [activeTab, setActiveTab] = useState<'identify' | 'diagnose' | 'chat' | 'garden' | 'guide' | 'profile' | 'community'>('identify');
@@ -14,14 +15,29 @@ export function useAppState() {
     setError(null);
     setAnalysis(null);
     setDiseaseDiagnosis(null);
-    setLastImage(base64);
+    
+    // Ensure base64 is optimized
+    let optimizedBase64 = base64;
+    try {
+      if (base64.length > 1024 * 1024) { // Larger than ~750KB
+        const compressed = await compressImage(base64, {
+          maxDimension: 1600,
+          targetMaxSizeBytes: 800 * 1024
+        });
+        optimizedBase64 = compressed.base64;
+      }
+    } catch (e) {
+      console.warn('Fallback: using uncompressed base64', e);
+    }
+
+    setLastImage(optimizedBase64);
     
     try {
       if (currentTab === 'identify') {
-        const result = await analyzePlantImage(base64);
+        const result = await analyzePlantImage(optimizedBase64);
         setAnalysis(result);
       } else if (currentTab === 'diagnose') {
-        const result = await diagnosePlantDisease(base64);
+        const result = await diagnosePlantDisease(optimizedBase64);
         setDiseaseDiagnosis(result);
       }
     } catch (err) {

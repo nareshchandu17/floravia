@@ -1,11 +1,24 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signOut as firebaseSignOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  updateProfile,
+  User
+} from 'firebase/auth';
 import { getFirestore, collection, addDoc, serverTimestamp, getDocs, query, where, deleteDoc, doc, Timestamp, orderBy, setDoc, getDoc, updateDoc, increment, writeBatch } from 'firebase/firestore';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import firebaseConfig from '../../firebase-applet-config.json';
     
 export const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = (firebaseConfig as any).firestoreDatabaseId 
+  ? getFirestore(app, (firebaseConfig as any).firestoreDatabaseId)
+  : getFirestore(app);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
@@ -28,24 +41,39 @@ export async function getUserFeedback(): Promise<FeedbackEntry[]> {
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as FeedbackEntry));
-  } catch (error) {
+  } catch (error: any) {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes('client is offline') || error?.code === 'unavailable') {
+      console.warn("User feedback read skipped while offline:", msg);
+      return [];
+    }
     handleFirestoreError(error, OperationType.GET, path);
-    return []; // Never reached but satisfies TS
+    return [];
   }
 }
 
 export async function getNotificationSettings(): Promise<boolean> {
   if (!auth.currentUser) return false;
-  const d = await getDoc(doc(db, 'users', auth.currentUser.uid));
-  if (d.exists()) {
-    return !!d.data().fcmToken;
+  try {
+    const d = await getDoc(doc(db, 'users', auth.currentUser.uid));
+    if (d.exists()) {
+      return !!d.data().fcmToken;
+    }
+    return false;
+  } catch (error: any) {
+    // If offline or document does not exist yet, fallback gracefully without throwing
+    console.warn("Could not retrieve notification settings (offline or initial profile):", error?.message || error);
+    return false;
   }
-  return false;
 }
 
 export async function disableNotifications() {
   if (!auth.currentUser) return;
-  await setDoc(doc(db, 'users', auth.currentUser.uid), { fcmToken: null }, { merge: true });
+  try {
+    await setDoc(doc(db, 'users', auth.currentUser.uid), { fcmToken: null }, { merge: true });
+  } catch (error) {
+    console.warn("Error disabling notifications in database:", error);
+  }
 }
 
 export interface FeedbackPayload {
@@ -88,8 +116,9 @@ export interface SavedPlant {
 
 export async function savePlantToGarden(plant: Partial<SavedPlant>) {
   if (!auth.currentUser) throw new Error("Must be logged in to save plants");
+  const path = 'plants';
   try {
-    const plantsRef = collection(db, 'plants');
+    const plantsRef = collection(db, path);
     const docRef = await addDoc(plantsRef, {
       userId: auth.currentUser.uid,
       name: plant.name,
@@ -114,7 +143,8 @@ export async function savePlantToGarden(plant: Partial<SavedPlant>) {
 
     return docRef.id;
   } catch (err: any) {
-    throw new Error("Failed to save plant: " + err.message);
+    handleFirestoreError(err, OperationType.CREATE, path);
+    throw err;
   }
 }
 
@@ -129,90 +159,147 @@ export interface HealthHistoryEntry {
 
 export async function getPlantHealthHistory(plantId: string): Promise<HealthHistoryEntry[]> {
   if (!auth.currentUser) return [];
-  const q = query(
-    collection(db, 'plants', plantId, 'healthHistory'),
-    orderBy('createdAt', 'asc')
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as HealthHistoryEntry));
+  const path = `plants/${plantId}/healthHistory`;
+  try {
+    const q = query(
+      collection(db, 'plants', plantId, 'healthHistory'),
+      orderBy('createdAt', 'asc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as HealthHistoryEntry));
+  } catch (err: any) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('client is offline') || err?.code === 'unavailable') {
+      return [];
+    }
+    handleFirestoreError(err, OperationType.GET, path);
+    return [];
+  }
 }
 
 export async function updatePlantHealth(plantId: string, healthScore: number, mood: string, note?: string, photoUrl?: string) {
   if (!auth.currentUser) throw new Error("Must be logged in to update plant health");
-  
-  const plantRef = doc(db, 'plants', plantId);
-  await setDoc(plantRef, { healthScore, mood, updatedAt: serverTimestamp() }, { merge: true });
-  
-  await addDoc(collection(db, 'plants', plantId, 'healthHistory'), {
-    healthScore,
-    mood,
-    note: note || null,
-    photoUrl: photoUrl || null,
-    createdAt: serverTimestamp()
-  });
+  const path = `plants/${plantId}`;
+  try {
+    const plantRef = doc(db, 'plants', plantId);
+    await setDoc(plantRef, { healthScore, mood, updatedAt: serverTimestamp() }, { merge: true });
+    
+    await addDoc(collection(db, 'plants', plantId, 'healthHistory'), {
+      healthScore,
+      mood,
+      note: note || null,
+      photoUrl: photoUrl || null,
+      createdAt: serverTimestamp()
+    });
+  } catch (err) {
+    handleFirestoreError(err, OperationType.UPDATE, path);
+  }
 }
 
 export async function updatePlantNickname(plantId: string, nickname: string) {
   if (!auth.currentUser) throw new Error("Must be logged in to update plant nickname");
-  const plantRef = doc(db, 'plants', plantId);
-  await setDoc(plantRef, { nickname, updatedAt: serverTimestamp() }, { merge: true });
+  const path = `plants/${plantId}`;
+  try {
+    const plantRef = doc(db, 'plants', plantId);
+    await setDoc(plantRef, { nickname, updatedAt: serverTimestamp() }, { merge: true });
+  } catch (err) {
+    handleFirestoreError(err, OperationType.UPDATE, path);
+  }
 }
 
 export async function getUserPlants(): Promise<SavedPlant[]> {
   if (!auth.currentUser) return [];
-  const q = query(collection(db, 'plants'), where("userId", "==", auth.currentUser.uid), orderBy("createdAt", "desc"));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as SavedPlant));
+  const path = 'plants';
+  try {
+    const q = query(collection(db, path), where("userId", "==", auth.currentUser.uid), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as SavedPlant));
+  } catch (err: any) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('client is offline') || err?.code === 'unavailable') {
+      console.warn("User plants read skipped while offline:", msg);
+      return [];
+    }
+    handleFirestoreError(err, OperationType.GET, path);
+    return [];
+  }
 }
 
 export interface PlantReminder {
   id?: string;
   userId: string;
   plantId: string;
-  type: 'water' | 'fertilize' | 'prune' | 'other';
+  type: 'water' | 'fertilize' | 'prune' | 'other' | string;
   dueDate: any; // Firestore Timestamp
+  time?: string; // e.g. "09:00"
+  timezone?: string; // e.g. "America/New_York"
   createdAt: any;
   notified?: boolean;
 }
 
-export async function addPlantReminder(plantId: string, type: string, dueDate: Date) {
+export async function addPlantReminder(
+  plantId: string, 
+  type: string, 
+  dueDate: Date,
+  options?: { time?: string; timezone?: string }
+) {
   if (!auth.currentUser) throw new Error("Must be logged in to add reminder");
+  const path = 'reminders';
   try {
-    const remindersRef = collection(db, 'reminders');
+    const remindersRef = collection(db, path);
     const docRef = await addDoc(remindersRef, {
       userId: auth.currentUser.uid,
       plantId,
       type,
       dueDate: Timestamp.fromDate(dueDate),
+      time: options?.time || '09:00',
+      timezone: options?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
       createdAt: serverTimestamp(),
       notified: false
     });
     return docRef.id;
   } catch (err: any) {
-    throw new Error("Failed to add reminder: " + err.message);
+    handleFirestoreError(err, OperationType.CREATE, path);
+    throw err;
   }
 }
 
 export async function getPlantReminders(plantId: string): Promise<PlantReminder[]> {
   if (!auth.currentUser) return [];
-  const q = query(
-    collection(db, 'reminders'), 
-    where("userId", "==", auth.currentUser.uid),
-    where("plantId", "==", plantId),
-    orderBy("dueDate", "asc")
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as PlantReminder));
+  const path = 'reminders';
+  try {
+    const q = query(
+      collection(db, path), 
+      where("userId", "==", auth.currentUser.uid),
+      where("plantId", "==", plantId),
+      orderBy("dueDate", "asc")
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as PlantReminder));
+  } catch (err: any) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('client is offline') || err?.code === 'unavailable') {
+      return [];
+    }
+    handleFirestoreError(err, OperationType.GET, path);
+    return [];
+  }
 }
 
 export async function deleteReminder(reminderId: string) {
   if (!auth.currentUser) return;
-  await deleteDoc(doc(db, 'reminders', reminderId));
+  const path = `reminders/${reminderId}`;
+  try {
+    await deleteDoc(doc(db, 'reminders', reminderId));
+  } catch (err) {
+    handleFirestoreError(err, OperationType.DELETE, path);
+  }
 }
 
 export interface UserPreferences {
   id?: string;
   userId: string;
+  timezone?: string;
   gardeningStyle?: string;
   expertise?: 'beginner' | 'intermediate' | 'expert';
   specialInterests?: string[];
@@ -229,7 +316,12 @@ export async function getUserPreferences(): Promise<UserPreferences | null> {
       return { id: d.id, ...d.data() } as UserPreferences;
     }
     return null;
-  } catch (error) {
+  } catch (error: any) {
+    const msg = error instanceof Error ? error.message : String(error);
+    if (msg.includes('client is offline') || error?.code === 'unavailable') {
+      console.warn("User preferences read skipped while offline:", msg);
+      return null;
+    }
     handleFirestoreError(error, OperationType.GET, path);
     return null;
   }
@@ -374,7 +466,12 @@ export async function getUserThreads(): Promise<ChatThread[]> {
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ChatThread));
-  } catch (err) {
+  } catch (err: any) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('client is offline') || err?.code === 'unavailable') {
+      console.warn("User chat threads read skipped while offline:", msg);
+      return [];
+    }
     handleFirestoreError(err, OperationType.GET, path);
     return [];
   }
@@ -535,7 +632,11 @@ export async function getChatHistory(threadId?: string, limitCount: number = 50)
         return timeA - timeB; // Chronological
       })
       .slice(-limitCount); // Keep only the latest N
-  } catch (err) {
+  } catch (err: any) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('client is offline') || err?.code === 'unavailable') {
+      return [];
+    }
     handleFirestoreError(err, OperationType.GET, path);
     return [];
   }
@@ -543,8 +644,9 @@ export async function getChatHistory(threadId?: string, limitCount: number = 50)
 
 export async function addCareLog(plantId: string, type: string) {
   if (!auth.currentUser) throw new Error("Must be logged in to add care log");
+  const path = 'careLogs';
   try {
-    const logsRef = collection(db, 'careLogs');
+    const logsRef = collection(db, path);
     const docRef = await addDoc(logsRef, {
       userId: auth.currentUser.uid,
       plantId,
@@ -553,20 +655,31 @@ export async function addCareLog(plantId: string, type: string) {
     });
     return docRef.id;
   } catch (err: any) {
-    throw new Error("Failed to add care log: " + err.message);
+    handleFirestoreError(err, OperationType.CREATE, path);
+    throw err;
   }
 }
 
 export async function getCareLogs(plantId: string): Promise<CareLog[]> {
   if (!auth.currentUser) return [];
-  const q = query(
-    collection(db, 'careLogs'), 
-    where("userId", "==", auth.currentUser.uid),
-    where("plantId", "==", plantId),
-    orderBy("createdAt", "desc")
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as CareLog));
+  const path = 'careLogs';
+  try {
+    const q = query(
+      collection(db, path), 
+      where("userId", "==", auth.currentUser.uid),
+      where("plantId", "==", plantId),
+      orderBy("createdAt", "desc")
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as CareLog));
+  } catch (err: any) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('client is offline') || err?.code === 'unavailable') {
+      return [];
+    }
+    handleFirestoreError(err, OperationType.GET, path);
+    return [];
+  }
 }
 
 export interface CommunityTip {
@@ -583,43 +696,63 @@ export interface CommunityTip {
 }
 
 export async function getCommunityTips(category?: string): Promise<CommunityTip[]> {
-  const tipsRef = collection(db, 'communityTips');
-  let q;
-  if (category && category !== 'All') {
-    q = query(
-      tipsRef,
-      where('plantCategory', '==', category),
-      orderBy('createdAt', 'desc')
-    );
-  } else {
-    q = query(tipsRef, orderBy('createdAt', 'desc'));
+  const path = 'communityTips';
+  try {
+    const tipsRef = collection(db, path);
+    let q;
+    if (category && category !== 'All') {
+      q = query(
+        tipsRef,
+        where('plantCategory', '==', category),
+        orderBy('createdAt', 'desc')
+      );
+    } else {
+      q = query(tipsRef, orderBy('createdAt', 'desc'));
+    }
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(d => ({ id: d.id, ...d.data() as any } as CommunityTip));
+  } catch (err: any) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('client is offline') || err?.code === 'unavailable') {
+      return [];
+    }
+    handleFirestoreError(err, OperationType.GET, path);
+    return [];
   }
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(d => ({ id: d.id, ...d.data() as any } as CommunityTip));
 }
 
 export async function addCommunityTip(tip: Partial<CommunityTip>) {
   if (!auth.currentUser) throw new Error("Must be logged in to share tips");
-  const tipsRef = collection(db, 'communityTips');
-  await addDoc(tipsRef, {
-    userId: auth.currentUser.uid,
-    userName: auth.currentUser.displayName || 'Anonymous Gardener',
-    plantCategory: tip.plantCategory || 'General',
-    title: tip.title || 'Gardening Wisdom',
-    tip: tip.tip,
-    isCurated: false,
-    upvotes: 0,
-    downvotes: 0,
-    createdAt: serverTimestamp()
-  });
+  const path = 'communityTips';
+  try {
+    const tipsRef = collection(db, path);
+    await addDoc(tipsRef, {
+      userId: auth.currentUser.uid,
+      userName: auth.currentUser.displayName || 'Anonymous Gardener',
+      plantCategory: tip.plantCategory || 'General',
+      title: tip.title || 'Gardening Wisdom',
+      tip: tip.tip,
+      isCurated: false,
+      upvotes: 0,
+      downvotes: 0,
+      createdAt: serverTimestamp()
+    });
+  } catch (err) {
+    handleFirestoreError(err, OperationType.CREATE, path);
+  }
 }
 
 export async function voteOnTip(tipId: string, type: 'up' | 'down') {
   if (!auth.currentUser) throw new Error("Must be logged in to vote");
-  const tipRef = doc(db, 'communityTips', tipId);
-  await updateDoc(tipRef, {
-    [type === 'up' ? 'upvotes' : 'downvotes']: increment(1)
-  });
+  const path = `communityTips/${tipId}`;
+  try {
+    const tipRef = doc(db, 'communityTips', tipId);
+    await updateDoc(tipRef, {
+      [type === 'up' ? 'upvotes' : 'downvotes']: increment(1)
+    });
+  } catch (err) {
+    handleFirestoreError(err, OperationType.UPDATE, path);
+  }
 }
 
 // Firebase Cloud Messaging Functions
@@ -675,7 +808,7 @@ export const setupOnMessageListener = (callback: (payload: any) => void) => {
   }
 };
 
-export const signIn = async () => {
+export const signInWithGoogle = async (): Promise<User> => {
   try {
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({
@@ -684,9 +817,55 @@ export const signIn = async () => {
     const result = await signInWithPopup(auth, provider);
     return result.user;
   } catch (error) {
-    console.error("Auth error:", error);
+    console.error("Google Auth error:", error);
     throw error;
   }
+};
+
+export const signIn = signInWithGoogle;
+
+export const signUpWithEmail = async (email: string, pass: string, displayName?: string): Promise<User> => {
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email.trim(), pass);
+    if (displayName && cred.user) {
+      await updateProfile(cred.user, { displayName: displayName.trim() });
+    }
+    if (cred.user) {
+      // Send email verification link immediately
+      await sendEmailVerification(cred.user);
+    }
+    return cred.user;
+  } catch (error) {
+    console.error("Sign up error:", error);
+    throw error;
+  }
+};
+
+export const signInWithEmail = async (email: string, pass: string): Promise<User> => {
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email.trim(), pass);
+    return cred.user;
+  } catch (error) {
+    console.error("Sign in error:", error);
+    throw error;
+  }
+};
+
+export const resendVerificationEmail = async (): Promise<void> => {
+  if (!auth.currentUser) {
+    throw new Error("No signed-in user to send verification email to.");
+  }
+  await sendEmailVerification(auth.currentUser);
+};
+
+export const reloadCurrentUser = async (): Promise<User | null> => {
+  if (!auth.currentUser) return null;
+  await auth.currentUser.reload();
+  return auth.currentUser;
+};
+
+export const sendPasswordReset = async (email: string): Promise<void> => {
+  await sendPasswordResetEmail(auth, email.trim());
 };
 
 export const signOut = () => firebaseSignOut(auth);
@@ -719,8 +898,13 @@ interface FirestoreErrorInfo {
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const isUnverified = auth.currentUser && !auth.currentUser.emailVerified;
+  const rawMsg = error instanceof Error ? error.message : String(error);
+  
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: isUnverified 
+      ? `Email verification required: Please verify your email (${auth.currentUser?.email}) before accessing your garden database.` 
+      : rawMsg,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -734,7 +918,55 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     },
     operationType,
     path
-  }
+  };
   console.error('Firestore Error: ', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
+}
+
+export function parseFirestoreError(err: unknown): {
+  isPermissionError: boolean;
+  isUnverifiedEmail: boolean;
+  userMessage: string;
+} {
+  const isCurrentlyUnverified = !!auth.currentUser && !auth.currentUser.emailVerified;
+  
+  if (isCurrentlyUnverified) {
+    return {
+      isPermissionError: true,
+      isUnverifiedEmail: true,
+      userMessage: `Email verification required: Please verify your email (${auth.currentUser?.email}) before syncing cloud data or saving plants.`
+    };
+  }
+
+  const rawMessage = err instanceof Error ? err.message : String(err);
+
+  try {
+    const parsed = JSON.parse(rawMessage);
+    if (parsed && typeof parsed === 'object') {
+      const isUnverified = parsed.authInfo?.emailVerified === false;
+      const isPerm = parsed.error?.includes('permission') || parsed.error?.includes('insufficient') || isUnverified;
+      return {
+        isPermissionError: isPerm,
+        isUnverifiedEmail: isUnverified,
+        userMessage: isUnverified
+          ? `Email verification required: Please verify your email (${parsed.authInfo?.email || 'your email'}) to complete this action.`
+          : isPerm
+            ? 'Action blocked by database security rules. Please make sure you have appropriate access.'
+            : parsed.error || rawMessage
+      };
+    }
+  } catch {
+    // Not a JSON string
+  }
+
+  const isPerm = rawMessage.includes('permission-denied') || rawMessage.includes('Missing or insufficient permissions') || rawMessage.includes('Email verification required');
+  return {
+    isPermissionError: isPerm,
+    isUnverifiedEmail: isCurrentlyUnverified || rawMessage.includes('Email verification required'),
+    userMessage: isPerm
+      ? (isCurrentlyUnverified 
+          ? `Email verification required: Please verify your email (${auth.currentUser?.email}) to continue.` 
+          : 'Access denied: You do not have permission for this cloud database operation.')
+      : rawMessage
+  };
 }

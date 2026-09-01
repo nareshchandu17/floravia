@@ -59,6 +59,33 @@ export async function getWeatherForecast(lat: number, lon: number): Promise<stri
   }
 }
 
+export const POPULAR_CITY_WEATHER: Record<string, WeatherData> = {
+  'Bhimavaram': { city: 'Bhimavaram', temp: 29, humidity: 73, condition: 'Clouds Conditions', icon: '04d' },
+  'Phoenix (Arid Desert)': { city: 'Phoenix (Arid Desert)', temp: 34, humidity: 24, condition: 'Clear Sky / Arid', icon: '01d' },
+  'Denver (Low Humidity)': { city: 'Denver (Low Humidity)', temp: 26, humidity: 32, condition: 'Dry Alpine Air', icon: '01d' },
+  'Dubai (Dry Heat)': { city: 'Dubai (Dry Heat)', temp: 38, humidity: 28, condition: 'High Desert Heat', icon: '01d' },
+  'Hyderabad': { city: 'Hyderabad', temp: 28, humidity: 55, condition: 'Partly Cloudy', icon: '02d' },
+  'Bangalore': { city: 'Bangalore', temp: 25, humidity: 62, condition: 'Mild Breeze', icon: '03d' },
+  'San Francisco': { city: 'San Francisco', temp: 18, humidity: 68, condition: 'Coastal Fog', icon: '50d' },
+  'London': { city: 'London', temp: 19, humidity: 65, condition: 'Overcast Skies', icon: '04d' },
+  'Tokyo': { city: 'Tokyo', temp: 24, humidity: 70, condition: 'Temperate Rain', icon: '10d' },
+  'Singapore': { city: 'Singapore', temp: 31, humidity: 82, condition: 'Tropical Humidity', icon: '09d' },
+  'Sydney': { city: 'Sydney', temp: 22, humidity: 58, condition: 'Sunny Oceanic', icon: '01d' },
+};
+
+export async function getWeatherForCity(cityName: string): Promise<WeatherData> {
+  if (POPULAR_CITY_WEATHER[cityName]) {
+    return POPULAR_CITY_WEATHER[cityName];
+  }
+  return {
+    city: cityName,
+    temp: 27,
+    humidity: 50,
+    condition: 'Pleasant Microclimate',
+    icon: '02d'
+  };
+}
+
 export function getWateringAdvice(weather: WeatherData, plantName: string): { advice: string; intensity: 'low' | 'medium' | 'high' } {
   // Simple heuristic logic for watering based on weather
   const isHot = weather.temp > 28;

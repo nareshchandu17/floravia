@@ -126,9 +126,95 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "updatedAt"]
+    },
+    "ForumPost": {
+      "title": "Forum Post",
+      "description": "Community forum discussion or question post",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userAvatar": { "type": "string" },
+        "title": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "content": { "type": "string", "minLength": 10, "maxLength": 5000 },
+        "category": { "type": "string", "enum": ["question", "showcase", "tip", "discussion", "identification"] },
+        "photoUrl": { "type": "string" },
+        "plantTag": { "type": "string" },
+        "likesCount": { "type": "integer" },
+        "commentsCount": { "type": "integer" },
+        "isPinned": { "type": "boolean" },
+        "isSolved": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["active", "hidden", "flagged"] },
+        "flagCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "userName", "title", "content", "category", "createdAt"]
+    },
+    "ForumComment": {
+      "title": "Forum Comment",
+      "description": "Response or comment on a community forum post",
+      "type": "object",
+      "properties": {
+        "postId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userAvatar": { "type": "string" },
+        "content": { "type": "string", "minLength": 1, "maxLength": 2000 },
+        "photoUrl": { "type": "string" },
+        "isSolution": { "type": "boolean" },
+        "likesCount": { "type": "integer" },
+        "status": { "type": "string", "enum": ["active", "hidden"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["postId", "userId", "userName", "content", "createdAt"]
+    },
+    "ForumReport": {
+      "title": "Forum Report",
+      "description": "Moderation report for inappropriate forum content",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "targetType": { "type": "string", "enum": ["post", "comment"] },
+        "targetId": { "type": "string" },
+        "postId": { "type": "string" },
+        "reason": { "type": "string", "enum": ["spam", "harassment", "misleading", "inappropriate", "other"] },
+        "details": { "type": "string", "maxLength": 500 },
+        "status": { "type": "string", "enum": ["pending", "reviewed", "dismissed", "actioned"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "targetType", "targetId", "postId", "reason", "status", "createdAt"]
+    },
+    "ForumLike": {
+      "title": "Forum Like",
+      "description": "Upvote / like record for forum posts or comments",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "targetId": { "type": "string" },
+        "targetType": { "type": "string", "enum": ["post", "comment"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "targetId", "targetType", "createdAt"]
     }
   },
   "firestore": {
+    "/forumPosts/{postId}": {
+      "schema": { "$ref": "#/entities/ForumPost" },
+      "description": "Community forum posts and questions"
+    },
+    "/forumPosts/{postId}/comments/{commentId}": {
+      "schema": { "$ref": "#/entities/ForumComment" },
+      "description": "Comments and replies on a forum post"
+    },
+    "/forumReports/{reportId}": {
+      "schema": { "$ref": "#/entities/ForumReport" },
+      "description": "Moderation reports submitted by users"
+    },
+    "/forumLikes/{likeId}": {
+      "schema": { "$ref": "#/entities/ForumLike" },
+      "description": "User like records for posts and comments"
+    },
     "/userPreferences/{userId}": {
       "schema": { "$ref": "#/entities/UserPreferences" },
       "description": "Individualized user preference stack for memory generation"

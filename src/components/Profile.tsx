@@ -2,16 +2,42 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
 import { getUserPlants, getUserFeedback, getUserPreferences, saveUserPreferences, SavedPlant, FeedbackEntry, UserPreferences } from '../services/firebase';
-import { Sprout, Bell, BellOff, MessageSquare, ThumbsUp, ThumbsDown, LogOut, Loader2, Brain, Sparkles, Wand2 } from 'lucide-react';
+import { 
+  Sprout, 
+  Bell, 
+  BellOff, 
+  MessageSquare, 
+  ThumbsUp, 
+  ThumbsDown, 
+  LogOut, 
+  Loader2, 
+  Brain, 
+  Sparkles, 
+  Wand2, 
+  Globe, 
+  Clock, 
+  CheckCircle2, 
+  RefreshCw 
+} from 'lucide-react';
 import { signOut } from '../services/firebase';
 import { motion, AnimatePresence } from 'motion/react';
+import { EmailVerificationGate } from './EmailVerificationGate';
+import { 
+  COMMON_TIMEZONES, 
+  getUserTimezone, 
+  setUserTimezoneCache, 
+  getDeviceTimezone, 
+  getUserLocalCurrentTimeString, 
+  getTimezoneDisplayOffset 
+} from '../utils/timezone';
 
 interface ProfileProps {
   onNavigateToGarden: () => void;
+  onOpenAuthModal?: () => void;
 }
 
-export const Profile: React.FC<ProfileProps> = ({ onNavigateToGarden }) => {
-  const { user } = useAuth();
+export const Profile: React.FC<ProfileProps> = ({ onNavigateToGarden, onOpenAuthModal }) => {
+  const { user, isEmailVerified } = useAuth();
   const { 
     enabled: notificationsEnabled, 
     loading: notifsLoading, 
@@ -24,6 +50,19 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigateToGarden }) => {
   const [prefs, setPrefs] = useState<UserPreferences | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingPrefs, setSavingPrefs] = useState(false);
+  const [currentTimeStr, setCurrentTimeStr] = useState<string>('');
+
+  const activeTimezone = getUserTimezone(prefs?.timezone);
+
+  // Update live clock every second
+  useEffect(() => {
+    const updateTime = () => {
+      setCurrentTimeStr(getUserLocalCurrentTimeString(activeTimezone));
+    };
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
+    return () => clearInterval(timer);
+  }, [activeTimezone]);
 
   useEffect(() => {
     if (user) {
@@ -35,7 +74,7 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigateToGarden }) => {
     try {
       await notify(
         "Botanical Alert System", 
-        "System check initiated. Real-time neural link established with Floravia core.",
+        `System check initiated. Real-time neural link active in ${activeTimezone}.`,
         "success"
       );
     } catch (err) {
@@ -47,13 +86,34 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigateToGarden }) => {
     setLoading(true);
     try {
       const [savedPlants, userFeedback, userPrefs] = await Promise.all([
-        getUserPlants(),
-        getUserFeedback(),
-        getUserPreferences()
+        getUserPlants().catch(() => []),
+        getUserFeedback().catch(() => []),
+        getUserPreferences().catch(() => null)
       ]);
-      setPlants(savedPlants);
-      setFeedbacks(userFeedback);
-      setPrefs(userPrefs);
+      setPlants(savedPlants || []);
+      setFeedbacks(userFeedback || []);
+      
+      // If user has no timezone preference yet, auto-detect device timezone and save
+      const deviceTz = getDeviceTimezone();
+      if (userPrefs) {
+        if (!userPrefs.timezone) {
+          userPrefs.timezone = deviceTz;
+          saveUserPreferences({ timezone: deviceTz });
+        }
+        setUserTimezoneCache(userPrefs.timezone);
+        setPrefs(userPrefs);
+      } else {
+        const initialPrefs: UserPreferences = {
+          userId: user?.uid || '',
+          timezone: deviceTz,
+          expertise: 'intermediate',
+          sageTone: 'Friendly',
+          updatedAt: new Date()
+        };
+        saveUserPreferences({ timezone: deviceTz });
+        setUserTimezoneCache(deviceTz);
+        setPrefs(initialPrefs);
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -63,6 +123,9 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigateToGarden }) => {
 
   const handleUpdatePrefs = async (updates: Partial<UserPreferences>) => {
     setSavingPrefs(true);
+    if (updates.timezone) {
+      setUserTimezoneCache(updates.timezone);
+    }
     try {
       await saveUserPreferences(updates);
       setPrefs(prev => prev ? { ...prev, ...updates } : { userId: user?.uid || '', updatedAt: new Date(), ...updates });
@@ -71,6 +134,11 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigateToGarden }) => {
     } finally {
       setSavingPrefs(false);
     }
+  };
+
+  const handleAutoDetectTimezone = async () => {
+    const deviceTz = getDeviceTimezone();
+    await handleUpdatePrefs({ timezone: deviceTz });
   };
 
   const handleToggleNotifications = async () => {
@@ -99,15 +167,36 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigateToGarden }) => {
 
   if (!user) {
     return (
-      <div className="flex justify-center items-center py-20 text-stone-500">
-        <p>Please log in to view your profile.</p>
+      <div className="max-w-md mx-auto py-16 px-4 text-center space-y-4">
+        <div className="w-16 h-16 rounded-2xl bg-emerald-950/80 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto shadow-[0_0_30px_rgba(16,185,129,0.2)]">
+          <Sprout className="w-8 h-8" />
+        </div>
+        <h3 className="text-lg font-bold text-white">Sign In to View Settings</h3>
+        <p className="text-xs text-emerald-200/70 leading-relaxed">
+          Access your botanical preferences, notifications, and cloud telemetry.
+        </p>
+        <button
+          onClick={onOpenAuthModal}
+          className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
+        >
+          Sign In / Create Account
+        </button>
       </div>
+    );
+  }
+
+  if (user && !isEmailVerified) {
+    return (
+      <EmailVerificationGate 
+        featureName="Profile & Settings" 
+        onVerified={loadProfileData} 
+      />
     );
   }
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-20 text-stone-500">
+      <div className="flex justify-center items-center py-20 text-emerald-400">
         <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     );
@@ -189,6 +278,89 @@ export const Profile: React.FC<ProfileProps> = ({ onNavigateToGarden }) => {
             <Sparkles className="w-3 h-3" />
             Send Test Alert
           </button>
+        </div>
+      </div>
+
+      {/* Timezone & Temporal Reminder Alignment (P0) */}
+      <div className="glass-card overflow-hidden">
+        <div className="p-6 border-b border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
+              <Globe className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-xl font-display font-bold text-primary">Timezone & Temporal Scheduling</h3>
+              <p className="text-secondary text-xs font-ui mt-0.5">
+                Ensures plant care reminders execute at your local time (e.g. 9:00 AM in your timezone, not server UTC)
+              </p>
+            </div>
+          </div>
+          {savingPrefs && <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />}
+        </div>
+
+        <div className="p-6 space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Active Timezone Selection */}
+            <div className="space-y-3">
+              <label className="text-[10px] font-black uppercase tracking-widest text-muted flex items-center gap-2">
+                <Clock className="w-3 h-3 text-emerald-400" />
+                Active Botanical Timezone
+              </label>
+              <select
+                value={activeTimezone}
+                onChange={(e) => handleUpdatePrefs({ timezone: e.target.value })}
+                className="w-full bg-surface border border-white/10 text-primary text-sm rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-emerald-500 transition-colors cursor-pointer"
+              >
+                {COMMON_TIMEZONES.map((tz) => (
+                  <option key={tz.value} value={tz.value} className="bg-elevated text-primary">
+                    {tz.label} ({tz.offset})
+                  </option>
+                ))}
+              </select>
+              
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-[11px] text-muted">
+                  Offset: <span className="text-emerald-400 font-mono font-medium">{getTimezoneDisplayOffset(activeTimezone)}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={handleAutoDetectTimezone}
+                  className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1 transition-colors"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Auto-Detect Device ({getDeviceTimezone()})
+                </button>
+              </div>
+            </div>
+
+            {/* Live Local Clock & Calculation Preview */}
+            <div className="p-4 rounded-2xl bg-emerald-950/30 border border-emerald-500/20 flex flex-col justify-between space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Live Temporal Sync
+                </span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono">
+                  Active Sync
+                </span>
+              </div>
+              <div>
+                <p className="text-xl font-mono font-bold text-white tracking-wide">
+                  {currentTimeStr || 'Synchronizing...'}
+                </p>
+                <p className="text-[11px] text-emerald-200/70 mt-1 leading-relaxed">
+                  "Remind me at 9 AM" executes at <span className="text-white font-semibold">09:00:00</span> in this zone.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-white/5 flex items-start gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <p className="text-[11px] text-secondary leading-relaxed">
+              All hydration, misting, and nutrient alerts in <span className="text-emerald-400 font-semibold">My Garden</span>, <span className="text-emerald-400 font-semibold">Care Calendar</span>, and Google Calendar synchronizations are computed against your verified local timezone.
+            </p>
+          </div>
         </div>
       </div>
 

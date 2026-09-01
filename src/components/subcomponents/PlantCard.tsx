@@ -13,10 +13,13 @@ import {
   Scissors, 
   Zap,
   CalendarPlus,
-  Activity
+  Activity,
+  Clock,
+  Globe
 } from 'lucide-react';
 import { SavedPlant, PlantReminder, CareLog, HealthHistoryEntry } from '../../services/firebase';
 import { PlantHealthChart } from './PlantHealthChart';
+import { formatInUserTimezone, getUserTimezone, getTimezoneDisplayOffset } from '../../utils/timezone';
 
 interface PlantCardProps {
   plant: SavedPlant;
@@ -24,7 +27,7 @@ interface PlantCardProps {
   reminders: PlantReminder[];
   careLogs: CareLog[];
   healthHistory: HealthHistoryEntry[];
-  onAddReminder: (plantId: string, type: string, days: string) => Promise<void>;
+  onAddReminder: (plantId: string, type: string, days: string, time?: string) => Promise<void>;
   onCompleteReminder: (reminderId: string, plantId: string, type: string) => Promise<void>;
   onManualLog: (plantId: string, type: string) => Promise<void>;
   onPulseCheck: (plantId: string, score: number, mood: string, note: string) => Promise<void>;
@@ -52,6 +55,7 @@ export const PlantCard: React.FC<PlantCardProps> = ({
   const [addingReminder, setAddingReminder] = useState(false);
   const [remType, setRemType] = useState('water');
   const [remDays, setRemDays] = useState('3');
+  const [remTime, setRemTime] = useState('09:00');
   
   const [pulseMode, setPulseMode] = useState(false);
   const [pulseScore, setPulseScore] = useState(plant.healthScore || 85);
@@ -67,7 +71,7 @@ export const PlantCard: React.FC<PlantCardProps> = ({
   };
 
   const handleAddReminder = async () => {
-    await onAddReminder(plant.id!, remType, remDays);
+    await onAddReminder(plant.id!, remType, remDays, remTime);
     setAddingReminder(false);
   };
 
@@ -208,7 +212,16 @@ export const PlantCard: React.FC<PlantCardProps> = ({
               <div className="space-y-2">
                 <AnimatePresence>
                   {reminders.map(rem => {
-                    const isOverdue = rem.dueDate.toDate() < new Date();
+                    const tz = rem.timezone || getUserTimezone();
+                    const isOverdue = rem.dueDate?.toDate ? rem.dueDate.toDate() < new Date() : false;
+                    const dateFormatted = formatInUserTimezone(rem.dueDate, tz, { 
+                      month: 'short', 
+                      day: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                      hour12: true
+                    });
+
                     return (
                       <motion.div 
                         layout
@@ -218,11 +231,19 @@ export const PlantCard: React.FC<PlantCardProps> = ({
                         key={rem.id} 
                         className={`flex items-center justify-between p-3 rounded-2xl border ${isOverdue ? 'bg-red-500/10 border-red-500/30' : 'bg-surface/50 border-white/5'}`}
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="capitalize text-sm font-semibold text-primary font-ui">{rem.type}</span>
-                          <span className={`text-xs ${isOverdue ? 'text-red-400 font-bold' : 'text-muted'}`}>
-                            • {rem.dueDate.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}
-                          </span>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-2">
+                            <span className="capitalize text-sm font-semibold text-primary font-ui">{rem.type}</span>
+                            <span className={`text-xs ${isOverdue ? 'text-red-400 font-bold' : 'text-muted'}`}>
+                              • {dateFormatted}
+                            </span>
+                          </div>
+                          {rem.timezone && (
+                            <span className="text-[10px] text-muted/70 flex items-center gap-1 mt-0.5 font-mono">
+                              <Globe className="w-2.5 h-2.5 text-emerald-400" />
+                              {getTimezoneDisplayOffset(rem.timezone)}
+                            </span>
+                          )}
                         </div>
                         <button 
                           onClick={() => onCompleteReminder(rem.id!, plant.id!, rem.type)}
@@ -246,30 +267,51 @@ export const PlantCard: React.FC<PlantCardProps> = ({
                 animate={{ opacity: 1, height: 'auto' }}
                 className="p-4 bg-green-500/10 border border-green-500/20 rounded-2xl space-y-3 mt-3 shadow-inner"
               >
-                <div className="flex gap-2">
-                  <select 
-                    value={remType}
-                    onChange={(e) => setRemType(e.target.value)}
-                    className="flex-1 text-sm bg-surface border border-white/10 text-primary rounded-lg px-2 py-1.5 focus:outline-none focus:border-green-500"
-                  >
-                    <option value="water" className="bg-elevated text-primary">Water</option>
-                    <option value="fertilize" className="bg-elevated text-primary">Fertilize</option>
-                    <option value="prune" className="bg-elevated text-primary">Prune</option>
-                    <option value="other" className="bg-elevated text-primary">Other</option>
-                  </select>
-                  <select 
-                    value={remDays}
-                    onChange={(e) => setRemDays(e.target.value)}
-                    className="flex-1 text-sm bg-surface border border-white/10 text-primary rounded-lg px-2 py-1.5 focus:outline-none focus:border-green-500"
-                  >
-                    <option value="1" className="bg-elevated text-primary">Tomorrow</option>
-                    <option value="3" className="bg-elevated text-primary">In 3 days</option>
-                    <option value="7" className="bg-elevated text-primary">In 1 week</option>
-                    <option value="14" className="bg-elevated text-primary">In 2 weeks</option>
-                    <option value="30" className="bg-elevated text-primary">In 1 month</option>
-                  </select>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <select 
+                      value={remType}
+                      onChange={(e) => setRemType(e.target.value)}
+                      className="flex-1 text-xs bg-surface border border-white/10 text-primary rounded-lg px-2 py-1.5 focus:outline-none focus:border-green-500"
+                    >
+                      <option value="water" className="bg-elevated text-primary">Water</option>
+                      <option value="fertilize" className="bg-elevated text-primary">Fertilize</option>
+                      <option value="prune" className="bg-elevated text-primary">Prune</option>
+                      <option value="mist" className="bg-elevated text-primary">Mist</option>
+                      <option value="other" className="bg-elevated text-primary">Other</option>
+                    </select>
+                    <select 
+                      value={remDays}
+                      onChange={(e) => setRemDays(e.target.value)}
+                      className="flex-1 text-xs bg-surface border border-white/10 text-primary rounded-lg px-2 py-1.5 focus:outline-none focus:border-green-500"
+                    >
+                      <option value="1" className="bg-elevated text-primary">Tomorrow</option>
+                      <option value="2" className="bg-elevated text-primary">In 2 days</option>
+                      <option value="3" className="bg-elevated text-primary">In 3 days</option>
+                      <option value="7" className="bg-elevated text-primary">In 1 week</option>
+                      <option value="14" className="bg-elevated text-primary">In 2 weeks</option>
+                      <option value="30" className="bg-elevated text-primary">In 1 month</option>
+                    </select>
+                  </div>
+                  
+                  {/* Time & Timezone Target */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 flex-1 bg-surface border border-white/10 rounded-lg px-2 py-1">
+                      <Clock className="w-3 h-3 text-emerald-400 shrink-0" />
+                      <input 
+                        type="time" 
+                        value={remTime}
+                        onChange={(e) => setRemTime(e.target.value)}
+                        className="bg-transparent text-primary text-xs w-full focus:outline-none"
+                      />
+                    </div>
+                    <div className="text-[10px] text-emerald-300/80 font-mono px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 whitespace-nowrap">
+                      {getTimezoneDisplayOffset(getUserTimezone())}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-end gap-2">
+
+                <div className="flex justify-end gap-2 pt-1">
                   <button 
                     onClick={() => setAddingReminder(false)}
                     className="text-xs text-muted px-3 py-1.5 hover:bg-white/5 rounded-lg transition-colors font-semibold"
@@ -280,7 +322,7 @@ export const PlantCard: React.FC<PlantCardProps> = ({
                     onClick={handleAddReminder}
                     className="text-xs font-bold bg-gradient-to-r from-green-500 to-teal-500 text-void px-4 py-1.5 rounded-lg hover:from-green-400 hover:to-teal-400 transition-colors shadow-glow-green"
                   >
-                    Save
+                    Save Reminder
                   </button>
                 </div>
               </motion.div>

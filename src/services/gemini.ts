@@ -55,6 +55,34 @@ export async function generateSpeech(text: string): Promise<string> {
   return base64Audio;
 }
 
+export async function transcribeAudio(base64Audio: string, mimeType: string = "audio/webm"): Promise<string> {
+  const model = "gemini-3.7-flash";
+  const prompt = `You are an accurate voice-to-text botanical audio transcriber. 
+Transcribe the user's spoken audio into clean, natural text.
+- Accurately capture botanical terminology, scientific plant names, common plant names, physiological symptoms, pests, and plant care questions (e.g., Monstera deliciosa, Sansevieria, root rot, yellow leaves, neem oil, nitrogen deficiency, watering frequency, repotting).
+- Do not add conversational commentary, timestamps, or quotation marks.
+- Return ONLY the exact transcribed text. If the audio is silent or unintelligible, return an empty string.`;
+
+  const audioPart = {
+    inlineData: {
+      mimeType: mimeType.split(';')[0] || "audio/webm",
+      data: base64Audio.split(",")[1] || base64Audio,
+    },
+  };
+
+  try {
+    const response = await ai.models.generateContent({
+      model,
+      contents: [{ parts: [audioPart, { text: prompt }] }],
+    });
+
+    return response.text?.trim() || "";
+  } catch (error) {
+    console.error("Audio transcription error:", error);
+    throw error;
+  }
+}
+
 export async function diagnosePlantDisease(base64Image: string): Promise<DiseaseDiagnosis> {
   const model = "gemini-3-flash-preview";
   

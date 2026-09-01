@@ -8,6 +8,12 @@ service cloud.firestore {
     function isSignedIn() { 
       return request.auth != null && request.auth.token.email_verified == true; 
     }
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'nareshchandu27@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
     function incoming() { return request.resource.data; }
     function existing() { return resource == null ? null : resource.data; }
     function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
@@ -222,6 +228,94 @@ service cloud.firestore {
     match /userPreferences/{userId} {
       allow get, list: if isSignedIn() && userId == request.auth.uid;
       allow create, update: if isSignedIn() && userId == request.auth.uid && isValidUserPreferences(incoming());
+    }
+
+    // Community Forum Rules
+    function isValidForumPostCreate(data) {
+      return data.keys().hasAll(['userId', 'userName', 'title', 'content', 'category', 'createdAt'])
+        && (data.keys().size() >= 6 && data.keys().size() <= 16)
+        && data.userId == request.auth.uid
+        && data.title is string && data.title.size() >= 3 && data.title.size() <= 200
+        && data.content is string && data.content.size() >= 10 && data.content.size() <= 5000
+        && data.category in ['question', 'showcase', 'tip', 'discussion', 'identification']
+        && (!('photoUrl' in data) || (data.photoUrl == null || data.photoUrl is string))
+        && (!('plantTag' in data) || (data.plantTag == null || data.plantTag is string))
+        && (!('userAvatar' in data) || (data.userAvatar == null || data.userAvatar is string))
+        && (!('likesCount' in data) || data.likesCount is int)
+        && (!('commentsCount' in data) || data.commentsCount is int)
+        && (!('isPinned' in data) || data.isPinned is bool)
+        && (!('isSolved' in data) || data.isSolved is bool)
+        && (!('status' in data) || (data.status in ['active', 'hidden', 'flagged']))
+        && (!('flagCount' in data) || data.flagCount is int)
+        && data.createdAt == request.time;
+    }
+
+    match /forumPosts/{postId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(postId) && isValidForumPostCreate(incoming());
+      allow update: if isSignedIn() && (
+        isAdmin() ||
+        (
+          existing().userId == request.auth.uid 
+          && incoming().userId == existing().userId
+          && incoming().createdAt == existing().createdAt
+          && incoming().diff(existing()).affectedKeys().hasAny(['title', 'content', 'category', 'photoUrl', 'plantTag', 'isSolved', 'status', 'updatedAt'])
+        ) ||
+        (
+          incoming().diff(existing()).affectedKeys().hasOnly(['likesCount', 'commentsCount', 'status', 'flagCount', 'isSolved', 'isPinned', 'updatedAt'])
+        )
+      );
+      allow delete: if isSignedIn() && (isAdmin() || existing().userId == request.auth.uid);
+
+      match /comments/{commentId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && isValidId(commentId)
+          && incoming().keys().hasAll(['postId', 'userId', 'userName', 'content', 'createdAt'])
+          && incoming().userId == request.auth.uid
+          && incoming().postId == postId
+          && incoming().content is string && incoming().content.size() >= 1 && incoming().content.size() <= 2000
+          && (!('photoUrl' in incoming()) || (incoming().photoUrl == null || incoming().photoUrl is string))
+          && (!('userAvatar' in incoming()) || (incoming().userAvatar == null || incoming().userAvatar is string))
+          && (!('isSolution' in incoming()) || incoming().isSolution is bool)
+          && (!('likesCount' in incoming()) || incoming().likesCount is int)
+          && (!('status' in incoming()) || (incoming().status in ['active', 'hidden']))
+          && incoming().createdAt == request.time;
+        allow update: if isSignedIn() && (
+          isAdmin() ||
+          (
+            existing().userId == request.auth.uid 
+            && incoming().userId == existing().userId
+            && incoming().diff(existing()).affectedKeys().hasAny(['content', 'photoUrl', 'isSolution', 'status'])
+          ) ||
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly(['likesCount', 'isSolution', 'status'])
+          )
+        );
+        allow delete: if isSignedIn() && (isAdmin() || existing().userId == request.auth.uid);
+      }
+    }
+
+    match /forumReports/{reportId} {
+      allow create: if isSignedIn() && isValidId(reportId)
+        && incoming().keys().hasAll(['userId', 'targetType', 'targetId', 'postId', 'reason', 'status', 'createdAt'])
+        && incoming().userId == request.auth.uid
+        && incoming().targetType in ['post', 'comment']
+        && incoming().reason in ['spam', 'harassment', 'misleading', 'inappropriate', 'other']
+        && incoming().status == 'pending'
+        && (!('details' in incoming()) || (incoming().details == null || incoming().details is string))
+        && incoming().createdAt == request.time;
+      allow read: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow update, delete: if isSignedIn() && isAdmin();
+    }
+
+    match /forumLikes/{likeId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(likeId)
+        && incoming().keys().hasAll(['userId', 'targetId', 'targetType', 'createdAt'])
+        && incoming().userId == request.auth.uid
+        && incoming().targetType in ['post', 'comment']
+        && incoming().createdAt == request.time;
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
     }
   }
 }

@@ -8,18 +8,19 @@ import {
   PlantReminder, 
   getCareLogs, 
   addCareLog, 
-  CareLog,
-  getPlantHealthHistory,
-  HealthHistoryEntry,
-  updatePlantHealth,
-  updatePlantNickname
+  CareLog, 
+  getPlantHealthHistory, 
+  HealthHistoryEntry, 
+  updatePlantHealth, 
+  updatePlantNickname 
 } from '../services/firebase';
 import { useAuth } from './useAuth';
+import { getUserTimezone, getNextReminderOccurrence } from '../utils/timezone';
 
 export type TabView = 'reminders' | 'history' | 'trends';
 
 export function useGarden() {
-  const { user } = useAuth();
+  const { user, isEmailVerified } = useAuth();
   const [plants, setPlants] = useState<SavedPlant[]>([]);
   const [reminders, setReminders] = useState<Record<string, PlantReminder[]>>({});
   const [careLogs, setCareLogs] = useState<Record<string, CareLog[]>>({});
@@ -28,7 +29,17 @@ export function useGarden() {
   const [activeTabs, setActiveTabs] = useState<Record<string, TabView>>({});
 
   const loadGarden = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setPlants([]);
+      setLoading(false);
+      return;
+    }
+
+    if (!user.emailVerified) {
+      setPlants([]);
+      setLoading(false);
+      return;
+    }
     
     setLoading(true);
     try {
@@ -43,9 +54,9 @@ export function useGarden() {
       for (const p of savedPlants) {
         if (p.id) {
           const [rems, logs, history] = await Promise.all([
-            getPlantReminders(p.id),
-            getCareLogs(p.id),
-            getPlantHealthHistory(p.id)
+            getPlantReminders(p.id).catch(() => []),
+            getCareLogs(p.id).catch(() => []),
+            getPlantHealthHistory(p.id).catch(() => [])
           ]);
           
           newReminders[p.id] = rems;
@@ -59,23 +70,27 @@ export function useGarden() {
       setCareLogs(newLogs);
       setHealthHistory(newHealthHistory);
       setActiveTabs(initialTabs);
-    } catch (err) {
-      console.error('Failed to load garden:', err);
+    } catch (err: any) {
+      console.warn('Failed to load garden database:', err?.message || err);
     } finally {
       setLoading(false);
     }
   }, [user]);
 
   useEffect(() => {
-    if (user) {
+    if (user && isEmailVerified) {
       loadGarden();
+    } else {
+      setLoading(false);
     }
-  }, [user, loadGarden]);
+  }, [user, isEmailVerified, loadGarden]);
 
-  const handleAddReminder = async (plantId: string, type: string, days: string) => {
-    const dueDate = new Date();
-    dueDate.setDate(dueDate.getDate() + parseInt(days));
-    await addPlantReminder(plantId, type, dueDate);
+  const handleAddReminder = async (plantId: string, type: string, days: string, time: string = '09:00') => {
+    const userTz = getUserTimezone();
+    const daysCount = parseInt(days) || 1;
+    const { dueDate } = getNextReminderOccurrence(daysCount, time, userTz);
+    
+    await addPlantReminder(plantId, type, dueDate, { time, timezone: userTz });
     const rems = await getPlantReminders(plantId);
     setReminders(prev => ({ ...prev, [plantId]: rems }));
   };

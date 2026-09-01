@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { chatWithGardeningExpert, generateThreadTitle } from '../services/gemini';
 import { 
   getUserPlants, 
-  getPlantHealthHistory, 
-  getCareLogs, 
+  getPlantHealthHistory,
+  getCareLogs,
   getPlantReminders,
   getUserFeedback, 
   getUserPreferences,
@@ -15,7 +15,8 @@ import {
   updateChatThread,
   deleteMessagePair,
   updateMessageFeedback,
-  ChatThread
+  ChatThread,
+  parseFirestoreError
 } from '../services/firebase';
 import { getCurrentWeather, getWeatherForecast } from '../services/weather';
 import { useAuth } from './useAuth';
@@ -90,10 +91,10 @@ export function useChatBot() {
       setIsRefreshingContext(true);
       try {
         const [plants, feedback, prefs, threads] = await Promise.all([
-          getUserPlants(),
-          getUserFeedback(),
-          getUserPreferences(),
-          getUserThreads()
+          getUserPlants().catch(() => []),
+          getUserFeedback().catch(() => []),
+          getUserPreferences().catch(() => null),
+          getUserThreads().catch(() => [])
         ]);
 
         if (plants.length === 0 && threads.length === 0) {
@@ -107,9 +108,9 @@ export function useChatBot() {
           if (!p.id) return "";
           
           const [history, logs, reminders] = await Promise.all([
-            getPlantHealthHistory(p.id),
-            getCareLogs(p.id),
-            getPlantReminders(p.id)
+            getPlantHealthHistory(p.id).catch(() => []),
+            getCareLogs(p.id).catch(() => []),
+            getPlantReminders(p.id).catch(() => [])
           ]);
 
           const recentHistory = history.slice(-10).map(h => {
@@ -322,9 +323,14 @@ ELITE_DIRECTIVE: Use these 3-day projections to anticipate "Fungal Thresholds" o
         });
       }
       fetchThreads();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Chat error:', error);
-      setError("I'm having trouble connecting to Sage. My systems may be undergoing maintenance or experiencing a network fluctuation.");
+      const parsed = parseFirestoreError(error);
+      if (parsed.isPermissionError || parsed.isUnverifiedEmail) {
+        setError(parsed.userMessage);
+      } else {
+        setError(error?.message || "I'm having trouble connecting to Sage. My systems may be undergoing maintenance or experiencing a network fluctuation.");
+      }
     } finally {
       setIsLoading(false);
     }

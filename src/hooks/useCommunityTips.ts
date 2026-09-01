@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getCommunityTips, addCommunityTip, CommunityTip, voteOnTip } from '../services/firebase';
+import { getCommunityTips, addCommunityTip, CommunityTip, voteOnTip, parseFirestoreError } from '../services/firebase';
 import { useAuth } from './useAuth';
 
 export function useCommunityTips(activeCategory: string) {
   const [tips, setTips] = useState<CommunityTip[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [voteError, setVoteError] = useState<string | null>(null);
   const { user } = useAuth();
 
   const fetchTips = useCallback(async () => {
@@ -38,7 +39,11 @@ export function useCommunityTips(activeCategory: string) {
   };
 
   const handleVote = async (tipId: string, type: 'up' | 'down') => {
-    if (!user) return;
+    setVoteError(null);
+    if (!user) {
+      setVoteError('Please sign in to vote on community protocols.');
+      return;
+    }
     try {
       await voteOnTip(tipId, type);
       // Optimistic update
@@ -53,6 +58,8 @@ export function useCommunityTips(activeCategory: string) {
         return t;
       }));
     } catch (err) {
+      const parsed = parseFirestoreError(err);
+      setVoteError(parsed.userMessage);
       console.error("Failed to vote:", err);
     }
   };
@@ -61,8 +68,11 @@ export function useCommunityTips(activeCategory: string) {
     tips,
     isLoading,
     isSubmitting,
+    voteError,
+    setVoteError,
     handleAddTip,
     handleVote,
     refreshTips: fetchTips
   };
 }
+

@@ -1,8 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, Droplets, Sun, Bug, Scissors, MessageSquare, Plus, Send, X, Star } from 'lucide-react';
+import { 
+  ChevronDown, 
+  Droplets, 
+  Sun, 
+  Bug, 
+  Scissors, 
+  MessageSquare, 
+  Plus, 
+  Send, 
+  X, 
+  Star,
+  Calculator,
+  BookOpen,
+  FlaskConical,
+  Sparkles,
+  Leaf
+} from 'lucide-react';
 import { CommunityTip, subscribeToTips, submitTip } from '../services/communityTips';
 import { useAuth } from '../hooks/useAuth';
+import { FertilizerCalculator } from './FertilizerCalculator';
+import { DashboardPlant } from '../types/botanical';
+
+interface PlantCareGuideProps {
+  gardenPlants?: DashboardPlant[];
+  onNavigateToCalendar?: () => void;
+}
 
 const guideCategories = [
   {
@@ -83,7 +106,11 @@ const guideCategories = [
   }
 ];
 
-export const PlantCareGuide: React.FC = () => {
+export const PlantCareGuide: React.FC<PlantCareGuideProps> = ({
+  gardenPlants = [],
+  onNavigateToCalendar
+}) => {
+  const [activeSection, setActiveSection] = useState<'calculator' | 'encyclopedia' | 'community'>('calculator');
   const [openTopic, setOpenTopic] = useState<string | null>(null);
   const [communityTips, setCommunityTips] = useState<CommunityTip[]>([]);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
@@ -131,170 +158,272 @@ export const PlantCareGuide: React.FC = () => {
         hidden: { opacity: 0 },
         show: { opacity: 1, transition: { staggerChildren: 0.1 } }
       }}
-      className="max-w-4xl mx-auto space-y-12 pb-20"
+      className="max-w-5xl mx-auto space-y-8 pb-20"
     >
-      <div className="grid gap-6 md:grid-cols-2">
-        {guideCategories.map((category) => {
-          const Icon = category.icon;
-          return (
-            <motion.div 
-              variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { ease: [0.25, 0.46, 0.45, 0.94] } } }}
-              key={category.id} 
-              className="glass-card overflow-hidden"
-            >
-              <div className="bg-surface/30 border-b border-white/5 p-5 flex items-center gap-4">
-                <div className="p-3 bg-surface rounded-2xl shadow-inner text-green-400 border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.1)]">
-                  <Icon className="w-5 h-5" />
-                </div>
-                <h3 className="font-display font-bold text-primary text-xl tracking-wide">{category.title}</h3>
-              </div>
-              <div className="divide-y divide-white/5 font-ui">
-                {category.topics.map((topic, index) => {
-                  const topicId = `${category.id}-${index}`;
-                  const isOpen = openTopic === topicId;
-                  
-                  return (
-                    <div key={topicId} className="group">
-                      <button
-                        onClick={() => toggleTopic(topicId)}
-                        className="w-full text-left px-6 py-5 flex items-center justify-between hover:bg-surface/50 transition-colors focus:outline-none"
-                      >
-                        <span className="font-semibold text-primary/80 group-hover:text-green-400 transition-colors">
-                          {topic.title}
-                        </span>
-                        <ChevronDown 
-                          className={`w-4 h-4 text-muted transition-transform duration-300 ${isOpen ? 'rotate-180 text-green-400' : ''}`} 
-                        />
-                      </button>
-                      <AnimatePresence initial={false}>
-                        {isOpen && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
-                            className="overflow-hidden"
-                          >
-                            <div className="px-6 pb-6 text-secondary text-sm leading-relaxed border-l-2 border-green-500/30 ml-6 mb-4">
-                              {topic.content}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
+      {/* Header & Sub-Navigation */}
+      <div className="text-center space-y-4">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+          <BookOpen className="w-3.5 h-3.5" />
+          Botanical Care & Nutrition Guide
+        </div>
 
-      {/* Community Wisdom Section */}
-      <motion.div 
-        variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0 } }}
-        className="space-y-6"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-yellow-400/10 rounded-2xl border border-yellow-400/20 shadow-[0_0_15px_rgba(250,204,21,0.1)] text-yellow-400">
-              <Star className="w-5 h-5 fill-yellow-400/20" />
-            </div>
-            <div>
-              <h3 className="font-display font-bold text-primary text-xl tracking-wide">Community Wisdom</h3>
-              <p className="text-[10px] uppercase tracking-widest text-muted font-bold">Tips from fellow gardeners</p>
-            </div>
-          </div>
-          <button 
-            onClick={() => setShowSubmitForm(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 hover:bg-green-500/20 transition-all text-sm font-bold shadow-glow-green"
+        <h1 className="text-3xl md:text-5xl font-display font-bold text-white tracking-tight">
+          Plant Care & Fertilizer Guide
+        </h1>
+
+        <p className="text-xs md:text-sm text-slate-400 max-w-2xl mx-auto leading-relaxed font-ui">
+          Master plant nutrition, species-specific care protocols, pest solutions, and interactive fertilizer dosing calibrated for every developmental growth stage.
+        </p>
+
+        {/* Section Navigation Tabs */}
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+          <button
+            onClick={() => setActiveSection('calculator')}
+            className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeSection === 'calculator'
+                ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20 scale-105'
+                : 'bg-[#08140e] border border-emerald-900/40 text-slate-300 hover:text-white hover:border-emerald-700/50'
+            }`}
           >
-            <Plus className="w-4 h-4" /> Share a Tip
+            <Calculator className="w-4 h-4" />
+            <span>Fertilizer Calculator</span>
+            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black uppercase ${
+              activeSection === 'calculator' ? 'bg-slate-950 text-emerald-400' : 'bg-emerald-500/20 text-emerald-300'
+            }`}>
+              Interactive
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveSection('encyclopedia')}
+            className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeSection === 'encyclopedia'
+                ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20 scale-105'
+                : 'bg-[#08140e] border border-emerald-900/40 text-slate-300 hover:text-white hover:border-emerald-700/50'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>Care Encyclopedia</span>
+          </button>
+
+          <button
+            onClick={() => setActiveSection('community')}
+            className={`px-4 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+              activeSection === 'community'
+                ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20 scale-105'
+                : 'bg-[#08140e] border border-emerald-900/40 text-slate-300 hover:text-white hover:border-emerald-700/50'
+            }`}
+          >
+            <Star className="w-4 h-4" />
+            <span>Community Wisdom</span>
+            {communityTips.length > 0 && (
+              <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-black ${
+                activeSection === 'community' ? 'bg-slate-950 text-emerald-400' : 'bg-amber-500/20 text-amber-300'
+              }`}>
+                {communityTips.length}
+              </span>
+            )}
           </button>
         </div>
+      </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {communityTips.map((tip) => (
-            <motion.div 
-              key={tip.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className={`glass-card p-6 border-l-4 ${tip.isCurated ? 'border-l-yellow-400' : 'border-l-green-500/30'}`}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-[10px] font-black text-muted uppercase tracking-tighter bg-white/5 px-2 py-0.5 rounded">
-                  {tip.plantCategory || 'General'}
-                </span>
-                {tip.isCurated && (
-                  <div className="flex items-center gap-1 text-[8px] font-black text-yellow-400 uppercase tracking-widest">
-                    <Star className="w-2.5 h-2.5 fill-yellow-400" /> Curated
+      {/* ================= 1. FERTILIZER CALCULATOR TAB ================= */}
+      {activeSection === 'calculator' && (
+        <motion.div
+          key="calculator-section"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.25 }}
+        >
+          <FertilizerCalculator 
+            gardenPlants={gardenPlants}
+            onNavigateToCalendar={onNavigateToCalendar}
+          />
+        </motion.div>
+      )}
+
+      {/* ================= 2. CARE ENCYCLOPEDIA TAB ================= */}
+      {activeSection === 'encyclopedia' && (
+        <motion.div
+          key="encyclopedia-section"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
+          <div className="grid gap-6 md:grid-cols-2">
+            {guideCategories.map((category) => {
+              const Icon = category.icon;
+              return (
+                <motion.div 
+                  variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { ease: [0.25, 0.46, 0.45, 0.94] } } }}
+                  key={category.id} 
+                  className="bg-[#08140e] border border-emerald-900/30 rounded-3xl overflow-hidden shadow-xl"
+                >
+                  <div className="bg-[#0b1b13] border-b border-emerald-900/30 p-5 flex items-center gap-4">
+                    <div className="p-3 bg-[#06100b] rounded-2xl text-emerald-400 border border-emerald-500/20 shadow-md">
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <h3 className="font-display font-bold text-white text-lg tracking-wide">{category.title}</h3>
                   </div>
-                )}
+                  <div className="divide-y divide-emerald-900/20 font-ui">
+                    {category.topics.map((topic, index) => {
+                      const topicId = `${category.id}-${index}`;
+                      const isOpen = openTopic === topicId;
+                      
+                      return (
+                        <div key={topicId} className="group">
+                          <button
+                            onClick={() => toggleTopic(topicId)}
+                            className="w-full text-left px-6 py-4 flex items-center justify-between hover:bg-[#0c1e15] transition-colors focus:outline-none cursor-pointer"
+                          >
+                            <span className="font-semibold text-slate-200 group-hover:text-emerald-300 transition-colors text-sm">
+                              {topic.title}
+                            </span>
+                            <ChevronDown 
+                              className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${isOpen ? 'rotate-180 text-emerald-400' : ''}`} 
+                            />
+                          </button>
+                          <AnimatePresence initial={false}>
+                            {isOpen && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
+                                className="overflow-hidden"
+                              >
+                                <div className="px-6 pb-5 text-slate-300 text-xs leading-relaxed border-l-2 border-emerald-500/40 ml-6 mb-3">
+                                  {topic.content}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
+      {/* ================= 3. COMMUNITY WISDOM TAB ================= */}
+      {activeSection === 'community' && (
+        <motion.div 
+          key="community-section"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.25 }}
+          className="space-y-6"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-amber-400/10 rounded-2xl border border-amber-400/20 text-amber-400 shadow-md">
+                <Star className="w-5 h-5 fill-amber-400/20" />
               </div>
-              <h4 className="font-display font-bold text-primary mb-2">{tip.title || 'Gardening Secret'}</h4>
-              <p className="text-secondary text-sm leading-relaxed italic mb-4">"{tip.tip}"</p>
-              <div className="flex items-center justify-between text-[10px] text-muted font-bold">
-                <div className="flex items-center gap-1.5 text-blue-400/70">
-                  <MessageSquare className="w-3 h-3" />
-                  Shared by {tip.userName || 'Anonymous'}
-                </div>
-                <span>{tip.createdAt?.toDate().toLocaleDateString() || 'Recently'}</span>
+              <div>
+                <h3 className="font-display font-bold text-white text-xl tracking-wide">Community Wisdom</h3>
+                <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Tips from fellow botanists</p>
               </div>
-            </motion.div>
-          ))}
-          {communityTips.length === 0 && (
-            <div className="md:col-span-2 py-12 text-center border-2 border-dashed border-white/5 rounded-3xl">
-              <p className="text-muted text-sm font-ui">No community tips yet. Be the first to share your wisdom!</p>
             </div>
-          )}
-        </div>
-      </motion.div>
+            <button 
+              onClick={() => setShowSubmitForm(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all text-xs font-bold cursor-pointer"
+            >
+              <Plus className="w-4 h-4" /> Share a Tip
+            </button>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {communityTips.map((tip) => (
+              <motion.div 
+                key={tip.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className={`bg-[#08140e] border border-emerald-900/30 rounded-2xl p-5 border-l-4 ${tip.isCurated ? 'border-l-amber-400' : 'border-l-emerald-500/40'}`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider bg-white/5 px-2 py-0.5 rounded">
+                    {tip.plantCategory || 'General'}
+                  </span>
+                  {tip.isCurated && (
+                    <div className="flex items-center gap-1 text-[9px] font-black text-amber-400 uppercase tracking-widest">
+                      <Star className="w-2.5 h-2.5 fill-amber-400" /> Curated
+                    </div>
+                  )}
+                </div>
+                <h4 className="font-display font-bold text-white mb-1.5 text-sm">{tip.title || 'Gardening Secret'}</h4>
+                <p className="text-slate-300 text-xs leading-relaxed italic mb-3">"{tip.tip}"</p>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold border-t border-emerald-900/20 pt-2.5">
+                  <div className="flex items-center gap-1.5 text-emerald-400/80">
+                    <MessageSquare className="w-3 h-3" />
+                    Shared by {tip.userName || 'Anonymous'}
+                  </div>
+                  <span>{tip.createdAt?.toDate().toLocaleDateString() || 'Recently'}</span>
+                </div>
+              </motion.div>
+            ))}
+            {communityTips.length === 0 && (
+              <div className="md:col-span-2 py-12 text-center border-2 border-dashed border-emerald-900/30 rounded-3xl">
+                <p className="text-slate-400 text-xs font-ui">No community tips yet. Be the first to share your wisdom!</p>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
 
       {/* Submit Tip Modal */}
       <AnimatePresence>
         {showSubmitForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-void/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="glass-card w-full max-w-lg p-8 relative overflow-hidden"
+              className="bg-[#08140e] border border-emerald-500/30 rounded-3xl w-full max-w-lg p-6 md:p-8 relative overflow-hidden shadow-2xl"
             >
-              <div className="absolute -right-20 -top-20 w-64 h-64 bg-green-500/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -right-20 -top-20 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
               
               <button 
                 onClick={() => setShowSubmitForm(false)}
-                className="absolute top-6 right-6 text-muted hover:text-primary transition-colors"
+                className="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="mb-8">
-                <h3 className="text-2xl font-display font-bold text-primary mb-1">Share Your Wisdom</h3>
-                <p className="text-xs text-muted font-bold uppercase tracking-widest leading-none">Contribute to the Floravia community</p>
+              <div className="mb-6">
+                <h3 className="text-xl font-display font-bold text-white mb-1">Share Your Wisdom</h3>
+                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Contribute to the Floravia botanical community</p>
               </div>
 
-              <form onSubmit={handleSubmitTip} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest text-muted font-black ml-1">Subject / Plant Name</label>
+              <form onSubmit={handleSubmitTip} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase tracking-wider text-slate-400 font-bold ml-1">Subject / Plant Name</label>
                   <input 
                     type="text"
                     required
                     value={newTip.title}
                     onChange={(e) => setNewTip({ ...newTip, title: e.target.value })}
-                    placeholder="e.g. Aloe Vera Secret"
-                    className="w-full bg-surface/50 border border-white/10 rounded-xl px-4 py-3 text-primary focus:border-green-500/50 outline-none transition-colors"
+                    placeholder="e.g. Aloe Vera Drainage Secret"
+                    className="w-full bg-[#050e09] border border-emerald-900/40 rounded-xl px-4 py-2.5 text-xs text-white focus:border-emerald-500/50 outline-none transition-colors"
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest text-muted font-black ml-1">Category</label>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase tracking-wider text-slate-400 font-bold ml-1">Category</label>
                   <select 
                     value={newTip.category}
                     onChange={(e) => setNewTip({ ...newTip, category: e.target.value })}
-                    className="w-full bg-surface/50 border border-white/10 rounded-xl px-4 py-3 text-primary focus:border-green-500/50 outline-none transition-colors"
+                    className="w-full bg-[#050e09] border border-emerald-900/40 rounded-xl px-4 py-2.5 text-xs text-white focus:border-emerald-500/50 outline-none transition-colors"
                   >
                     <option value="General">General Care</option>
+                    <option value="Fertilizing">Fertilizing & Nutrients</option>
                     <option value="Watering">Watering</option>
                     <option value="Pests">Pest Control</option>
                     <option value="Repotting">Repotting</option>
@@ -302,24 +431,24 @@ export const PlantCareGuide: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest text-muted font-black ml-1">Your Tip</label>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] uppercase tracking-wider text-slate-400 font-bold ml-1">Your Tip</label>
                   <textarea 
                     required
                     value={newTip.tip}
                     onChange={(e) => setNewTip({ ...newTip, tip: e.target.value })}
-                    placeholder="Share your experience..."
+                    placeholder="Share your practical experience or care formula..."
                     rows={4}
-                    className="w-full bg-surface/50 border border-white/10 rounded-xl px-4 py-3 text-primary focus:border-green-500/50 outline-none transition-colors resize-none"
+                    className="w-full bg-[#050e09] border border-emerald-900/40 rounded-xl px-4 py-2.5 text-xs text-white focus:border-emerald-500/50 outline-none transition-colors resize-none"
                   />
                 </div>
 
                 <button 
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-4 rounded-2xl bg-green-500 text-void font-bold flex items-center justify-center gap-2 hover:bg-green-400 transition-colors shadow-glow-green disabled:opacity-50"
+                  className="w-full py-3.5 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20 disabled:opacity-50 cursor-pointer"
                 >
-                  {isSubmitting ? 'Syncing...' : (
+                  {isSubmitting ? 'Publishing...' : (
                     <>
                       <Send className="w-4 h-4" /> Broadcast Tip
                     </>
@@ -333,3 +462,4 @@ export const PlantCareGuide: React.FC = () => {
     </motion.div>
   );
 };
+

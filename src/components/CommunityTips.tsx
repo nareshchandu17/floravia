@@ -14,10 +14,13 @@ import {
   X,
   ThumbsUp,
   ThumbsDown,
-  Users
+  Users,
+  AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useCommunityTips } from '../hooks/useCommunityTips';
+import { parseFirestoreError } from '../services/firebase';
+import { AuthModal } from './AuthModal';
 
 const CATEGORIES = ['All', 'Watering', 'Light', 'Soil', 'Pests', 'General'];
 
@@ -35,12 +38,16 @@ export function CommunityTips() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'signup' | 'verify-email'>('verify-email');
   const { user } = useAuth();
   
   const {
     tips,
     isLoading,
     isSubmitting,
+    voteError,
+    setVoteError,
     handleAddTip,
     handleVote
   } = useCommunityTips(activeCategory);
@@ -81,8 +88,9 @@ export function CommunityTips() {
         setIsModalOpen(false);
         setSuccessMessage(null);
       }, 2000);
-    } catch (err) {
-      setSubmissionError('Failed to synchronize with collective core. Please retry.');
+    } catch (err: any) {
+      const parsed = parseFirestoreError(err);
+      setSubmissionError(parsed.userMessage);
     }
   };
 
@@ -128,13 +136,64 @@ export function CommunityTips() {
           </div>
 
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              if (!user) {
+                setAuthModalMode('login');
+                setAuthModalOpen(true);
+                return;
+              }
+              if (!user.emailVerified) {
+                setAuthModalMode('verify-email');
+                setAuthModalOpen(true);
+                return;
+              }
+              setIsModalOpen(true);
+            }}
             className="bg-primary text-void px-6 md:px-8 py-3 md:py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-green-400 transition-all shadow-glow shadow-white/10 text-xs md:text-sm"
           >
             <Plus className="w-4 h-4 md:w-5 md:h-5" /> Share Tip
           </button>
         </div>
       </div>
+
+      {/* Vote / Action Error Toast */}
+      <AnimatePresence>
+        {voteError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-6 p-4 rounded-2xl bg-amber-950/60 border border-amber-500/40 text-amber-200 text-xs flex items-center justify-between gap-3 shadow-lg"
+          >
+            <div className="flex items-center gap-2.5">
+              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>{voteError}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              {(!user || !user.emailVerified) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthModalMode(user ? 'verify-email' : 'login');
+                    setAuthModalOpen(true);
+                    setVoteError(null);
+                  }}
+                  className="px-3 py-1 rounded-lg bg-amber-500 text-slate-950 font-bold text-xs hover:bg-amber-400 transition-colors"
+                >
+                  {user ? 'Verify Email' : 'Sign In'}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setVoteError(null)}
+                className="p-1 text-amber-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-32 space-y-4">
@@ -368,6 +427,13 @@ export function CommunityTips() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Auth Modal for Unverified or Signed Out Users */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialMode={authModalMode}
+      />
     </div>
   );
 }

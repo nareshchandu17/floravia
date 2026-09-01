@@ -1,21 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-display: 'Instrument Serif', Georgia, serif;
-  --font-sans: 'Geist', system-ui, sans-serif;
-  --font-ui: 'Geist', system-ui, sans-serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-ui: 'Plus Jakarta Sans', system-ui, sans-serif;
   --font-mono: 'Geist Mono', monospace;
 
-  --color-void: #060a0f;
-  --color-base: #0a1018;
-  --color-surface: #0f1a24;
-  --color-elevated: #162232;
+  --color-void: #050b08;
+  --color-base: #08110c;
+  --color-sidebar: #09130e;
+  --color-surface: #0d1a14;
+  --color-card: #0f1f18;
+  --color-card-border: rgba(34, 197, 94, 0.12);
+  --color-elevated: #13271e;
 
-  --color-green-950: #011a0d;
-  --color-green-900: #022b16;
-  --color-green-700: #0a5c2f;
-  --color-green-500: #16a349;
+  --color-green-950: #021a0d;
+  --color-green-900: #042916;
+  --color-green-800: #064024;
+  --color-green-700: #0b5c33;
+  --color-green-600: #108549;
+  --color-green-500: #10b981;
   --color-green-400: #22c55e;
   --color-green-300: #4ade80;
   
@@ -24,20 +29,22 @@
   --color-teal-300: #5eead4;
 
   --color-amber-600: #d97706;
+  --color-amber-500: #f59e0b;
   --color-amber-400: #fbbf24;
 
-  --color-primary: #f0fdf4;
-  --color-secondary: #86efac;
-  --color-muted: #4b7a5e;
-  --color-inverse: #060a0f;
+  --color-primary: #f2fbf5;
+  --color-secondary: #a7d7bc;
+  --color-muted: #527a63;
+  --color-inverse: #050b08;
 
-  --shadow-glow-green: 0 0 40px rgba(34, 197, 94, 0.3), 0 0 80px rgba(34, 197, 94, 0.15);
-  --shadow-glow-teal: 0 0 40px rgba(20, 184, 166, 0.3), 0 0 80px rgba(20, 184, 166, 0.15);
+  --shadow-glow-green: 0 0 35px rgba(34, 197, 94, 0.25), 0 0 70px rgba(34, 197, 94, 0.1);
+  --shadow-glow-teal: 0 0 35px rgba(20, 184, 166, 0.25), 0 0 70px rgba(20, 184, 166, 0.1);
 }
 
 @layer base {
   body {
     @apply antialiased bg-void text-primary font-ui;
+    background-color: #050b08;
   }
   
   button, 
@@ -51,26 +58,38 @@
 }
 
 @layer utilities {
+  .dashboard-card {
+    background: #0d1a14;
+    border: 1px solid rgba(34, 197, 94, 0.1);
+    border-radius: 18px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    transition: all 0.25s ease-in-out;
+  }
+
+  .dashboard-card:hover {
+    border-color: rgba(34, 197, 94, 0.22);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  }
+
   .glass-card {
-    background: rgba(15, 26, 36, 0.7);
+    background: rgba(13, 26, 20, 0.85);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(74, 222, 128, 0.12);
-    border-radius: 20px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(34, 197, 94, 0.12);
+    border-radius: 18px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
     transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   }
   
   .glass-card:hover {
-    border-color: rgba(74, 222, 128, 0.25);
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 0 60px rgba(34, 197, 94, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-    transform: translateY(-4px);
+    border-color: rgba(34, 197, 94, 0.25);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 0 40px rgba(34, 197, 94, 0.08);
   }
 
   .glass-panel {
-    background: rgba(15, 26, 36, 0.7);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(74, 222, 128, 0.1);
+    background: rgba(9, 19, 14, 0.9);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(34, 197, 94, 0.1);
   }
 
   .text-gradient {
@@ -87,6 +106,22 @@
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Custom subtle dark scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #070d0a;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #142a1f;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #1e3d2e;
   }
 }
 
