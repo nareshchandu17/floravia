@@ -30,6 +30,151 @@ export interface FeedbackEntry {
   createdAt: any;
 }
 
+export interface UserTransaction {
+  id?: string;
+  userId: string;
+  userEmail?: string;
+  paymentId: string;
+  orderId?: string;
+  signature?: string;
+  planId: string;
+  planName: string;
+  amount: number;
+  currency: string;
+  billingCycle: 'monthly' | 'yearly';
+  method?: string;
+  status: 'captured' | 'failed' | 'refunded' | 'success';
+  createdAt: any;
+}
+
+export async function recordUserTransaction(receipt: {
+  razorpay_payment_id: string;
+  razorpay_order_id?: string;
+  razorpay_signature?: string;
+  planId?: string;
+  planName: string;
+  amount: number;
+  currency?: string;
+  billingCycle: 'monthly' | 'yearly';
+  timestamp?: string;
+  userEmail?: string;
+  method?: string;
+  status?: string;
+}): Promise<string | null> {
+  if (!auth.currentUser) return null;
+  const path = 'transactions';
+  try {
+    const docRef = await addDoc(collection(db, path), {
+      userId: auth.currentUser.uid,
+      userEmail: receipt.userEmail || auth.currentUser.email || '',
+      paymentId: receipt.razorpay_payment_id,
+      orderId: receipt.razorpay_order_id || `order_${receipt.razorpay_payment_id.replace(/^pay_/, '')}`,
+      signature: receipt.razorpay_signature || `sig_${receipt.razorpay_payment_id}_captured`,
+      planId: receipt.planId || 'pro',
+      planName: receipt.planName,
+      amount: receipt.amount,
+      currency: receipt.currency || 'INR',
+      billingCycle: receipt.billingCycle,
+      method: receipt.method || 'CARD',
+      status: (receipt.status as any) || 'captured',
+      createdAt: serverTimestamp()
+    });
+    return docRef.id;
+  } catch (err: any) {
+    console.warn("Could not record transaction to Firestore:", err);
+    return null;
+  }
+}
+
+export async function getUserTransactions(): Promise<UserTransaction[]> {
+  // 1. Fetch locally cached receipts first for instant availability / offline support
+  let localList: UserTransaction[] = [];
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem('floravia_subscription_receipts') : null;
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      localList = (Array.isArray(parsed) ? parsed : []).map((r: any, idx: number) => ({
+        id: `local_${r.razorpay_payment_id || idx}`,
+        userId: auth.currentUser?.uid || '',
+        userEmail: r.userEmail || auth.currentUser?.email || '',
+        paymentId: r.razorpay_payment_id || `pay_${idx}`,
+        orderId: r.razorpay_order_id || `order_${idx}`,
+        signature: r.razorpay_signature,
+        planId: r.planId || 'pro',
+        planName: r.planName || 'Floravia Pro Plan',
+        amount: r.amount || 5028,
+        currency: r.currency || 'INR',
+        billingCycle: r.billingCycle || 'yearly',
+        method: r.method || 'CARD',
+        status: 'captured',
+        createdAt: r.timestamp || new Date().toISOString()
+      }));
+    }
+  } catch (e) {
+    console.warn("Failed to parse local transaction receipts:", e);
+  }
+
+  if (!auth.currentUser) {
+    return localList;
+  }
+
+  const path = 'transactions';
+  try {
+    const q = query(
+      collection(db, path),
+      where('userId', '==', auth.currentUser.uid),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    const cloudTransactions: UserTransaction[] = snapshot.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    } as UserTransaction));
+
+    // Deduplicate by paymentId
+    const seenPaymentIds = new Set(cloudTransactions.map(t => t.paymentId));
+    const merged = [...cloudTransactions];
+
+    for (const lt of localList) {
+      if (!seenPaymentIds.has(lt.paymentId)) {
+        seenPaymentIds.add(lt.paymentId);
+        merged.push(lt);
+        // Try uploading to Firestore in background
+        recordUserTransaction({
+          razorpay_payment_id: lt.paymentId,
+          razorpay_order_id: lt.orderId,
+          razorpay_signature: lt.signature,
+          planId: lt.planId,
+          planName: lt.planName,
+          amount: lt.amount,
+          currency: lt.currency,
+          billingCycle: lt.billingCycle,
+          timestamp: typeof lt.createdAt === 'string' ? lt.createdAt : new Date().toISOString(),
+          userEmail: auth.currentUser.email || lt.userEmail,
+          method: lt.method
+        }).catch(() => {});
+      }
+    }
+
+    // Sort descending by date
+    merged.sort((a, b) => {
+      const timeA = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : (new Date(a.createdAt).getTime() || 0);
+      const timeB = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : (new Date(b.createdAt).getTime() || 0);
+      return timeB - timeA;
+    });
+
+    return merged;
+  } catch (err: any) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes('client is offline') || err?.code === 'unavailable') {
+      console.warn("User transactions read skipped while offline:", msg);
+      return localList;
+    }
+    console.warn("Error fetching cloud transactions, returning local transactions:", err);
+    return localList;
+  }
+}
+
 export async function getUserFeedback(): Promise<FeedbackEntry[]> {
   if (!auth.currentUser) return [];
   const path = 'feedback';
@@ -73,6 +218,68 @@ export async function disableNotifications() {
     await setDoc(doc(db, 'users', auth.currentUser.uid), { fcmToken: null }, { merge: true });
   } catch (error) {
     console.warn("Error disabling notifications in database:", error);
+  }
+}
+
+export interface UserProfileData {
+  userId: string;
+  displayName: string;
+  bio?: string;
+  location?: string;
+  photoURL?: string;
+  expertise?: 'beginner' | 'intermediate' | 'expert';
+  gardeningStyle?: string;
+  timezone?: string;
+  preferredReminderTime?: string;
+  fcmToken?: string | null;
+  updatedAt?: any;
+}
+
+export async function getUserProfile(userId?: string): Promise<UserProfileData | null> {
+  const targetUid = userId || auth.currentUser?.uid;
+  if (!targetUid) return null;
+  const path = 'users';
+  try {
+    const snap = await getDoc(doc(db, path, targetUid));
+    if (snap.exists()) {
+      return { userId: snap.id, ...snap.data() } as UserProfileData;
+    }
+    return null;
+  } catch (error: any) {
+    console.warn("Could not retrieve user profile from Firestore:", error?.message || error);
+    return null;
+  }
+}
+
+export async function saveUserProfile(data: Partial<UserProfileData>): Promise<void> {
+  if (!auth.currentUser) throw new Error("Must be logged in to update profile");
+  const path = 'users';
+  try {
+    const cleanPayload: any = {
+      userId: auth.currentUser.uid,
+      updatedAt: serverTimestamp()
+    };
+    if (data.displayName !== undefined) cleanPayload.displayName = data.displayName.trim();
+    if (data.bio !== undefined) cleanPayload.bio = data.bio.trim();
+    if (data.location !== undefined) cleanPayload.location = data.location.trim();
+    if (data.photoURL !== undefined) cleanPayload.photoURL = data.photoURL.trim();
+    if (data.expertise !== undefined) cleanPayload.expertise = data.expertise;
+    if (data.gardeningStyle !== undefined) cleanPayload.gardeningStyle = data.gardeningStyle;
+    if (data.timezone !== undefined) cleanPayload.timezone = data.timezone;
+    if (data.preferredReminderTime !== undefined) cleanPayload.preferredReminderTime = data.preferredReminderTime;
+
+    await setDoc(doc(db, path, auth.currentUser.uid), cleanPayload, { merge: true });
+
+    // Also synchronize Firebase Auth profile
+    const authUpdates: { displayName?: string; photoURL?: string } = {};
+    if (data.displayName) authUpdates.displayName = data.displayName.trim();
+    if (data.photoURL) authUpdates.photoURL = data.photoURL.trim();
+    if (Object.keys(authUpdates).length > 0) {
+      await updateProfile(auth.currentUser, authUpdates);
+    }
+  } catch (error: any) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+    throw error;
   }
 }
 
@@ -304,6 +511,8 @@ export interface UserPreferences {
   expertise?: 'beginner' | 'intermediate' | 'expert';
   specialInterests?: string[];
   sageTone?: string;
+  temperatureUnit?: 'celsius' | 'fahrenheit';
+  voiceAutoPlay?: boolean;
   updatedAt: any;
 }
 
@@ -866,6 +1075,11 @@ export const reloadCurrentUser = async (): Promise<User | null> => {
 
 export const sendPasswordReset = async (email: string): Promise<void> => {
   await sendPasswordResetEmail(auth, email.trim());
+};
+
+export const updateUserProfile = async (updates: { displayName?: string; photoURL?: string }): Promise<void> => {
+  if (!auth.currentUser) throw new Error("Must be logged in to update profile");
+  await updateProfile(auth.currentUser, updates);
 };
 
 export const signOut = () => firebaseSignOut(auth);

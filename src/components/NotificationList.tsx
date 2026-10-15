@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Bell, X, Check, Trash2, Info, AlertTriangle, AlertCircle, Sparkles } from 'lucide-react';
 import { useNotifications } from '../hooks/useNotifications';
+import { EmptyState } from './EmptyState';
 
 interface NotificationListProps {
   isOpen: boolean;
@@ -46,16 +47,16 @@ export const NotificationList: React.FC<NotificationListProps> = ({ isOpen, onCl
             initial={{ opacity: 0, x: 100, scale: 0.95 }}
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 50, scale: 0.95 }}
-            className="fixed top-20 right-4 md:right-8 w-full max-w-sm glass-panel z-[101] shadow-2xl overflow-hidden flex flex-col max-h-[70vh]"
+            className="fixed top-20 right-4 md:right-8 w-full max-w-sm bg-[#0b1f16] border border-emerald-500/20 rounded-2xl z-[101] shadow-2xl overflow-hidden flex flex-col max-h-[70vh]"
           >
-            <div className="p-4 border-b border-white/5 flex items-center justify-between bg-surface/30">
+            <div className="p-4 border-b border-emerald-500/10 flex items-center justify-between bg-[#071610]">
               <div className="flex items-center gap-2">
-                <Bell className="w-5 h-5 text-green-400" />
-                <h3 className="font-display font-bold text-lg tracking-tight">Intelligence Log</h3>
+                <Bell className="w-5 h-5 text-emerald-400" />
+                <h3 className="font-display font-bold text-lg tracking-tight text-white">Intelligence Log</h3>
               </div>
               <button 
                 onClick={onClose}
-                className="p-1.5 hover:bg-white/10 rounded-lg text-muted transition-colors"
+                className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -63,15 +64,12 @@ export const NotificationList: React.FC<NotificationListProps> = ({ isOpen, onCl
             
             <div className="flex-1 overflow-y-auto p-2 space-y-2 hide-scrollbar">
               {notifications.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 px-4 text-center space-y-4">
-                  <div className="w-16 h-16 rounded-full bg-surface/50 border border-white/5 flex items-center justify-center">
-                    <Bell className="w-8 h-8 text-muted" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-secondary font-bold uppercase tracking-widest text-[10px]">No New Data</p>
-                    <p className="text-xs text-muted max-w-[200px]">Sage has not issued any botanical alerts currently.</p>
-                  </div>
-                </div>
+                <EmptyState
+                  variant="compact"
+                  icon={Bell}
+                  title="No Botanical Alerts"
+                  description="Sage has not issued any alerts. All scheduled tasks and system diagnostics are currently up to date."
+                />
               ) : (
                 notifications.map((n) => (
                   <motion.div
@@ -126,8 +124,8 @@ export const NotificationList: React.FC<NotificationListProps> = ({ isOpen, onCl
             </div>
             
             {notifications.length > 0 && (
-              <div className="p-4 border-t border-white/5 bg-void/50 text-center">
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted italic">Neural Archive Active</p>
+              <div className="p-4 border-t border-emerald-500/10 bg-[#071610] text-center">
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-400/80 italic">Neural Archive Active</p>
               </div>
             )}
           </motion.div>

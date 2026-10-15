@@ -18,28 +18,28 @@ export const GardenStats: React.FC<GardenStatsProps> = ({ stats, count }) => {
       animate={{ opacity: 1, y: 0 }}
       className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-10"
     >
-      <div className="glass-card p-5 border-green-500/20 flex flex-col items-center justify-center gap-2">
-        <div className="text-[10px] uppercase font-bold text-muted tracking-widest text-center">Avg. Health</div>
-        <div className={`text-3xl font-display font-bold ${stats.avgHealth > 70 ? 'text-green-400' : 'text-amber-400'}`}>
+      <div className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 shadow-lg flex flex-col items-center justify-center gap-2">
+        <div className="text-[10px] uppercase font-bold text-slate-400 tracking-widest text-center">Avg. Health</div>
+        <div className={`text-3xl font-display font-bold ${stats.avgHealth > 70 ? 'text-emerald-400' : 'text-amber-400'}`}>
           {stats.avgHealth}%
         </div>
-        <div className="w-full h-1 bg-surface rounded-full overflow-hidden mt-1">
-          <div className="h-full bg-green-500 shadow-glow-green" style={{ width: `${stats.avgHealth}%` }} />
+        <div className="w-full h-1.5 bg-[#071610] rounded-full overflow-hidden mt-1 border border-emerald-500/15">
+          <div className="h-full bg-emerald-500 shadow-glow-green" style={{ width: `${stats.avgHealth}%` }} />
         </div>
       </div>
-      <div className="glass-card p-5 border-teal-500/20 flex flex-col items-center justify-center gap-2">
-        <div className="text-[10px] uppercase font-bold text-muted tracking-widest text-center">General Mood</div>
-        <div className="text-2xl font-display font-bold text-teal-400 animate-pulse">
+      <div className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 shadow-lg flex flex-col items-center justify-center gap-2">
+        <div className="text-[10px] uppercase font-bold text-slate-400 tracking-widest text-center">General Mood</div>
+        <div className="text-2xl font-display font-bold text-emerald-400">
           {stats.mood}
         </div>
-        <p className="text-[10px] text-secondary font-ui">Based on {count} plants</p>
+        <p className="text-[10px] text-slate-400 font-ui">Based on {count} plants</p>
       </div>
-      <div className="hidden md:flex glass-card p-5 border-blue-500/20 flex-col items-center justify-center gap-2">
-        <div className="text-[10px] uppercase font-bold text-muted tracking-widest text-center">Care Horizon</div>
-        <div className="text-2xl font-display font-bold text-blue-400">
+      <div className="hidden md:flex bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 shadow-lg flex-col items-center justify-center gap-2">
+        <div className="text-[10px] uppercase font-bold text-slate-400 tracking-widest text-center">Care Horizon</div>
+        <div className="text-2xl font-display font-bold text-emerald-300">
           3 Tasks
         </div>
-        <p className="text-[10px] text-secondary font-ui">Next 48 hours</p>
+        <p className="text-[10px] text-slate-400 font-ui">Next 48 hours</p>
       </div>
     </motion.div>
   );

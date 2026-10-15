@@ -481,13 +481,13 @@ Safety Note: ${currentSpecies.specialNotes}`;
   }, [searchQuery]);
 
   return (
-    <div className="w-full bg-[#08140e] border border-emerald-900/40 rounded-3xl p-5 md:p-8 shadow-2xl space-y-8 relative overflow-hidden">
+    <div className="w-full bg-[#0b1f16] border border-emerald-500/15 rounded-3xl p-5 md:p-8 shadow-2xl space-y-8 relative overflow-hidden">
       {/* Ambient background glow */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-10 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-10 w-80 h-80 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-emerald-900/30 pb-6 relative z-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-emerald-500/15 pb-6 relative z-10">
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold uppercase tracking-wider">
             <FlaskConical className="w-3.5 h-3.5" />
@@ -496,13 +496,13 @@ Safety Note: ${currentSpecies.specialNotes}`;
           <h2 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight flex items-center gap-2.5">
             Fertilizer Dosage & Frequency Calculator
           </h2>
-          <p className="text-xs md:text-sm text-slate-400 max-w-2xl leading-relaxed font-ui">
+          <p className="text-xs md:text-sm text-slate-300 max-w-2xl leading-relaxed font-ui">
             Calculate scientifically calibrated nutrient concentrations, NPK ratios, dilution rates, and feeding intervals matched to your plant's species and developmental stage.
           </p>
         </div>
 
         {/* Quick Unit Switcher */}
-        <div className="flex items-center gap-1 bg-[#050d09] p-1.5 rounded-xl border border-emerald-900/40 self-start md:self-auto shrink-0">
+        <div className="flex items-center gap-1 bg-[#071610] p-1.5 rounded-xl border border-emerald-500/20 self-start md:self-auto shrink-0">
           <button
             onClick={() => {
               setUnitSystem('metric');
@@ -534,13 +534,13 @@ Safety Note: ${currentSpecies.specialNotes}`;
 
       {/* Quick Select from User Garden (If Available) */}
       {gardenPlants.length > 0 && (
-        <div className="p-3.5 rounded-2xl bg-[#06100b] border border-emerald-900/30 space-y-2">
+        <div className="p-3.5 rounded-2xl bg-[#071610] border border-emerald-500/15 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
               <Leaf className="w-3.5 h-3.5 text-emerald-400" />
               Quick-Fill from Your Garden Plants:
             </span>
-            <span className="text-[10px] text-slate-500">{gardenPlants.length} plants saved</span>
+            <span className="text-[10px] text-slate-400">{gardenPlants.length} plants saved</span>
           </div>
 
           <div className="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
@@ -558,7 +558,7 @@ Safety Note: ${currentSpecies.specialNotes}`;
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs shrink-0 transition-all cursor-pointer ${
                     selectedSpeciesId === matched.id
                       ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold'
-                      : 'bg-[#08140e] border-emerald-900/40 text-slate-300 hover:text-white hover:border-emerald-700/50'
+                      : 'bg-[#0b1f16] border-emerald-500/20 text-slate-300 hover:text-white hover:border-emerald-500/40'
                   }`}
                 >
                   <img 
@@ -597,7 +597,7 @@ Safety Note: ${currentSpecies.specialNotes}`;
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search species (e.g., Monstera, Ficus, Rose, Orchid, Tomato)..."
-                className="w-full bg-[#050e09] border border-emerald-900/40 focus:border-emerald-500/60 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-slate-500 outline-none transition-colors"
+                className="w-full bg-[#071610] border border-emerald-500/20 focus:border-emerald-500/60 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder:text-slate-400 outline-none transition-colors"
               />
             </div>
 
@@ -612,13 +612,13 @@ Safety Note: ${currentSpecies.specialNotes}`;
                     className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-emerald-500/20 border-emerald-400 shadow-md shadow-emerald-500/10'
-                        : 'bg-[#06110c] border-emerald-900/30 hover:border-emerald-800 hover:bg-[#091a11]'
+                        : 'bg-[#071610] border-emerald-500/15 hover:border-emerald-500/35 hover:bg-[#0c2419]'
                     }`}
                   >
                     <div className={`text-xs font-bold truncate ${isSelected ? 'text-emerald-300' : 'text-slate-200'}`}>
                       {sp.name}
                     </div>
-                    <div className="text-[10px] text-slate-500 italic truncate">
+                    <div className="text-[10px] text-slate-400 italic truncate">
                       {sp.scientificName}
                     </div>
                   </button>
@@ -648,14 +648,14 @@ Safety Note: ${currentSpecies.specialNotes}`;
                     className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
                       isSelected
                         ? 'bg-emerald-500/20 border-emerald-400 shadow-lg shadow-emerald-500/10 scale-[1.02]'
-                        : 'bg-[#06110c] border-emerald-900/30 hover:border-emerald-800 hover:bg-[#091a11]'
+                        : 'bg-[#071610] border-emerald-500/15 hover:border-emerald-500/35 hover:bg-[#0c2419]'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2 mb-1.5">
                       <div className={`p-1.5 rounded-lg ${isSelected ? 'bg-emerald-400 text-slate-950' : 'bg-emerald-500/10 text-emerald-400'}`}>
                         <Icon className="w-4 h-4" />
                       </div>
-                      <span className="text-[9px] font-bold uppercase text-slate-500">{st.subtitle}</span>
+                      <span className="text-[9px] font-bold uppercase text-slate-400">{st.subtitle}</span>
                     </div>
 
                     <div>
@@ -685,7 +685,7 @@ Safety Note: ${currentSpecies.specialNotes}`;
               <select
                 value={formulation}
                 onChange={(e) => setFormulation(e.target.value as FormulationType)}
-                className="w-full bg-[#050e09] border border-emerald-900/40 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500/60"
+                className="w-full bg-[#071610] border border-emerald-500/20 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500/60"
               >
                 <option value="liquid">Liquid Concentrate (Standard)</option>
                 <option value="powder">Water-Soluble Powder (e.g. 20-20-20)</option>
@@ -705,7 +705,7 @@ Safety Note: ${currentSpecies.specialNotes}`;
               <select
                 value={potSize}
                 onChange={(e) => setPotSize(e.target.value as PotSizeCategory)}
-                className="w-full bg-[#050e09] border border-emerald-900/40 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500/60"
+                className="w-full bg-[#071610] border border-emerald-500/20 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500/60"
               >
                 <option value="small">Small Pot (3"–5" / 0.5–1L)</option>
                 <option value="medium">Medium Pot (6"–8" / 2–4L)</option>
@@ -718,13 +718,13 @@ Safety Note: ${currentSpecies.specialNotes}`;
 
           {/* 4. Interactive Water Batch Volume Slider (If using liquid/soluble) */}
           {formulation !== 'slow_release_granules' && (
-            <div className="p-4 rounded-2xl bg-[#06110c] border border-emerald-900/30 space-y-3">
+            <div className="p-4 rounded-2xl bg-[#071610] border border-emerald-500/15 space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-slate-300 flex items-center gap-2">
-                  <Droplets className="w-4 h-4 text-cyan-400" />
+                  <Droplets className="w-4 h-4 text-emerald-400" />
                   Watering Can / Mixing Tank Volume:
                 </label>
-                <span className="text-xs font-black text-cyan-300 bg-cyan-950/60 px-2.5 py-1 rounded-lg border border-cyan-500/30">
+                <span className="text-xs font-black text-emerald-300 bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-500/30">
                   {waterBatchVolume} {unitSystem === 'metric' ? 'Liters' : 'Gallons'}
                 </span>
               </div>
@@ -739,7 +739,7 @@ Safety Note: ${currentSpecies.specialNotes}`;
                 className="w-full accent-emerald-400 cursor-pointer h-2 bg-black/40 rounded-lg"
               />
 
-              <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+              <div className="flex justify-between text-[10px] text-slate-400 font-mono">
                 <span>{unitSystem === 'metric' ? '0.5 L (Small Bottle)' : '0.25 Gal (1 Quart)'}</span>
                 <span>{unitSystem === 'metric' ? '2.0 L (Standard Can)' : '1.0 Gal (Standard)'}</span>
                 <span>{unitSystem === 'metric' ? '10.0 L (Large Reservoir)' : '5.0 Gal (Garden Pail)'}</span>
@@ -750,7 +750,7 @@ Safety Note: ${currentSpecies.specialNotes}`;
 
         {/* RIGHT COLUMN (5 Cols): SCIENTIFIC CALCULATION CARD */}
         <div className="lg:col-span-5 space-y-5">
-          <div className="bg-gradient-to-b from-[#091e13] to-[#040a07] border-2 border-emerald-500/40 rounded-3xl p-6 shadow-2xl space-y-5 relative">
+          <div className="bg-gradient-to-b from-[#0c2419] to-[#071610] border border-emerald-500/30 rounded-3xl p-6 shadow-2xl space-y-5 relative">
             
             {/* Top Badge: Status & Safety */}
             <div className="flex items-center justify-between">
@@ -785,7 +785,7 @@ Safety Note: ${currentSpecies.specialNotes}`;
             </div>
 
             {/* BIG METRIC 1: Exact Dosage Rate */}
-            <div className="p-4 rounded-2xl bg-black/40 border border-emerald-500/30 space-y-1">
+            <div className="p-4 rounded-2xl bg-[#050e09] border border-emerald-500/25 space-y-1">
               <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block">
                 Calculated Dosage
               </span>
@@ -799,7 +799,7 @@ Safety Note: ${currentSpecies.specialNotes}`;
 
             {/* BIG METRIC 2: Frequency & NPK Ratio */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="p-3.5 rounded-2xl bg-black/30 border border-emerald-900/40 space-y-1">
+              <div className="p-3.5 rounded-2xl bg-[#050e09] border border-emerald-500/20 space-y-1">
                 <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block flex items-center gap-1">
                   <Calendar className="w-3 h-3 text-emerald-400" />
                   Frequency
@@ -816,7 +816,7 @@ Safety Note: ${currentSpecies.specialNotes}`;
                 </span>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-black/30 border border-emerald-900/40 space-y-1">
+              <div className="p-3.5 rounded-2xl bg-[#050e09] border border-emerald-500/20 space-y-1">
                 <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block flex items-center gap-1">
                   <Sparkles className="w-3 h-3 text-amber-400" />
                   Target NPK
@@ -837,7 +837,7 @@ Safety Note: ${currentSpecies.specialNotes}`;
             </div>
 
             {/* Botanical Pro-Tips & Species Warning */}
-            <div className="p-3.5 rounded-xl bg-[#06110c] border border-emerald-900/40 space-y-1.5 text-xs">
+            <div className="p-3.5 rounded-xl bg-[#050e09] border border-emerald-500/20 space-y-1.5 text-xs">
               <div className="flex items-center gap-1.5 text-amber-400 font-bold">
                 <Info className="w-3.5 h-3.5" />
                 <span>Species-Specific Care Guidance</span>
@@ -855,7 +855,7 @@ Safety Note: ${currentSpecies.specialNotes}`;
                 </span>
                 <div className="grid grid-cols-4 gap-1.5 text-center">
                   {calculationResult.futureCycles.map((c) => (
-                    <div key={c.cycle} className="p-2 rounded-xl bg-black/40 border border-emerald-900/30">
+                    <div key={c.cycle} className="p-2 rounded-xl bg-[#050e09] border border-emerald-500/20">
                       <span className="block text-[9px] text-slate-400 font-bold uppercase">Cycle {c.cycle}</span>
                       <span className="block text-xs font-bold text-emerald-400 mt-0.5">{c.date}</span>
                     </div>
@@ -901,28 +901,28 @@ Safety Note: ${currentSpecies.specialNotes}`;
       </div>
 
       {/* ================= STEP-BY-STEP FEEDING PROTOCOL GUIDE ================= */}
-      <div className="border-t border-emerald-900/30 pt-6 space-y-4">
-        <h4 className="text-sm font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
+      <div className="border-t border-emerald-500/15 pt-6 space-y-4">
+        <h4 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
           <ShieldAlert className="w-4 h-4 text-emerald-400" />
           The Golden Rules of Plant Fertilization
         </h4>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 text-xs">
-          <div className="p-4 rounded-2xl bg-[#06110c] border border-emerald-900/30 space-y-1.5">
+          <div className="p-4 rounded-2xl bg-[#071610] border border-emerald-500/15 space-y-1.5 shadow-sm">
             <span className="font-bold text-emerald-300 block">1. Pre-Moisten Soil First</span>
             <p className="text-slate-300 leading-relaxed font-ui">
               Never apply fertilizer solutions to bone-dry soil. Fertilizer salts pull water out of dry root membranes through osmosis, burning microscopic root hairs. Water thoroughly 1–2 hours before liquid feeding.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#06110c] border border-emerald-900/30 space-y-1.5">
+          <div className="p-4 rounded-2xl bg-[#071610] border border-emerald-500/15 space-y-1.5 shadow-sm">
             <span className="font-bold text-emerald-300 block">2. The "Less is More" Rule</span>
             <p className="text-slate-300 leading-relaxed font-ui">
               Under-fertilizing results in slightly slower growth, but over-fertilizing causes irreversible leaf necrosis, salt crusting, and root rot. Diluting to 25%–50% label strength is the professional botanical standard.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-[#06110c] border border-emerald-900/30 space-y-1.5">
+          <div className="p-4 rounded-2xl bg-[#071610] border border-emerald-500/15 space-y-1.5 shadow-sm">
             <span className="font-bold text-emerald-300 block">3. Quarterly Leaching Flush</span>
             <p className="text-slate-300 leading-relaxed font-ui">
               Every 90 days, take potted plants to the sink and flush the root ball with 3x the container volume of clean plain water. This dissolves and removes residual mineral salts before toxicity develops.

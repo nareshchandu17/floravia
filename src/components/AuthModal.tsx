@@ -301,15 +301,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-            className="bg-[#0b1812] border border-emerald-500/30 rounded-3xl max-w-md w-full p-6 md:p-8 shadow-2xl relative overflow-hidden text-white"
+            className="bg-[#0b1f16] border border-emerald-500/25 rounded-3xl max-w-md w-full p-6 md:p-8 shadow-2xl relative overflow-hidden text-white"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Ambient Background Glow */}
             <div className="absolute -right-20 -top-20 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute -left-20 -bottom-20 w-48 h-48 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -left-20 -bottom-20 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
             {/* Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-emerald-900/30 mb-6">
+            <div className="flex items-center justify-between pb-4 border-b border-emerald-500/15 mb-6">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
                   <Sprout className="w-5 h-5" />
@@ -370,7 +370,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-center py-8 space-y-3"
               >
-                <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 mx-auto shadow-glow-green">
+                <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-emerald-400 mx-auto shadow-[0_0_25px_rgba(16,185,129,0.3)]">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
                 <h4 className="text-lg font-bold text-white">Email Verified Successfully!</h4>
@@ -381,8 +381,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             ) : mode === 'verify-email' ? (
               /* --- VERIFY EMAIL SCREEN --- */
               <div className="space-y-4">
-                <div className="p-4 rounded-2xl bg-[#0e2118] border border-emerald-800/40 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto">
+                <div className="p-4 rounded-2xl bg-[#071610] border border-emerald-500/15 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto">
                     <Mail className="w-6 h-6 animate-pulse" />
                   </div>
                   <div>
@@ -390,7 +390,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <p className="text-xs text-emerald-200/80 mt-1">
                       We sent a confirmation link to:
                     </p>
-                    <p className="text-xs font-mono font-bold text-cyan-300 mt-0.5 break-all">
+                    <p className="text-xs font-mono font-bold text-emerald-300 mt-0.5 break-all">
                       {currentEmail}
                     </p>
                   </div>
@@ -407,7 +407,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </a>
                   )}
 
-                  <div className="text-[11px] text-slate-300/90 bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-900/30 leading-relaxed text-left">
+                  <div className="text-[11px] text-slate-300 bg-emerald-950/40 p-2.5 rounded-xl border border-emerald-500/15 leading-relaxed text-left">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 inline mr-1 -mt-0.5" />
                     <strong>Why is this required?</strong> Firestore database security rules require verified email status before writing plant health telemetry, creating custom reminders, or sharing community protocols.
                   </div>
@@ -437,7 +437,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     type="button"
                     onClick={handleResendVerification}
                     disabled={loading || resendCooldown > 0}
-                    className="w-full py-2.5 px-4 rounded-xl bg-[#0e2118] hover:bg-[#132d21] border border-emerald-800/40 text-emerald-300 font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+                    className="w-full py-2.5 px-4 rounded-xl bg-[#071610] hover:bg-[#0c2419] border border-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
                   >
                     {loading ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -452,7 +452,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </button>
                 </div>
 
-                <div className="pt-2 border-t border-emerald-900/30 flex items-center justify-between text-xs text-slate-400">
+                <div className="pt-2 border-t border-emerald-500/15 flex items-center justify-between text-xs text-slate-400">
                   <button
                     type="button"
                     onClick={onClose}
@@ -488,7 +488,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="alex@floravia.botany"
                       required
-                      className="w-full bg-[#0d1a13] border border-emerald-900/40 focus:border-emerald-500 rounded-xl py-2.5 pl-10 pr-4 text-xs text-white placeholder:text-slate-500 focus:outline-none transition-colors"
+                      className="w-full bg-[#071610] border border-emerald-500/20 focus:border-emerald-400 rounded-xl py-2.5 pl-10 pr-4 text-xs text-white placeholder:text-slate-500 focus:outline-none transition-colors"
                     />
                   </div>
                 </div>
@@ -523,7 +523,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   type="button"
                   onClick={handleGoogleSignIn}
                   disabled={loading}
-                  className="w-full py-2.5 px-4 rounded-xl bg-[#0e2118] hover:bg-[#132d21] border border-emerald-800/40 text-white font-semibold text-xs flex items-center justify-center gap-2.5 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+                  className="w-full py-2.5 px-4 rounded-xl bg-[#071610] hover:bg-[#0c2419] border border-emerald-500/20 text-white font-semibold text-xs flex items-center justify-center gap-2.5 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
                 >
                   <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
                     <path
@@ -547,11 +547,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </button>
 
                 <div className="flex items-center gap-3">
-                  <div className="h-[1px] bg-emerald-900/40 flex-1" />
-                  <span className="text-[10px] uppercase font-bold text-emerald-500/70 tracking-widest">
+                  <div className="h-[1px] bg-emerald-500/20 flex-1" />
+                  <span className="text-[10px] uppercase font-bold text-emerald-400/70 tracking-widest">
                     Or with email
                   </span>
-                  <div className="h-[1px] bg-emerald-900/40 flex-1" />
+                  <div className="h-[1px] bg-emerald-500/20 flex-1" />
                 </div>
 
                 <form onSubmit={mode === 'signup' ? handleSignUp : handleSignIn} className="space-y-3.5">
@@ -567,7 +567,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           value={displayName}
                           onChange={(e) => setDisplayName(e.target.value)}
                           placeholder="Dr. Maya Lin"
-                          className="w-full bg-[#0d1a13] border border-emerald-900/40 focus:border-emerald-500 rounded-xl py-2.5 pl-10 pr-4 text-xs text-white placeholder:text-slate-500 focus:outline-none transition-colors"
+                          className="w-full bg-[#071610] border border-emerald-500/20 focus:border-emerald-400 rounded-xl py-2.5 pl-10 pr-4 text-xs text-white placeholder:text-slate-500 focus:outline-none transition-colors"
                         />
                       </div>
                     </div>
@@ -585,7 +585,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="maya@floravia.botany"
                         required
-                        className="w-full bg-[#0d1a13] border border-emerald-900/40 focus:border-emerald-500 rounded-xl py-2.5 pl-10 pr-4 text-xs text-white placeholder:text-slate-500 focus:outline-none transition-colors"
+                        className="w-full bg-[#071610] border border-emerald-500/20 focus:border-emerald-400 rounded-xl py-2.5 pl-10 pr-4 text-xs text-white placeholder:text-slate-500 focus:outline-none transition-colors"
                       />
                     </div>
                   </div>
@@ -617,7 +617,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
                         required
-                        className="w-full bg-[#0d1a13] border border-emerald-900/40 focus:border-emerald-500 rounded-xl py-2.5 pl-10 pr-10 text-xs text-white placeholder:text-slate-500 focus:outline-none transition-colors"
+                        className="w-full bg-[#071610] border border-emerald-500/20 focus:border-emerald-400 rounded-xl py-2.5 pl-10 pr-10 text-xs text-white placeholder:text-slate-500 focus:outline-none transition-colors"
                       />
                       <button
                         type="button"

@@ -36,6 +36,7 @@ import {
 } from '../services/googleCalendar';
 import { useAuth } from '../hooks/useAuth';
 import { getUserTimezone, getTimezoneDisplayOffset } from '../utils/timezone';
+import { EmptyState } from './EmptyState';
 
 const INITIAL_EVENTS: CareCalendarEvent[] = [
   { id: '1', plantId: '1', plantName: 'Orange Hybrid Tea Rose', scientificName: 'Rosa hybrida', type: 'water', date: '2026-08-23', time: '08:00', completed: false, notes: 'Water base thoroughly before morning heat' },
@@ -53,10 +54,14 @@ export const CareCalendar: React.FC = () => {
   const [events, setEvents] = useState<CareCalendarEvent[]>(() => {
     try {
       const saved = localStorage.getItem('floravia_care_events');
-      return saved ? JSON.parse(saved) : INITIAL_EVENTS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
     } catch {
-      return INITIAL_EVENTS;
+      // ignore
     }
+    return [];
   });
 
   // Google Calendar Integration States
@@ -76,7 +81,7 @@ export const CareCalendar: React.FC = () => {
 
   // Add Task Modal
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newPlantName, setNewPlantName] = useState('Orange Hybrid Tea Rose');
+  const [newPlantName, setNewPlantName] = useState('');
   const [newType, setNewType] = useState<'water' | 'fertilize' | 'prune' | 'mist' | 'repot'>('water');
   const [newDate, setNewDate] = useState(() => {
     const d = new Date();
@@ -527,8 +532,8 @@ export const CareCalendar: React.FC = () => {
       {/* Main Grid: Calendar View + Task List */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Schedule Overview */}
-        <div className="lg:col-span-2 bg-[#0b1711] border border-emerald-900/30 rounded-2xl p-5 shadow-lg space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-emerald-900/20">
+        <div className="lg:col-span-2 bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 shadow-lg space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-emerald-500/10">
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-bold text-white">Upcoming Care Schedule</h3>
               <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold">
@@ -536,130 +541,150 @@ export const CareCalendar: React.FC = () => {
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-              <span className="bg-[#08130d] px-3 py-1.5 rounded-lg border border-emerald-900/30">{currentMonth}</span>
+              <span className="bg-[#071610] px-3 py-1.5 rounded-lg border border-emerald-500/15">{currentMonth}</span>
             </div>
           </div>
 
           {/* Event Cards */}
           <div className="space-y-3">
-            {events.map((evt) => (
-              <div 
-                key={evt.id}
-                onClick={() => toggleComplete(evt.id)}
-                className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 cursor-pointer transition-all ${
-                  evt.completed
-                    ? 'bg-[#07110c]/60 border-emerald-900/20 opacity-60'
-                    : 'bg-[#0d1c15] border-emerald-800/30 hover:border-emerald-500/40 shadow-sm'
-                }`}
-              >
-                <div className="flex items-start sm:items-center gap-3.5 min-w-0">
-                  <div className={`p-2.5 rounded-xl border shrink-0 mt-0.5 sm:mt-0 ${
-                    evt.completed ? 'bg-emerald-950/40 border-emerald-900/40' : 'bg-[#08130d] border-emerald-800/30'
-                  }`}>
-                    {getEventIcon(evt.type)}
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className={`text-sm font-bold truncate ${evt.completed ? 'line-through text-slate-400' : 'text-white'}`}>
-                        {evt.plantName}
-                      </p>
-                      
-                      {/* Google Calendar Synced Badge */}
-                      {evt.googleCalendarSynced ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 text-[10px] font-bold">
-                          <CalendarCheck2 className="w-3 h-3 text-cyan-400" />
-                          <span>Synced</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-400 text-[10px]">
-                          Local
-                        </span>
-                      )}
+            {events.length === 0 ? (
+              <EmptyState
+                variant="dashed"
+                icon={CalendarIcon}
+                badge="Botanical Schedule"
+                title="No Care Tasks Scheduled"
+                description="Your care schedule is currently empty. Add custom tasks for watering, misting, fertilizing, or repotting — with direct push sync to Google Calendar."
+                action={{
+                  label: "Schedule First Task",
+                  onClick: () => setShowAddModal(true),
+                  icon: Plus
+                }}
+                secondaryAction={{
+                  label: "Load Sample Schedule",
+                  onClick: () => setEvents(INITIAL_EVENTS),
+                  title: "Populate sample tasks to test Google Calendar push notifications"
+                }}
+              />
+            ) : (
+              events.map((evt) => (
+                <div 
+                  key={evt.id}
+                  onClick={() => toggleComplete(evt.id)}
+                  className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 cursor-pointer transition-all ${
+                    evt.completed
+                      ? 'bg-[#071610]/60 border-emerald-500/10 opacity-60'
+                      : 'bg-[#092217] border-emerald-500/20 hover:border-emerald-500/40 shadow-sm'
+                  }`}
+                >
+                  <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+                    <div className={`p-2.5 rounded-xl border shrink-0 mt-0.5 sm:mt-0 ${
+                      evt.completed ? 'bg-emerald-950/40 border-emerald-500/20' : 'bg-[#071610] border-emerald-500/20'
+                    }`}>
+                      {getEventIcon(evt.type)}
                     </div>
-
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 mt-1">
-                      <span className="capitalize text-emerald-300 font-semibold">{evt.type}</span>
-                      <span>•</span>
-                      <span className="text-slate-300">{evt.date}</span>
-                      {evt.time && (
-                        <>
-                          <span>•</span>
-                          <span className="text-slate-400 flex items-center gap-0.5">
-                            <Clock className="w-3 h-3" />
-                            {evt.time}
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className={`text-sm font-bold truncate ${evt.completed ? 'line-through text-slate-400' : 'text-white'}`}>
+                          {evt.plantName}
+                        </p>
+                        
+                        {/* Google Calendar Synced Badge */}
+                        {evt.googleCalendarSynced ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-cyan-950/60 border border-cyan-500/30 text-cyan-300 text-[10px] font-bold">
+                            <CalendarCheck2 className="w-3 h-3 text-cyan-400" />
+                            <span>Synced</span>
                           </span>
-                        </>
-                      )}
-                      {evt.notes && (
-                        <>
-                          <span>•</span>
-                          <span className="truncate max-w-[200px] italic text-slate-400">{evt.notes}</span>
-                        </>
-                      )}
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-400 text-[10px]">
+                            Local
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400 mt-1">
+                        <span className="capitalize text-emerald-300 font-semibold">{evt.type}</span>
+                        <span>•</span>
+                        <span className="text-slate-300">{evt.date}</span>
+                        {evt.time && (
+                          <>
+                            <span>•</span>
+                            <span className="text-slate-400 flex items-center gap-0.5">
+                              <Clock className="w-3 h-3" />
+                              {evt.time}
+                            </span>
+                          </>
+                        )}
+                        {evt.notes && (
+                          <>
+                            <span>•</span>
+                            <span className="truncate max-w-[200px] italic text-slate-400">{evt.notes}</span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Right Actions */}
-                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-emerald-900/30 w-full sm:w-auto justify-end">
-                  {/* Google Calendar Quick Sync / Direct Link */}
-                  {evt.googleCalendarSynced ? (
-                    <div className="flex items-center gap-1.5">
-                      {evt.googleCalendarHtmlLink && (
-                        <a
-                          href={evt.googleCalendarHtmlLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="p-1.5 rounded-lg bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/40 border border-cyan-500/20 text-xs flex items-center gap-1 transition-colors"
-                          title="Open event in Google Calendar"
+                  {/* Right Actions */}
+                  <div className="flex items-center gap-2 self-end sm:self-auto shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-emerald-500/10 w-full sm:w-auto justify-end">
+                    {/* Google Calendar Quick Sync / Direct Link */}
+                    {evt.googleCalendarSynced ? (
+                      <div className="flex items-center gap-1.5">
+                        {evt.googleCalendarHtmlLink && (
+                          <a
+                            href={evt.googleCalendarHtmlLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="p-1.5 rounded-lg bg-cyan-950/40 text-cyan-300 hover:bg-cyan-900/40 border border-cyan-500/20 text-xs flex items-center gap-1 transition-colors"
+                            title="Open event in Google Calendar"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                        <button
+                          onClick={(e) => handlePromptDeleteCalendarEvent(evt, e)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition-colors"
+                          title="Unlink and remove from Google Calendar"
                         >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      )}
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
                       <button
-                        onClick={(e) => handlePromptDeleteCalendarEvent(evt, e)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 transition-colors"
-                        title="Unlink and remove from Google Calendar"
+                        onClick={(e) => handleSyncSingleEvent(evt, e)}
+                        disabled={syncingEventId === evt.id}
+                        className="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
+                        title="Sync this task to Google Calendar with push notification"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        {syncingEventId === evt.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin text-emerald-400" />
+                        ) : (
+                          <CalendarIcon className="w-3 h-3 text-emerald-400" />
+                        )}
+                        <span>Sync Cal</span>
                       </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={(e) => handleSyncSingleEvent(evt, e)}
-                      disabled={syncingEventId === evt.id}
-                      className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer disabled:opacity-50"
-                      title="Sync this task to Google Calendar with push notification"
-                    >
-                      {syncingEventId === evt.id ? (
-                        <Loader2 className="w-3 h-3 animate-spin text-emerald-400" />
-                      ) : (
-                        <CalendarIcon className="w-3 h-3 text-emerald-400" />
-                      )}
-                      <span>Sync Cal</span>
-                    </button>
-                  )}
+                    )}
 
-                  {/* Task Completion Checkbox */}
-                  <button 
-                    className={`p-1.5 rounded-lg transition-colors ${
-                      evt.completed ? 'text-emerald-400 bg-emerald-500/10' : 'text-slate-500 hover:text-emerald-300'
-                    }`}
-                  >
-                    <CheckCircle2 className="w-5 h-5" />
-                  </button>
+                    {/* Task Completion Checkbox */}
+                    <button 
+                      className={`p-1.5 rounded-lg transition-colors ${
+                        evt.completed ? 'text-emerald-400 bg-emerald-500/10' : 'text-slate-500 hover:text-emerald-300'
+                      }`}
+                    >
+                      <CheckCircle2 className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
         {/* Right 1 Col: Sync Benefits & Microclimate Advice */}
         <div className="space-y-6">
           {/* Google Notification Specs */}
-          <div className="bg-[#0b1711] border border-emerald-900/30 rounded-2xl p-5 shadow-lg space-y-3.5">
-            <div className="flex items-center gap-2 text-cyan-400 text-xs font-bold uppercase tracking-wider">
+          <div className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 shadow-lg space-y-3.5">
+            <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
               <Bell className="w-4 h-4" />
               <span>Push Alert Integration</span>
             </div>
@@ -681,7 +706,7 @@ export const CareCalendar: React.FC = () => {
           </div>
 
           {/* Seasonal Advice */}
-          <div className="bg-[#0b1711] border border-emerald-900/30 rounded-2xl p-5 shadow-lg space-y-3.5">
+          <div className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 shadow-lg space-y-3.5">
             <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase">
               <Sun className="w-4 h-4" />
               <span>Microclimate Alert</span>

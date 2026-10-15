@@ -89,7 +89,7 @@ export const PlantCard: React.FC<PlantCardProps> = ({
       initial={{ opacity: 0, scale: 0.9, y: 20 }}
       animate={{ opacity: 1, scale: 1, y: 0, transition: { delay: index * 0.05, ease: [0.25, 0.46, 0.45, 0.94] } }}
       exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-      className="glass-card overflow-hidden flex flex-col hover:-translate-y-1 transition-transform duration-300 shadow-[0_0_15px_rgba(34,197,94,0.05)] hover:shadow-[0_0_30px_rgba(34,197,94,0.15)]"
+      className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl overflow-hidden flex flex-col hover:-translate-y-1 transition-transform duration-300 shadow-lg hover:border-emerald-500/35"
     >
       <div className="p-6 pb-2">
         <div className="flex items-start justify-between mb-4">
@@ -100,7 +100,7 @@ export const PlantCard: React.FC<PlantCardProps> = ({
                   type="text"
                   value={tempNickname}
                   onChange={(e) => setTempNickname(e.target.value)}
-                  className="bg-surface border border-blue-500/30 rounded px-2 py-1 text-sm font-display font-bold text-primary focus:outline-none focus:border-blue-500 w-full max-w-[200px]"
+                  className="bg-[#071610] border border-emerald-500/30 rounded-xl px-2.5 py-1 text-sm font-display font-bold text-white focus:outline-none focus:border-emerald-500 w-full max-w-[200px]"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') handleUpdateNickname();
@@ -109,14 +109,14 @@ export const PlantCard: React.FC<PlantCardProps> = ({
                 />
                 <button 
                   onClick={handleUpdateNickname}
-                  className="p-1 hover:bg-green-500/10 text-green-400 rounded transition-colors"
+                  className="p-1 hover:bg-emerald-500/20 text-emerald-400 rounded-lg transition-colors cursor-pointer"
                 >
                   <Check className="w-4 h-4" />
                 </button>
               </div>
             ) : (
               <div className="group flex items-center gap-2">
-                <h3 className="text-2xl font-display font-bold text-primary">
+                <h3 className="text-2xl font-display font-bold text-white">
                   {plant.nickname || plant.name}
                 </h3>
                 <button 
@@ -124,20 +124,20 @@ export const PlantCard: React.FC<PlantCardProps> = ({
                     setEditingNickname(true);
                     setTempNickname(plant.nickname || plant.name);
                   }}
-                  className="p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/5 rounded text-muted"
+                  className="p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/5 rounded-lg text-slate-400 hover:text-white cursor-pointer"
                 >
                   <Edit3 className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}
             {plant.nickname && (
-              <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-muted tracking-widest mb-1">
-                <Leaf className="w-3 h-3" /> {plant.name}
+              <div className="flex items-center gap-1 text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-1">
+                <Leaf className="w-3 h-3 text-emerald-400" /> {plant.name}
               </div>
             )}
-            <p className="text-sm italic text-secondary font-display">{plant.scientificName}</p>
+            <p className="text-sm italic text-slate-300 font-display">{plant.scientificName}</p>
             {plant.mood && (
-              <div className="mt-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-green-500/10 text-[10px] font-bold text-green-400 uppercase tracking-widest border border-green-500/20">
+              <div className="mt-2 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-[10px] font-bold text-emerald-400 uppercase tracking-widest border border-emerald-500/20">
                 {plant.mood}
               </div>
             )}
@@ -146,7 +146,7 @@ export const PlantCard: React.FC<PlantCardProps> = ({
             <div className="flex flex-col items-center">
               <div className="relative w-12 h-12">
                 <svg className="w-full h-full transform -rotate-90">
-                  <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-surface" />
+                  <circle cx="24" cy="24" r="20" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-[#071610]" />
                   <motion.circle
                     cx="24"
                     cy="24"
@@ -157,10 +157,10 @@ export const PlantCard: React.FC<PlantCardProps> = ({
                     strokeDasharray={125.6}
                     initial={{ strokeDashoffset: 125.6 }}
                     animate={{ strokeDashoffset: 125.6 - (125.6 * plant.healthScore) / 100 }}
-                    className={plant.healthScore > 70 ? 'text-green-400' : 'text-amber-400'}
+                    className={plant.healthScore > 70 ? 'text-emerald-400' : 'text-amber-400'}
                   />
                 </svg>
-                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-primary">
+                <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
                   {plant.healthScore}
                 </div>
               </div>
@@ -168,21 +168,21 @@ export const PlantCard: React.FC<PlantCardProps> = ({
           )}
         </div>
 
-        <div className="flex border-b border-white/5 mb-4 font-ui">
+        <div className="flex border-b border-emerald-500/10 mb-4 font-ui">
           <button 
             onClick={() => onTabChange(plant.id!, 'reminders')}
-            className={`relative flex-1 py-2 text-sm font-bold transition-colors ${activeTab === 'reminders' ? 'text-green-400' : 'text-muted hover:text-secondary'}`}
+            className={`relative flex-1 py-2 text-sm font-bold transition-colors cursor-pointer ${activeTab === 'reminders' ? 'text-emerald-400' : 'text-slate-400 hover:text-slate-200'}`}
           >
             <div className="flex items-center justify-center gap-1.5 relative z-10">
               <Calendar className="w-4 h-4" /> Reminders
             </div>
             {activeTab === 'reminders' && (
-              <motion.div layoutId={`tab-${plant.id}`} className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]" />
+              <motion.div layoutId={`tab-${plant.id}`} className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]" />
             )}
           </button>
           <button 
             onClick={() => onTabChange(plant.id!, 'history')}
-            className={`relative flex-1 py-2 text-sm font-bold transition-colors ${activeTab === 'history' ? 'text-teal-400' : 'text-muted hover:text-secondary'}`}
+            className={`relative flex-1 py-2 text-sm font-bold transition-colors cursor-pointer ${activeTab === 'history' ? 'text-teal-400' : 'text-slate-400 hover:text-slate-200'}`}
           >
             <div className="flex items-center justify-center gap-1.5 relative z-10">
               <History className="w-4 h-4" /> Care
@@ -193,7 +193,7 @@ export const PlantCard: React.FC<PlantCardProps> = ({
           </button>
           <button 
             onClick={() => onTabChange(plant.id!, 'trends')}
-            className={`relative flex-1 py-2 text-sm font-bold transition-colors ${activeTab === 'trends' ? 'text-blue-400' : 'text-muted hover:text-secondary'}`}
+            className={`relative flex-1 py-2 text-sm font-bold transition-colors cursor-pointer ${activeTab === 'trends' ? 'text-cyan-400' : 'text-slate-400 hover:text-slate-200'}`}
           >
             <div className="flex items-center justify-center gap-1.5 relative z-10">
               <TrendingUp className="w-4 h-4" /> Health
@@ -265,47 +265,47 @@ export const PlantCard: React.FC<PlantCardProps> = ({
               <motion.div 
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
-                className="p-4 bg-green-500/10 border border-green-500/20 rounded-2xl space-y-3 mt-3 shadow-inner"
+                className="p-4 bg-[#071610] border border-emerald-500/20 rounded-2xl space-y-3 mt-3 shadow-inner"
               >
                 <div className="space-y-2">
                   <div className="flex gap-2">
                     <select 
                       value={remType}
                       onChange={(e) => setRemType(e.target.value)}
-                      className="flex-1 text-xs bg-surface border border-white/10 text-primary rounded-lg px-2 py-1.5 focus:outline-none focus:border-green-500"
+                      className="flex-1 text-xs bg-[#0b1f16] border border-emerald-500/20 text-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500"
                     >
-                      <option value="water" className="bg-elevated text-primary">Water</option>
-                      <option value="fertilize" className="bg-elevated text-primary">Fertilize</option>
-                      <option value="prune" className="bg-elevated text-primary">Prune</option>
-                      <option value="mist" className="bg-elevated text-primary">Mist</option>
-                      <option value="other" className="bg-elevated text-primary">Other</option>
+                      <option value="water" className="bg-[#0b1f16] text-white">Water</option>
+                      <option value="fertilize" className="bg-[#0b1f16] text-white">Fertilize</option>
+                      <option value="prune" className="bg-[#0b1f16] text-white">Prune</option>
+                      <option value="mist" className="bg-[#0b1f16] text-white">Mist</option>
+                      <option value="other" className="bg-[#0b1f16] text-white">Other</option>
                     </select>
                     <select 
                       value={remDays}
                       onChange={(e) => setRemDays(e.target.value)}
-                      className="flex-1 text-xs bg-surface border border-white/10 text-primary rounded-lg px-2 py-1.5 focus:outline-none focus:border-green-500"
+                      className="flex-1 text-xs bg-[#0b1f16] border border-emerald-500/20 text-slate-200 rounded-lg px-2 py-1.5 focus:outline-none focus:border-emerald-500"
                     >
-                      <option value="1" className="bg-elevated text-primary">Tomorrow</option>
-                      <option value="2" className="bg-elevated text-primary">In 2 days</option>
-                      <option value="3" className="bg-elevated text-primary">In 3 days</option>
-                      <option value="7" className="bg-elevated text-primary">In 1 week</option>
-                      <option value="14" className="bg-elevated text-primary">In 2 weeks</option>
-                      <option value="30" className="bg-elevated text-primary">In 1 month</option>
+                      <option value="1" className="bg-[#0b1f16] text-white">Tomorrow</option>
+                      <option value="2" className="bg-[#0b1f16] text-white">In 2 days</option>
+                      <option value="3" className="bg-[#0b1f16] text-white">In 3 days</option>
+                      <option value="7" className="bg-[#0b1f16] text-white">In 1 week</option>
+                      <option value="14" className="bg-[#0b1f16] text-white">In 2 weeks</option>
+                      <option value="30" className="bg-[#0b1f16] text-white">In 1 month</option>
                     </select>
                   </div>
                   
                   {/* Time & Timezone Target */}
                   <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 flex-1 bg-surface border border-white/10 rounded-lg px-2 py-1">
+                    <div className="flex items-center gap-1 flex-1 bg-[#0b1f16] border border-emerald-500/20 rounded-lg px-2 py-1">
                       <Clock className="w-3 h-3 text-emerald-400 shrink-0" />
                       <input 
                         type="time" 
                         value={remTime}
                         onChange={(e) => setRemTime(e.target.value)}
-                        className="bg-transparent text-primary text-xs w-full focus:outline-none"
+                        className="bg-transparent text-white text-xs w-full focus:outline-none"
                       />
                     </div>
-                    <div className="text-[10px] text-emerald-300/80 font-mono px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 whitespace-nowrap">
+                    <div className="text-[10px] text-emerald-300 font-mono px-2 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 whitespace-nowrap">
                       {getTimezoneDisplayOffset(getUserTimezone())}
                     </div>
                   </div>
@@ -314,13 +314,13 @@ export const PlantCard: React.FC<PlantCardProps> = ({
                 <div className="flex justify-end gap-2 pt-1">
                   <button 
                     onClick={() => setAddingReminder(false)}
-                    className="text-xs text-muted px-3 py-1.5 hover:bg-white/5 rounded-lg transition-colors font-semibold"
+                    className="text-xs text-slate-400 px-3 py-1.5 hover:bg-white/5 rounded-lg transition-colors font-semibold cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button 
                     onClick={handleAddReminder}
-                    className="text-xs font-bold bg-gradient-to-r from-green-500 to-teal-500 text-void px-4 py-1.5 rounded-lg hover:from-green-400 hover:to-teal-400 transition-colors shadow-glow-green"
+                    className="text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-1.5 rounded-lg transition-colors shadow-md cursor-pointer"
                   >
                     Save Reminder
                   </button>
@@ -329,7 +329,7 @@ export const PlantCard: React.FC<PlantCardProps> = ({
             ) : (
               <button 
                 onClick={() => setAddingReminder(true)}
-                className="mt-2 text-xs font-bold text-green-400 flex items-center gap-1 hover:text-green-300 transition-colors font-ui"
+                className="mt-2 text-xs font-bold text-emerald-400 flex items-center gap-1 hover:text-emerald-300 transition-colors font-ui cursor-pointer"
               >
                 <CalendarPlus className="w-3 h-3" />
                 Add Reminder

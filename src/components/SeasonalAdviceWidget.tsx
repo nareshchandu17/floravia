@@ -220,14 +220,14 @@ export const SeasonalAdviceWidget: React.FC<SeasonalAdviceWidgetProps> = ({
   const SeasonIcon = seasonColors.icon;
 
   return (
-    <div className="w-full bg-[#0b1711] border border-emerald-900/30 rounded-2xl p-5 md:p-6 shadow-xl relative overflow-hidden space-y-5">
+    <div className="w-full bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 md:p-6 shadow-xl relative overflow-hidden space-y-5">
       {/* Background Atmosphere Blur Glow */}
       <div 
         className={`absolute -right-12 -top-12 w-64 h-64 rounded-full blur-[90px] opacity-20 pointer-events-none transition-all duration-700 ${seasonColors.glow}`} 
       />
 
       {/* ================= HEADER: Season Header & Live Location Bar ================= */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-emerald-900/30 pb-4 relative z-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-emerald-500/10 pb-4 relative z-10">
         
         {/* Left: Season Badge, Title & Sub-phase */}
         <div className="flex items-start sm:items-center gap-3.5">
@@ -374,7 +374,7 @@ export const SeasonalAdviceWidget: React.FC<SeasonalAdviceWidgetProps> = ({
         {advice.primaryHighlights.map((hl, idx) => (
           <div
             key={idx}
-            className="p-4 rounded-xl bg-[#08140e] border border-emerald-900/30 hover:border-emerald-700/50 transition-all flex flex-col justify-between group"
+            className="p-4 rounded-xl bg-[#071610] border border-emerald-500/15 hover:border-emerald-500/40 transition-all flex flex-col justify-between group shadow-sm"
           >
             <div>
               <div className="flex items-center justify-between gap-2 mb-2">
@@ -398,7 +398,7 @@ export const SeasonalAdviceWidget: React.FC<SeasonalAdviceWidgetProps> = ({
               </p>
             </div>
 
-            <div className="pt-3 mt-3 border-t border-emerald-900/20 flex items-center justify-between text-xs text-emerald-400 font-semibold">
+            <div className="pt-3 mt-3 border-t border-emerald-500/10 flex items-center justify-between text-xs text-emerald-400 font-semibold">
               <span className="text-[11px] text-slate-400">Step {idx + 1} of 3</span>
               {onOpenChatWithTopic && (
                 <button
@@ -453,8 +453,8 @@ export const SeasonalAdviceWidget: React.FC<SeasonalAdviceWidgetProps> = ({
                   onClick={() => handleToggleTask(task.id)}
                   className={`p-3 rounded-xl border transition-all cursor-pointer flex items-start gap-3 select-none ${
                     isChecked
-                      ? 'bg-emerald-950/20 border-emerald-900/30 opacity-70'
-                      : 'bg-[#08130d] border-emerald-900/30 hover:border-emerald-600/40 hover:bg-[#0c1c14]'
+                      ? 'bg-emerald-950/20 border-emerald-500/10 opacity-70'
+                      : 'bg-[#071610] border-emerald-500/15 hover:border-emerald-500/40 hover:bg-[#0c2419]'
                   }`}
                 >
                   <button className="mt-0.5 text-emerald-400 shrink-0">
@@ -491,7 +491,7 @@ export const SeasonalAdviceWidget: React.FC<SeasonalAdviceWidgetProps> = ({
 
           {/* Soil & Foliage Micro Advice */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-            <div className="p-3 rounded-xl bg-[#08120c] border border-emerald-900/30 text-xs space-y-1">
+            <div className="p-3 rounded-xl bg-[#071610] border border-emerald-500/15 text-xs space-y-1 shadow-sm">
               <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
                 <Shovel className="w-3.5 h-3.5" />
                 <span>Soil Conditioning Tip</span>
@@ -501,7 +501,7 @@ export const SeasonalAdviceWidget: React.FC<SeasonalAdviceWidgetProps> = ({
               </p>
             </div>
 
-            <div className="p-3 rounded-xl bg-[#08120c] border border-emerald-900/30 text-xs space-y-1">
+            <div className="p-3 rounded-xl bg-[#071610] border border-emerald-500/15 text-xs space-y-1 shadow-sm">
               <div className="flex items-center gap-1.5 text-cyan-400 font-bold">
                 <Droplets className="w-3.5 h-3.5" />
                 <span>Seasonal Foliage Advice</span>
@@ -549,7 +549,7 @@ export const SeasonalAdviceWidget: React.FC<SeasonalAdviceWidgetProps> = ({
               {filteredPlanting.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-3 rounded-xl bg-[#08130d] border border-emerald-900/30 hover:border-emerald-800/50 transition-all flex items-start justify-between gap-3"
+                  className="p-3 rounded-xl bg-[#071610] border border-emerald-500/15 hover:border-emerald-500/35 transition-all flex items-start justify-between gap-3 shadow-sm"
                 >
                   <div className="space-y-0.5">
                     <div className="flex items-center gap-2">
@@ -566,7 +566,7 @@ export const SeasonalAdviceWidget: React.FC<SeasonalAdviceWidgetProps> = ({
                       item.action === 'Start Indoors' 
                         ? 'bg-amber-500/15 text-amber-300 border-amber-500/30' 
                         : item.action === 'Direct Sow' 
-                        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' 
                         : item.action === 'Overwinter'
                         ? 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
                         : 'bg-purple-500/15 text-purple-300 border-purple-500/30'
@@ -584,7 +584,7 @@ export const SeasonalAdviceWidget: React.FC<SeasonalAdviceWidgetProps> = ({
 
           {/* Plant-Specific Seasonal Highlight for active plant */}
           {currentPlant && (
-            <div className="p-3.5 rounded-xl bg-gradient-to-r from-emerald-950/40 to-[#071710] border border-emerald-800/30 mt-3 flex items-start justify-between gap-3">
+            <div className="p-3.5 rounded-xl bg-gradient-to-r from-[#0c2419] to-[#071610] border border-emerald-500/20 mt-3 flex items-start justify-between gap-3 shadow-sm">
               <div className="flex items-start gap-2.5">
                 <div className="w-8 h-8 rounded-lg overflow-hidden shrink-0 bg-black/40 border border-emerald-500/20">
                   <img src={currentPlant.imageUrl} alt={currentPlant.name} className="w-full h-full object-cover" />
@@ -610,7 +610,7 @@ export const SeasonalAdviceWidget: React.FC<SeasonalAdviceWidgetProps> = ({
               {onNavigateToTab && (
                 <button
                   onClick={() => onNavigateToTab('calendar')}
-                  className="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-[11px] font-bold border border-emerald-500/30 shrink-0 transition-colors cursor-pointer"
+                  className="px-2.5 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 text-[11px] font-bold border border-emerald-500/30 shrink-0 transition-colors cursor-pointer"
                   title="View full plant care schedule in Calendar"
                 >
                   Schedule
@@ -629,9 +629,9 @@ export const SeasonalAdviceWidget: React.FC<SeasonalAdviceWidgetProps> = ({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md bg-[#0b1711] border border-emerald-500/30 rounded-2xl p-5 shadow-2xl space-y-4"
+              className="w-full max-w-md bg-[#0b1f16] border border-emerald-500/30 rounded-2xl p-5 shadow-2xl space-y-4"
             >
-              <div className="flex items-center justify-between border-b border-emerald-900/30 pb-3">
+              <div className="flex items-center justify-between border-b border-emerald-500/15 pb-3">
                 <div className="flex items-center gap-2">
                   <MapPin className="w-5 h-5 text-emerald-400" />
                   <h3 className="text-base font-bold text-white">Select Climate Location</h3>

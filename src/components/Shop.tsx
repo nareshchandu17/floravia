@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Star, Check, Sparkles, Filter, ShieldCheck, Tag } from 'lucide-react';
+import { ShoppingBag, Star, Check, Sparkles, Filter, ShieldCheck, Tag, PackageOpen } from 'lucide-react';
 import { ShopItem } from '../types/botanical';
+import { EmptyState } from './EmptyState';
 
 export const Shop: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -106,7 +107,7 @@ export const Shop: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3 self-start sm:self-auto">
-          <div className="px-4 py-2 bg-[#0b1711] border border-emerald-900/30 rounded-xl text-xs text-slate-300 flex items-center gap-2">
+          <div className="px-4 py-2 bg-[#0b1f16] border border-emerald-500/15 rounded-xl text-xs text-slate-300 flex items-center gap-2">
             <ShoppingBag className="w-4 h-4 text-emerald-400" />
             <span className="font-bold text-white">{cartItems.length}</span>
             <span>Items in Cart</span>
@@ -120,10 +121,10 @@ export const Shop: React.FC = () => {
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
+            className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
               selectedCategory === cat
                 ? 'bg-emerald-500 text-slate-950 shadow-md font-bold'
-                : 'bg-[#0b1711] text-slate-400 hover:text-white border border-emerald-900/30'
+                : 'bg-[#0b1f16] text-slate-300 hover:text-white border border-emerald-500/15 hover:border-emerald-500/30'
             }`}
           >
             {cat}
@@ -132,60 +133,74 @@ export const Shop: React.FC = () => {
       </div>
 
       {/* Items Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredItems.map((item) => {
-          const isAdded = cartItems.includes(item.id);
-          return (
-            <div 
-              key={item.id}
-              className="bg-[#0b1711] border border-emerald-900/30 rounded-2xl overflow-hidden shadow-lg flex flex-col justify-between hover:border-emerald-700/40 transition-all group"
-            >
-              <div className="h-48 w-full bg-black/40 overflow-hidden relative">
-                <img 
-                  src={item.imageUrl} 
-                  alt={item.name} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md text-[10px] font-bold text-emerald-300 border border-white/10 uppercase tracking-wider">
-                  {item.category}
-                </span>
-              </div>
-
-              <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <div className="flex items-center gap-1 text-amber-400 text-xs">
-                      <Star className="w-3.5 h-3.5 fill-amber-400" />
-                      <span className="font-bold">{item.rating}</span>
-                      <span className="text-slate-500 text-[10px]">({item.reviewsCount})</span>
-                    </div>
-                    <span className="text-base font-extrabold text-emerald-400">${item.price}</span>
-                  </div>
-
-                  <h3 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">
-                    {item.name}
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed line-clamp-2">
-                    {item.description}
-                  </p>
+      {filteredItems.length === 0 ? (
+        <EmptyState
+          variant="card"
+          icon={PackageOpen}
+          badge="Botanical Supply Store"
+          title="No Products Found"
+          description={`No botanical supplies match the "${selectedCategory}" category filter. Switch categories or check back soon for incoming stock.`}
+          action={{
+            label: "Show All Supplies",
+            onClick: () => setSelectedCategory('All')
+          }}
+        />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredItems.map((item) => {
+            const isAdded = cartItems.includes(item.id);
+            return (
+              <div 
+                key={item.id}
+                className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl overflow-hidden shadow-lg flex flex-col justify-between hover:border-emerald-500/40 transition-all group"
+              >
+                <div className="h-48 w-full bg-black/40 overflow-hidden relative">
+                  <img 
+                    src={item.imageUrl} 
+                    alt={item.name} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <span className="absolute top-3 left-3 px-2.5 py-1 rounded-md bg-black/60 backdrop-blur-md text-[10px] font-bold text-emerald-300 border border-white/10 uppercase tracking-wider">
+                    {item.category}
+                  </span>
                 </div>
 
-                <button
-                  onClick={() => handleAddToCart(item)}
-                  className={`w-full py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                    isAdded
-                      ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/30'
-                      : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
-                  }`}
-                >
-                  {isAdded ? <Check className="w-4 h-4" /> : <ShoppingBag className="w-4 h-4" />}
-                  <span>{isAdded ? 'Added to Cart' : 'Add to Cart'}</span>
-                </button>
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-1 text-amber-400 text-xs">
+                        <Star className="w-3.5 h-3.5 fill-amber-400" />
+                        <span className="font-bold">{item.rating}</span>
+                        <span className="text-slate-500 text-[10px]">({item.reviewsCount})</span>
+                      </div>
+                      <span className="text-base font-extrabold text-emerald-400">${item.price}</span>
+                    </div>
+
+                    <h3 className="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">
+                      {item.name}
+                    </h3>
+                    <p className="text-xs text-slate-400 mt-1 leading-relaxed line-clamp-2">
+                      {item.description}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => handleAddToCart(item)}
+                    className={`w-full py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                      isAdded
+                        ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/30'
+                        : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
+                    }`}
+                  >
+                    {isAdded ? <Check className="w-4 h-4" /> : <ShoppingBag className="w-4 h-4" />}
+                    <span>{isAdded ? 'Added to Cart' : 'Add to Cart'}</span>
+                  </button>
+                </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Success Toast */}
       {successToast && (

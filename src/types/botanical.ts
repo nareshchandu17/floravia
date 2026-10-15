@@ -1,3 +1,11 @@
+export interface GrowthMeasurement {
+  id: string;
+  date: string;
+  heightCm: number;
+  note?: string;
+  photoUrl?: string;
+}
+
 export interface DashboardPlant {
   id: string;
   name: string;
@@ -13,6 +21,7 @@ export interface DashboardPlant {
   hydrationStatus: 'Optimal' | 'Excellent' | 'Dry' | 'Overwatered';
   pathologyRisk: 'Low Risk' | 'Minimal' | 'Moderate' | 'High Risk';
   neuralStress: 'Minimal' | 'None' | 'Moderate' | 'High';
+  growthHistory?: GrowthMeasurement[];
   aiAssessment: {
     mood: string;
     points: string[];

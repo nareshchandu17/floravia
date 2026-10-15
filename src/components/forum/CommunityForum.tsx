@@ -27,6 +27,7 @@ import { ReportModal } from './ReportModal';
 import { ModerationPanel } from './ModerationPanel';
 import { CommunityGuidelinesModal } from './CommunityGuidelinesModal';
 import { DashboardPlant } from '../../types/botanical';
+import { EmptyState } from '../EmptyState';
 
 interface CommunityForumProps {
   userPlants?: DashboardPlant[];
@@ -240,26 +241,30 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
           <p className="text-sm text-slate-400">Loading botanical discussions...</p>
         </div>
       ) : posts.length === 0 ? (
-        <div className="py-16 rounded-3xl bg-[#09150e] border border-dashed border-emerald-500/20 text-center p-8 space-y-4">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
-            <Leaf className="w-8 h-8" />
-          </div>
-          <div className="space-y-1">
-            <h3 className="text-lg font-bold text-white">No discussions found</h3>
-            <p className="text-xs text-slate-400 max-w-sm mx-auto">
-              {searchQuery
-                ? `No topics matched "${searchQuery}". Try changing search keywords or clearing filters.`
-                : 'Be the first to start a conversation in this category!'}
-            </p>
-          </div>
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all inline-flex items-center gap-2 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
-          >
-            <MessageSquarePlus className="w-4 h-4" />
-            Start First Discussion
-          </button>
-        </div>
+        <EmptyState
+          variant="card"
+          icon={Leaf}
+          badge="Community Forum"
+          title={searchQuery ? "No discussions match your query" : "No discussions found"}
+          description={
+            searchQuery
+              ? `No topics matched "${searchQuery}". Try changing search keywords or clearing active filters.`
+              : 'Be the first to share your botanical experience, ask a diagnosis question, or post a garden showcase!'
+          }
+          action={{
+            label: "Start First Discussion",
+            onClick: () => setIsCreateModalOpen(true),
+            icon: MessageSquarePlus
+          }}
+          secondaryAction={
+            searchQuery
+              ? {
+                  label: "Clear Search",
+                  onClick: () => setSearchQuery(''),
+                }
+              : undefined
+          }
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {posts.map((post) => (

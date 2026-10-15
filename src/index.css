@@ -7,22 +7,31 @@
   --font-ui: 'Plus Jakarta Sans', system-ui, sans-serif;
   --font-mono: 'Geist Mono', monospace;
 
-  --color-void: #050b08;
-  --color-base: #08110c;
-  --color-sidebar: #09130e;
-  --color-surface: #0d1a14;
-  --color-card: #0f1f18;
-  --color-card-border: rgba(34, 197, 94, 0.12);
-  --color-elevated: #13271e;
+  /* Botanical Green Color System */
+  --color-canvas: #06130d;
+  --color-void: #06130d;
+  --color-base: #06130d;
+  --color-sidebar: #081911;
+  --color-header: #071710;
+  
+  --color-surface: #0b1f16;
+  --color-card: #0b1f16;
+  --color-card-subtle: #071610;
+  --color-card-border: rgba(52, 211, 153, 0.16);
+  --color-card-hover: #0f271c;
+  --color-elevated: #0f271c;
 
-  --color-green-950: #021a0d;
-  --color-green-900: #042916;
-  --color-green-800: #064024;
-  --color-green-700: #0b5c33;
-  --color-green-600: #108549;
+  --color-green-950: #021a0e;
+  --color-green-900: #052615;
+  --color-green-800: #093b22;
+  --color-green-700: #0d5431;
+  --color-green-600: #107545;
   --color-green-500: #10b981;
-  --color-green-400: #22c55e;
-  --color-green-300: #4ade80;
+  --color-green-400: #34d399;
+  --color-green-300: #6ee7b7;
+  --color-green-200: #a7f3d0;
+  --color-green-100: #d1fae5;
+  --color-green-50: #ecfdf5;
   
   --color-teal-500: #14b8a6;
   --color-teal-400: #2dd4bf;
@@ -33,18 +42,23 @@
   --color-amber-400: #fbbf24;
 
   --color-primary: #f2fbf5;
-  --color-secondary: #a7d7bc;
-  --color-muted: #527a63;
-  --color-inverse: #050b08;
+  --color-secondary: #a3ceb5;
+  --color-muted: #5e8770;
+  --color-inverse: #06130d;
 
-  --shadow-glow-green: 0 0 35px rgba(34, 197, 94, 0.25), 0 0 70px rgba(34, 197, 94, 0.1);
+  --shadow-glow-green: 0 0 35px rgba(16, 185, 129, 0.25), 0 0 70px rgba(16, 185, 129, 0.1);
   --shadow-glow-teal: 0 0 35px rgba(20, 184, 166, 0.25), 0 0 70px rgba(20, 184, 166, 0.1);
 }
 
 @layer base {
   body {
-    @apply antialiased bg-void text-primary font-ui;
-    background-color: #050b08;
+    @apply antialiased text-primary font-ui;
+    background-color: #06130d;
+    background-image: 
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(16, 185, 129, 0.12), transparent),
+      radial-gradient(circle at 100% 100%, rgba(5, 38, 21, 0.2), transparent);
+    background-attachment: fixed;
+    min-height: 100vh;
   }
   
   button, 
@@ -58,42 +72,86 @@
 }
 
 @layer utilities {
+  /* Unified Botanical Card Surface */
+  .botanical-card,
   .dashboard-card {
-    background: #0d1a14;
-    border: 1px solid rgba(34, 197, 94, 0.1);
+    background-color: #0b1f16;
+    border: 1px solid rgba(52, 211, 153, 0.15);
     border-radius: 18px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
-    transition: all 0.25s ease-in-out;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
+  .botanical-card:hover,
   .dashboard-card:hover {
-    border-color: rgba(34, 197, 94, 0.22);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+    border-color: rgba(52, 211, 153, 0.32);
+    box-shadow: 0 8px 36px rgba(0, 0, 0, 0.55), 0 0 30px rgba(16, 185, 129, 0.08);
   }
 
+  /* Inner Recessed Sub-container */
+  .botanical-subcard {
+    background-color: #071610;
+    border: 1px solid rgba(52, 211, 153, 0.12);
+    border-radius: 14px;
+  }
+
+  /* Glass Card */
   .glass-card {
-    background: rgba(13, 26, 20, 0.85);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(34, 197, 94, 0.12);
+    background: rgba(11, 31, 22, 0.88);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border: 1px solid rgba(52, 211, 153, 0.16);
     border-radius: 18px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.04);
-    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: 0 4px 28px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   
   .glass-card:hover {
-    border-color: rgba(34, 197, 94, 0.25);
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 0 40px rgba(34, 197, 94, 0.08);
+    border-color: rgba(52, 211, 153, 0.32);
+    box-shadow: 0 8px 44px rgba(0, 0, 0, 0.55), 0 0 40px rgba(16, 185, 129, 0.12);
   }
 
+  /* Sidebar Glass Panel */
   .glass-panel {
-    background: rgba(9, 19, 14, 0.9);
+    background: rgba(8, 25, 17, 0.94);
     backdrop-filter: blur(16px);
-    border: 1px solid rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(52, 211, 153, 0.14);
+  }
+
+  /* Unified Buttons */
+  .botanical-btn-primary {
+    background-color: #10b981;
+    color: #021b0e;
+    font-weight: 700;
+    border-radius: 12px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.28);
+  }
+  .botanical-btn-primary:hover {
+    background-color: #34d399;
+    box-shadow: 0 0 28px rgba(16, 185, 129, 0.45);
+    transform: translateY(-1px);
+  }
+  .botanical-btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .botanical-btn-secondary {
+    background-color: rgba(9, 35, 23, 0.7);
+    color: #a7f3d0;
+    border: 1px solid rgba(52, 211, 153, 0.25);
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  .botanical-btn-secondary:hover {
+    background-color: rgba(13, 52, 33, 0.85);
+    border-color: rgba(52, 211, 153, 0.42);
+    color: #ecfdf5;
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, #4ade80 0%, #2dd4bf 50%, #86efac 100%);
+    background: linear-gradient(135deg, #6ee7b7 0%, #34d399 50%, #10b981 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -114,14 +172,14 @@
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #070d0a;
+    background: #06130d;
   }
   ::-webkit-scrollbar-thumb {
-    background: #142a1f;
+    background: #113324;
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #1e3d2e;
+    background: #194d36;
   }
 }
 

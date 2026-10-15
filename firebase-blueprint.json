@@ -51,10 +51,20 @@
     },
     "User": {
       "title": "User",
-      "description": "User profile config",
+      "description": "User profile config and preferences",
       "type": "object",
       "properties": {
-        "fcmToken": { "type": "string" }
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "bio": { "type": "string" },
+        "location": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "expertise": { "type": "string", "enum": ["beginner", "intermediate", "expert"] },
+        "gardeningStyle": { "type": "string" },
+        "timezone": { "type": "string" },
+        "preferredReminderTime": { "type": "string" },
+        "fcmToken": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
       }
     },
     "CareLog": {
@@ -119,10 +129,13 @@
       "type": "object",
       "properties": {
         "userId": { "type": "string" },
+        "timezone": { "type": "string" },
         "gardeningStyle": { "type": "string" },
         "expertise": { "type": "string", "enum": ["beginner", "intermediate", "expert"] },
         "specialInterests": { "type": "array", "items": { "type": "string" } },
         "sageTone": { "type": "string" },
+        "temperatureUnit": { "type": "string", "enum": ["celsius", "fahrenheit"] },
+        "voiceAutoPlay": { "type": "boolean" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "updatedAt"]
@@ -196,9 +209,34 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["userId", "targetId", "targetType", "createdAt"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "User subscription and payment transaction log",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "paymentId": { "type": "string" },
+        "orderId": { "type": "string" },
+        "signature": { "type": "string" },
+        "planId": { "type": "string" },
+        "planName": { "type": "string" },
+        "amount": { "type": "number" },
+        "currency": { "type": "string" },
+        "billingCycle": { "type": "string", "enum": ["monthly", "yearly"] },
+        "method": { "type": "string" },
+        "status": { "type": "string", "enum": ["captured", "failed", "refunded", "success"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "paymentId", "planName", "amount", "currency", "billingCycle", "createdAt"]
     }
   },
   "firestore": {
+    "/transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/Transaction" },
+      "description": "Payment transaction history and receipts for user accounts"
+    },
     "/forumPosts/{postId}": {
       "schema": { "$ref": "#/entities/ForumPost" },
       "description": "Community forum posts and questions"

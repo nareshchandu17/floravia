@@ -50,10 +50,19 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../hooks/useAuth';
 import { savePlantToGarden, signIn } from '../services/firebase';
 import { SeasonalAdviceWidget } from './SeasonalAdviceWidget';
+import { DashboardEmptyState } from './subcomponents/DashboardEmptyState';
+import { MicroclimateCard } from './MicroclimateCard';
+import { GrowthTimelineTracker } from './GrowthTimelineTracker';
+import { POPULAR_CITY_WEATHER } from '../services/weather';
+import { GrowthMeasurement } from '../types/botanical';
 
 interface DashboardViewProps {
-  currentPlant: DashboardPlant;
+  currentPlant: DashboardPlant | null;
   gardenPlants: DashboardPlant[];
+  selectedCity?: string;
+  onChangeCity?: (city: string) => void;
+  weatherTemp?: number;
+  weatherHumidity?: number;
   onSelectPlant: (plant: DashboardPlant) => void;
   onOpenBioSignature: () => void;
   onOpenGallery: (plant: DashboardPlant) => void;
@@ -61,25 +70,33 @@ interface DashboardViewProps {
   onWaterPlant?: (plantId: string) => void;
   onFertilizePlant?: (plantId: string, details?: { fertilizerType: string; date: string; notes?: string }) => void;
   onOpenChatWithTopic?: (topic: string) => void;
+  onLoadDemoPlants?: () => void;
+  onGrowthUpdated?: (plantId: string, measurements: GrowthMeasurement[]) => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
   currentPlant,
   gardenPlants,
+  selectedCity,
+  onChangeCity,
+  weatherTemp,
+  weatherHumidity,
   onSelectPlant,
   onOpenBioSignature,
   onOpenGallery,
   onNavigateToTab,
   onWaterPlant,
   onFertilizePlant,
-  onOpenChatWithTopic
+  onOpenChatWithTopic,
+  onLoadDemoPlants,
+  onGrowthUpdated
 }) => {
   const { user } = useAuth();
-  const [nickname, setNickname] = useState(currentPlant.nickname || '');
+  const [nickname, setNickname] = useState(currentPlant?.nickname || '');
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
-  const [userRating, setUserRating] = useState(currentPlant.careEssentials.userRating || 4);
+  const [userRating, setUserRating] = useState(currentPlant?.careEssentials?.userRating || 4);
   const [isAssessmentOpen, setIsAssessmentOpen] = useState(true);
   const [selectedPeriod, setSelectedPeriod] = useState('This Week');
   const [hasLiked, setHasLiked] = useState(false);
@@ -91,17 +108,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   const [isMistingActive, setIsMistingActive] = useState(false);
   const [mistedSuccess, setMistedSuccess] = useState(false);
 
-  // Dynamically calculate weather-adapted Care Essentials
-  const dynamicCare = calculateDynamicCareEssentials(currentPlant, currentPlant.weatherInsight);
-
   // Sync nickname when active plant changes
   React.useEffect(() => {
-    setNickname(currentPlant.nickname || '');
-    setIsSaved(false);
-    setIsWateredJustNow(false);
-    setIsMistingPromptDismissed(false);
-    setMistedSuccess(false);
-  }, [currentPlant.id, currentPlant.weatherInsight.humidity]);
+    if (currentPlant) {
+      setNickname(currentPlant.nickname || '');
+      setIsSaved(false);
+      setIsWateredJustNow(false);
+      setIsMistingPromptDismissed(false);
+      setMistedSuccess(false);
+    }
+  }, [currentPlant?.id, currentPlant?.weatherInsight?.humidity]);
+
+  if (!currentPlant) {
+    return (
+      <DashboardEmptyState 
+        onNavigateToTab={onNavigateToTab}
+        onLoadDemoPlants={onLoadDemoPlants}
+      />
+    );
+  }
+
+  // Dynamically calculate weather-adapted Care Essentials
+  const dynamicCare = calculateDynamicCareEssentials(currentPlant, currentPlant.weatherInsight);
 
   const handleQuickMist = () => {
     setIsMistingActive(true);
@@ -196,28 +224,28 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             className={`rounded-2xl p-4 md:p-5 border shadow-xl relative overflow-hidden flex flex-col md:flex-row items-start md:items-center justify-between gap-4 backdrop-blur-md ${
               dynamicCare.urgencyLevel === 'critical'
                 ? 'bg-gradient-to-r from-amber-950/70 via-[#181109]/90 to-red-950/60 border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.15)]'
-                : 'bg-gradient-to-r from-cyan-950/60 via-[#0a1813]/90 to-blue-950/50 border-cyan-500/30 shadow-[0_0_30px_rgba(6,182,212,0.12)]'
+                : 'bg-gradient-to-r from-[#0c2419] via-[#091d14] to-[#0b291d] border-emerald-500/35 shadow-[0_0_30px_rgba(16,185,129,0.15)]'
             }`}
           >
             {/* Ambient Background Glow */}
-            <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full blur-[50px] opacity-25 bg-amber-400 pointer-events-none" />
+            <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full blur-[50px] opacity-25 bg-emerald-400 pointer-events-none" />
 
             <div className="flex items-start gap-3.5 relative z-10">
               <div className={`p-3 rounded-2xl shrink-0 border mt-0.5 ${
                 dynamicCare.urgencyLevel === 'critical'
                   ? 'bg-amber-500/20 border-amber-400/30 text-amber-300'
-                  : 'bg-cyan-500/20 border-cyan-400/30 text-cyan-300'
+                  : 'bg-emerald-500/20 border-emerald-400/30 text-emerald-300'
               }`}>
                 <Waves className="w-6 h-6 animate-pulse" />
               </div>
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3 text-amber-400" />
+                  <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 text-emerald-400" />
                     Automated Climate Prompt • Low Humidity Alert
                   </span>
-                  <span className="text-xs text-slate-400">
-                    Local RH: <strong className="text-amber-300">{currentPlant.weatherInsight.humidity}%</strong> (below 40% threshold)
+                  <span className="text-xs text-slate-300">
+                    Local RH: <strong className="text-emerald-300">{currentPlant.weatherInsight.humidity}%</strong> (below 40% threshold)
                   </span>
                 </div>
                 <h4 className="text-base font-display font-bold text-white leading-snug">
@@ -237,7 +265,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 shadow-lg transition-all cursor-pointer ${
                   mistedSuccess
                     ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                    : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 hover:scale-105 active:scale-95'
+                    : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 hover:scale-105 active:scale-95'
                 }`}
                 title="Execute immediate foliar misting"
               >
@@ -259,13 +287,72 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         )}
       </AnimatePresence>
 
+      {/* Botanical Specimen Switcher Bar */}
+      <div className="bg-[#0b1f16]/95 border border-emerald-500/20 rounded-2xl p-3 md:p-4 shadow-xl backdrop-blur-md">
+        <div className="flex items-center justify-between gap-3 mb-2.5">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-300/90 font-ui">
+              Botanical Specimens ({gardenPlants.length} active)
+            </h3>
+          </div>
+          <button
+            onClick={() => onNavigateToTab('identify')}
+            className="text-xs font-bold text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 transition-colors cursor-pointer group"
+          >
+            <span>+ Scan New Specimen</span>
+          </button>
+        </div>
+
+        {/* Specimen Switcher Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          {gardenPlants.map((plant) => {
+            const isSelected = plant.id === currentPlant.id;
+            return (
+              <button
+                key={plant.id}
+                onClick={() => onSelectPlant(plant)}
+                className={`flex items-center gap-3 p-2.5 rounded-xl border transition-all cursor-pointer text-left ${
+                  isSelected
+                    ? 'bg-emerald-500/15 border-emerald-400/80 shadow-[0_0_20px_rgba(16,185,129,0.25)] ring-1 ring-emerald-400/40'
+                    : 'bg-[#071610]/80 border-emerald-500/15 hover:border-emerald-500/40 hover:bg-[#0c2419]'
+                }`}
+              >
+                <img
+                  src={plant.imageUrl}
+                  alt={plant.name}
+                  className="w-10 h-10 rounded-lg object-cover border border-emerald-500/25 shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className={`text-xs font-bold truncate ${isSelected ? 'text-white' : 'text-slate-200'}`}>
+                    {plant.nickname || plant.name}
+                  </p>
+                  <p className="text-[10px] text-slate-400 truncate italic font-serif">
+                    {plant.scientificName}
+                  </p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-[10px] font-mono font-bold text-emerald-400 tabular-nums">
+                      {plant.healthScore}% Vigor
+                    </span>
+                    <span className="text-[9px] text-slate-500">·</span>
+                    <span className="text-[10px] text-slate-400 truncate">
+                      {plant.mood}
+                    </span>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* 3-Column Top Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* ================= COLUMN 1: Identification & Plant Health ================= */}
         <div className="space-y-6 flex flex-col justify-between">
           {/* Main Identification Hero Card */}
-          <div className="bg-[#0b1711] border border-emerald-900/30 rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col justify-between">
+          <div className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col justify-between">
             {/* Top Plant Image with Gallery & Bookmark buttons & Water Animation */}
             <div className="relative w-full h-64 md:h-72 rounded-xl overflow-hidden mb-4 group bg-black/40">
               <img 
@@ -279,9 +366,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <button 
                 onClick={handleMarkAsWatered}
                 title="Mark Plant as Watered"
-                className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/60 hover:bg-cyan-950/80 backdrop-blur-md text-cyan-300 border border-cyan-500/30 transition-all hover:scale-105 hover:border-cyan-400/60 shadow-[0_0_15px_rgba(6,182,212,0.2)] cursor-pointer"
+                className="absolute top-3 left-3 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#06180f]/85 hover:bg-[#0c2b1a]/95 backdrop-blur-md text-emerald-300 border border-emerald-500/35 transition-all hover:scale-105 hover:border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)] cursor-pointer"
               >
-                <Droplets className={`w-4 h-4 text-cyan-400 ${isWatering ? 'animate-bounce' : ''}`} />
+                <Droplets className={`w-4 h-4 text-emerald-400 ${isWatering ? 'animate-bounce' : ''}`} />
                 <span className="text-xs font-bold">{isWateredJustNow ? 'Watered' : 'Water Plant'}</span>
               </button>
 
@@ -404,15 +491,16 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </p>
               </div>
 
-              {/* Match Badge & Confidence */}
-              <div className="flex items-center gap-3 pt-1">
-                <span className="px-2.5 py-1 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
-                  Match {currentPlant.matchScore}%
-                </span>
-                <span className="flex items-center gap-1 text-xs font-semibold text-emerald-400">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+              {/* Clean Unboxed Taxonomy & Confidence */}
+              <div className="flex items-center gap-2 text-xs text-slate-300 pt-1">
+                <span className="font-mono font-bold text-emerald-400 tabular-nums">{currentPlant.matchScore}% Match</span>
+                <span className="text-emerald-500/40" aria-hidden="true">·</span>
+                <span className="text-emerald-300 font-medium flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                   {currentPlant.confidence}
                 </span>
+                <span className="text-emerald-500/40" aria-hidden="true">·</span>
+                <span className="text-slate-400 font-medium">{currentPlant.careEssentials.light}</span>
               </div>
 
               {/* Nickname Input */}
@@ -426,9 +514,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
                     placeholder="e.g. My Sunshine"
-                    className="w-full bg-[#07110c] border border-emerald-900/40 rounded-xl px-3.5 py-2 text-xs md:text-sm text-slate-200 focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-[#071610] border border-emerald-500/20 rounded-xl px-3.5 py-2 text-xs md:text-sm text-slate-200 placeholder:text-emerald-500/40 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/20"
                   />
-                  <Edit3 className="w-3.5 h-3.5 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2" />
+                  <Edit3 className="w-3.5 h-3.5 text-emerald-400/60 absolute right-3.5 top-1/2 -translate-y-1/2" />
                 </div>
               </div>
 
@@ -439,7 +527,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   disabled={isSaving || isSaved}
                   className={`flex-1 py-2.5 px-3.5 rounded-xl text-xs md:text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)] cursor-pointer ${
                     isSaved
-                      ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/30'
+                      ? 'bg-[#071610] text-emerald-300 border border-emerald-500/30'
                       : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 hover:shadow-[0_0_25px_rgba(16,185,129,0.4)]'
                   }`}
                 >
@@ -449,20 +537,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                 <button
                   onClick={handleMarkAsWatered}
-                  className={`py-2.5 px-3.5 rounded-xl border text-xs md:text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-[0_0_15px_rgba(6,182,212,0.15)] hover:scale-105 active:scale-95 ${
+                  className={`py-2.5 px-3.5 rounded-xl border text-xs md:text-sm font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-[0_0_15px_rgba(16,185,129,0.2)] hover:scale-105 active:scale-95 ${
                     isWateredJustNow
-                      ? 'bg-cyan-950/80 text-cyan-200 border-cyan-400/60 shadow-[0_0_20px_rgba(6,182,212,0.3)]'
-                      : 'bg-cyan-900/30 hover:bg-cyan-900/50 text-cyan-300 border-cyan-500/40 hover:border-cyan-400'
+                      ? 'bg-emerald-500/25 text-emerald-200 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)]'
+                      : 'bg-emerald-950/70 hover:bg-emerald-900/80 text-emerald-300 border-emerald-500/35 hover:border-emerald-400'
                   }`}
                   title="Trigger watering animation and log care"
                 >
-                  <Droplets className={`w-4 h-4 text-cyan-400 ${isWatering ? 'animate-bounce' : ''}`} />
+                  <Droplets className={`w-4 h-4 text-emerald-400 ${isWatering ? 'animate-bounce' : ''}`} />
                   <span>{isWateredJustNow ? 'Watered!' : 'Water'}</span>
                 </button>
 
                 <button
                   onClick={handleShare}
-                  className="px-3.5 py-2.5 rounded-xl bg-[#0e1d16] hover:bg-[#13271e] border border-emerald-900/40 text-slate-300 hover:text-white text-xs md:text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                  className="px-3.5 py-2.5 rounded-xl bg-[#071610] hover:bg-[#0c261b] border border-emerald-500/20 text-emerald-200 hover:text-white text-xs md:text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
                   <Share2 className="w-4 h-4" />
                   <span>{copiedLink ? 'Copied!' : 'Share'}</span>
@@ -474,10 +562,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           {/* Analyze Bio-Signature Action Banner */}
           <button
             onClick={onOpenBioSignature}
-            className="w-full flex items-center justify-between p-3.5 bg-[#0b1711] hover:bg-[#0e2118] border border-emerald-800/30 hover:border-emerald-500/40 rounded-xl transition-all group cursor-pointer shadow-sm"
+            className="w-full flex items-center justify-between p-3.5 bg-[#0b1f16] hover:bg-[#0f2a1e] border border-emerald-500/20 hover:border-emerald-500/40 rounded-xl transition-all group cursor-pointer shadow-sm"
           >
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20 group-hover:scale-110 transition-transform">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/25 group-hover:scale-110 transition-transform">
                 <Atom className="w-4 h-4" />
               </div>
               <span className="text-xs md:text-sm font-bold text-slate-200 group-hover:text-emerald-300">
@@ -491,7 +579,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </button>
 
           {/* Plant Health Gauge Card */}
-          <div className="bg-[#0b1711] border border-emerald-900/30 rounded-2xl p-5 shadow-lg">
+          <div className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 shadow-lg">
             <h3 className="text-sm font-bold text-slate-200 mb-4">Plant Health</h3>
             
             <div className="flex items-center justify-between gap-4">
@@ -503,7 +591,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       cx="40"
                       cy="40"
                       r={radius}
-                      stroke="rgba(255,255,255,0.06)"
+                      stroke="rgba(52, 211, 153, 0.1)"
                       strokeWidth="7"
                       fill="transparent"
                     />
@@ -511,7 +599,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       cx="40"
                       cy="40"
                       r={radius}
-                      stroke="#22c55e"
+                      stroke="#10b981"
                       strokeWidth="7"
                       fill="transparent"
                       strokeDasharray={circumference}
@@ -541,10 +629,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               {/* Stacked Health Metrics Right */}
               <div className="space-y-2 text-xs">
                 <div className="flex items-center gap-2">
-                  <Droplets className="w-3.5 h-3.5 text-cyan-400" />
+                  <Droplets className="w-3.5 h-3.5 text-emerald-400" />
                   <div>
                     <span className="text-[10px] text-slate-400 block leading-none">Hydration</span>
-                    <span className="font-bold text-cyan-300">{currentPlant.hydrationStatus}</span>
+                    <span className="font-bold text-emerald-300">{currentPlant.hydrationStatus}</span>
                   </div>
                 </div>
 
@@ -557,10 +645,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <BrainCircuit className="w-3.5 h-3.5 text-purple-400" />
+                  <BrainCircuit className="w-3.5 h-3.5 text-emerald-300" />
                   <div>
                     <span className="text-[10px] text-slate-400 block leading-none">Neural Stress</span>
-                    <span className="font-bold text-purple-300">{currentPlant.neuralStress}</span>
+                    <span className="font-bold text-emerald-300">{currentPlant.neuralStress}</span>
                   </div>
                 </div>
               </div>
@@ -571,13 +659,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* ================= COLUMN 2: AI Assessment & Care Essentials ================= */}
         <div className="space-y-6 flex flex-col justify-between">
           {/* AI Assessment Card */}
-          <div className="bg-[#0b1711] border border-emerald-900/30 rounded-2xl p-5 shadow-lg">
+          <div className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 shadow-lg">
             <div 
               onClick={() => setIsAssessmentOpen(!isAssessmentOpen)}
               className="flex items-center justify-between cursor-pointer select-none"
             >
               <h3 className="text-sm font-bold text-slate-200">AI Assessment</h3>
-              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isAssessmentOpen ? '' : '-rotate-90'}`} />
+              <ChevronDown className={`w-4 h-4 text-emerald-400/70 transition-transform duration-200 ${isAssessmentOpen ? '' : '-rotate-90'}`} />
             </div>
 
             {isAssessmentOpen && (
@@ -603,13 +691,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Priority Adjustments Card */}
-          <div className="bg-[#0b1711] border border-emerald-900/30 rounded-2xl p-5 shadow-lg">
+          <div className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 shadow-lg">
             <h3 className="text-sm font-bold text-slate-200 mb-3.5">Priority Adjustments</h3>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Soil Hydro */}
-              <div className="p-3 bg-[#08130d] border border-emerald-900/30 rounded-xl space-y-1.5">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-cyan-400">
+              <div className="p-3 bg-[#071610] border border-emerald-500/15 rounded-xl space-y-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
                   <Droplets className="w-3.5 h-3.5" />
                   <span>Soil Hydro</span>
                 </div>
@@ -619,7 +707,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
 
               {/* Luminance */}
-              <div className="p-3 bg-[#08130d] border border-emerald-900/30 rounded-xl space-y-1.5">
+              <div className="p-3 bg-[#071610] border border-emerald-500/15 rounded-xl space-y-1.5">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
                   <Sun className="w-3.5 h-3.5" />
                   <span>Luminance</span>
@@ -631,49 +719,34 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
-          {/* Weather Intelligence Card */}
-          <div className="bg-[#0b1711] border border-emerald-900/30 rounded-2xl p-5 shadow-lg">
-            <h3 className="text-sm font-bold text-slate-200 mb-3.5">Weather Intelligence</h3>
-            
-            <div className="flex items-center justify-between p-3 bg-[#08130d] border border-emerald-900/30 rounded-xl mb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-emerald-900/30 text-slate-200">
-                  <Cloud className="w-4 h-4 text-slate-300" />
-                </div>
-                <div>
-                  <p className="text-xs font-bold text-slate-200">{currentPlant.weatherInsight.city}</p>
-                  <p className="text-[10px] text-slate-400">{currentPlant.weatherInsight.condition}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 text-xs">
-                <div className="flex items-center gap-1 text-slate-200 font-bold">
-                  <Thermometer className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{currentPlant.weatherInsight.temp}°C</span>
-                </div>
-                <div className="flex items-center gap-1 text-cyan-400 font-bold">
-                  <Droplets className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>{currentPlant.weatherInsight.humidity}%</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-3 bg-[#0d1c15] border border-emerald-800/30 rounded-xl flex items-center justify-between gap-3">
-              <p className="text-xs text-slate-300 leading-relaxed">
-                {currentPlant.weatherInsight.advice}
-              </p>
-              <Cloud className="w-5 h-5 text-emerald-400/40 shrink-0" />
-            </div>
-          </div>
+          {/* Micro-climate Dashboard Card */}
+          <MicroclimateCard
+            selectedCity={selectedCity || currentPlant.weatherInsight.city}
+            onChangeCity={onChangeCity}
+            weather={
+              selectedCity && POPULAR_CITY_WEATHER[selectedCity]
+                ? POPULAR_CITY_WEATHER[selectedCity]
+                : {
+                    city: selectedCity || currentPlant.weatherInsight.city,
+                    temp: weatherTemp !== undefined ? weatherTemp : currentPlant.weatherInsight.temp,
+                    humidity: weatherHumidity !== undefined ? weatherHumidity : currentPlant.weatherInsight.humidity,
+                    condition: currentPlant.weatherInsight.condition || 'Pleasant Microclimate',
+                    icon: '04d'
+                  }
+            }
+            plantName={currentPlant.name}
+            onQuickMist={handleQuickMist}
+            isMisting={isMistingActive}
+          />
 
           {/* Care Essentials Card (Weather-Integrated) */}
-          <div className="bg-[#0b1711] border border-emerald-900/30 rounded-2xl p-5 shadow-lg">
+          <div className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 shadow-lg">
             <div className="flex items-center justify-between mb-3.5">
               <h3 className="text-sm font-bold text-slate-200">Care Essentials</h3>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border ${
                 dynamicCare.isLowHumidity
                   ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                  : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25'
               }`}>
                 <Activity className="w-3 h-3" />
                 {dynamicCare.isLowHumidity ? 'Weather-Adapted (Arid)' : 'Weather-Synchronized'}
@@ -683,7 +756,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             {/* 4 Stat Badges with Dynamic Weather Overrides */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3.5">
               {[
-                { label: 'Water', val: dynamicCare.waterAdvice, icon: Droplets, color: 'text-cyan-400', isAlert: dynamicCare.isLowHumidity },
+                { label: 'Water', val: dynamicCare.waterAdvice, icon: Droplets, color: 'text-emerald-400', isAlert: dynamicCare.isLowHumidity },
                 { label: 'Light', val: dynamicCare.lightAdvice, icon: Sun, color: 'text-amber-400', isAlert: false },
                 { label: 'Temp', val: dynamicCare.tempAdvice, icon: Thermometer, color: 'text-rose-400', isAlert: false },
                 { label: 'Air / RH', val: dynamicCare.airAdvice, icon: Wind, color: 'text-emerald-400', isAlert: dynamicCare.isLowHumidity }
@@ -695,7 +768,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                     className={`p-2.5 rounded-xl text-center border transition-all ${
                       item.isAlert 
                         ? 'bg-amber-950/20 border-amber-500/30' 
-                        : 'bg-[#08130d] border-emerald-900/30'
+                        : 'bg-[#071610] border-emerald-500/15'
                     }`}
                   >
                     <Icon className={`w-4 h-4 mx-auto mb-1 ${item.color}`} />
@@ -726,8 +799,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             )}
 
             {/* Dynamic narrative summary */}
-            <div className="p-3.5 bg-[#08130d] border border-emerald-900/30 rounded-xl flex items-start gap-3 mb-3.5">
-              <div className="w-6 h-6 rounded-md bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+            <div className="p-3.5 bg-[#071610] border border-emerald-500/15 rounded-xl flex items-start gap-3 mb-3.5">
+              <div className="w-6 h-6 rounded-md bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
                 <Leaf className="w-3.5 h-3.5" />
               </div>
               <p className="text-xs text-slate-300 leading-relaxed font-ui">
@@ -783,12 +856,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         {/* ================= COLUMN 3: My Garden, Health Overview & Care Timeline ================= */}
         <div className="space-y-6 flex flex-col justify-between">
           {/* My Garden Horizontal Thumbnails Carousel */}
-          <div className="bg-[#0b1711] border border-emerald-900/30 rounded-2xl p-5 shadow-lg">
+          <div className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 shadow-lg">
             <div className="flex items-center justify-between mb-3.5">
               <h3 className="text-sm font-bold text-slate-200">My Garden</h3>
               <button 
                 onClick={() => onNavigateToTab('garden')}
-                className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
+                className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
               >
                 View All
               </button>
@@ -802,10 +875,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <div
                     key={plant.id}
                     onClick={() => onSelectPlant(plant)}
-                    className={`w-28 shrink-0 p-2 rounded-xl bg-[#08130d] border cursor-pointer transition-all ${
+                    className={`w-28 shrink-0 p-2 rounded-xl bg-[#071610] border cursor-pointer transition-all ${
                       isCurrent
-                        ? 'border-emerald-400 ring-2 ring-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.2)]'
-                        : 'border-emerald-900/30 opacity-75 hover:opacity-100 hover:border-emerald-700/50'
+                        ? 'border-emerald-400 ring-2 ring-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.25)]'
+                        : 'border-emerald-500/20 opacity-75 hover:opacity-100 hover:border-emerald-400/40'
                     }`}
                   >
                     <div className="w-full h-16 rounded-lg overflow-hidden mb-1.5 bg-black/40">
@@ -828,11 +901,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Health Overview Line Chart */}
-          <div className="bg-[#0b1711] border border-emerald-900/30 rounded-2xl p-5 shadow-lg space-y-3">
+          <div className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 shadow-lg space-y-3">
             {/* Header with Title and Period Filter */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <div className="p-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
                   <Activity className="w-4 h-4" />
                 </div>
                 <div>
@@ -842,14 +915,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
 
               {/* Period Filter Dropdown / Pills */}
-              <div className="flex items-center bg-[#07110c] border border-emerald-900/40 rounded-lg p-0.5 text-[11px]">
+              <div className="flex items-center bg-[#071610] border border-emerald-500/25 rounded-lg p-0.5 text-[11px]">
                 {['All History', 'Recent'].map((period) => (
                   <button
                     key={period}
                     onClick={() => setSelectedPeriod(period)}
                     className={`px-2 py-0.5 rounded-md font-medium transition-all cursor-pointer ${
                       selectedPeriod === period
-                        ? 'bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30'
+                        ? 'bg-emerald-500/25 text-emerald-200 font-bold border border-emerald-500/35'
                         : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
@@ -880,7 +953,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               return (
                 <>
                   {/* Micro stats banner */}
-                  <div className="flex items-center justify-between px-3 py-2 bg-[#07120c] border border-emerald-900/30 rounded-xl text-xs">
+                  <div className="flex items-center justify-between px-3 py-2 bg-[#071610] border border-emerald-500/15 rounded-xl text-xs">
                     <div className="flex items-center gap-1.5">
                       {isPositive ? (
                         <div className="flex items-center gap-1 text-emerald-400 font-bold text-[11px]">
@@ -912,21 +985,21 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                       >
                         <defs>
                           <linearGradient id="plantHealthGradient" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#22c55e" stopOpacity={0.25} />
-                            <stop offset="95%" stopColor="#22c55e" stopOpacity={0.0} />
+                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                            <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(52,211,153,0.06)" vertical={false} />
                         <XAxis 
                           dataKey="date" 
-                          stroke="#475569" 
+                          stroke="#5e8770" 
                           fontSize={10} 
                           tickLine={false} 
                           axisLine={false} 
                         />
                         <YAxis 
                           domain={[0, 100]} 
-                          stroke="#475569" 
+                          stroke="#5e8770" 
                           fontSize={10} 
                           tickLine={false} 
                           axisLine={false} 
@@ -940,8 +1013,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                               const diff = prevScore !== null ? d.score - prevScore : null;
 
                               return (
-                                <div className="p-2.5 bg-[#07140e] border border-emerald-500/40 rounded-xl text-xs shadow-2xl space-y-1 z-50 backdrop-blur-md">
-                                  <div className="flex items-center justify-between gap-4 border-b border-emerald-900/40 pb-1">
+                                <div className="p-2.5 bg-[#0b1f16] border border-emerald-500/40 rounded-xl text-xs shadow-2xl space-y-1 z-50 backdrop-blur-md">
+                                  <div className="flex items-center justify-between gap-4 border-b border-emerald-500/20 pb-1">
                                     <span className="font-bold text-slate-200">{d.date}</span>
                                     <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold text-[10px]">
                                       {d.mood || currentPlant.mood}
@@ -971,18 +1044,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                         <Area 
                           type="monotone" 
                           dataKey="score" 
-                          stroke="#22c55e" 
+                          stroke="#10b981" 
                           strokeWidth={2.5} 
                           fill="url(#plantHealthGradient)"
-                          dot={{ fill: '#22c55e', r: 3.5, stroke: '#08120d', strokeWidth: 1.5 }}
-                          activeDot={{ r: 5.5, fill: '#4ade80', stroke: '#fff', strokeWidth: 2 }}
+                          dot={{ fill: '#10b981', r: 3.5, stroke: '#06130d', strokeWidth: 1.5 }}
+                          activeDot={{ r: 5.5, fill: '#34d399', stroke: '#fff', strokeWidth: 2 }}
                           animationDuration={800}
                         />
                       </AreaChart>
                     </ResponsiveContainer>
 
                     {/* Dynamic Latest / Peak Reading Highlight Badge */}
-                    <div className="absolute top-1 right-1 px-2.5 py-1 rounded-xl bg-[#081810]/90 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold text-center shadow-lg backdrop-blur-sm">
+                    <div className="absolute top-1 right-1 px-2.5 py-1 rounded-xl bg-[#071610]/95 border border-emerald-500/40 text-emerald-300 text-[10px] font-bold text-center shadow-lg backdrop-blur-sm">
                       <span className="block text-xs font-extrabold text-emerald-400">{latestEntry.score}%</span>
                       <span className="text-[9px] text-slate-400 font-medium">{latestEntry.date}</span>
                     </div>
@@ -992,17 +1065,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             })()}
 
             {/* 4 Status Badges Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-emerald-900/20 text-center">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 border-t border-emerald-500/15 text-center">
               <button
                 onClick={handleMarkAsWatered}
-                className="p-1.5 -m-1 rounded-xl hover:bg-cyan-950/40 border border-transparent hover:border-cyan-500/30 transition-all cursor-pointer group text-center"
+                className="p-1.5 -m-1 rounded-xl hover:bg-emerald-500/15 border border-transparent hover:border-emerald-500/30 transition-all cursor-pointer group text-center"
                 title="Click to water and trigger water drop transition"
               >
-                <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 group-hover:text-cyan-300">
-                  <Droplets className={`w-3 h-3 text-cyan-400 ${isWatering ? 'animate-bounce' : 'group-hover:scale-110'} transition-transform`} />
+                <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 group-hover:text-emerald-300">
+                  <Droplets className={`w-3 h-3 text-emerald-400 ${isWatering ? 'animate-bounce' : 'group-hover:scale-110'} transition-transform`} />
                   <span>Watered</span>
                 </div>
-                <p className="text-[11px] font-bold text-slate-200 group-hover:text-cyan-200 transition-colors">
+                <p className="text-[11px] font-bold text-slate-200 group-hover:text-emerald-200 transition-colors">
                   {isWateredJustNow ? 'Just now' : currentPlant.healthOverview.lastWatered}
                 </p>
               </button>
@@ -1012,18 +1085,18 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   const el = document.getElementById('fertilizer-schedule-tracker');
                   if (el) {
                     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    el.classList.add('ring-2', 'ring-amber-500/60');
-                    setTimeout(() => el.classList.remove('ring-2', 'ring-amber-500/60'), 2200);
+                    el.classList.add('ring-2', 'ring-emerald-500/60');
+                    setTimeout(() => el.classList.remove('ring-2', 'ring-emerald-500/60'), 2200);
                   }
                 }}
-                className="p-1.5 -m-1 rounded-xl hover:bg-amber-950/40 border border-transparent hover:border-amber-500/30 transition-all cursor-pointer group text-center"
+                className="p-1.5 -m-1 rounded-xl hover:bg-emerald-500/15 border border-transparent hover:border-emerald-500/30 transition-all cursor-pointer group text-center"
                 title="Click to inspect species fertilizer schedule"
               >
-                <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 group-hover:text-amber-300">
-                  <Sprout className="w-3 h-3 text-amber-400 group-hover:scale-110 transition-transform" />
+                <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 group-hover:text-emerald-300">
+                  <Sprout className="w-3 h-3 text-emerald-400 group-hover:scale-110 transition-transform" />
                   <span>Fertilized</span>
                 </div>
-                <p className="text-[11px] font-bold text-slate-200 group-hover:text-amber-200 transition-colors">
+                <p className="text-[11px] font-bold text-slate-200 group-hover:text-emerald-200 transition-colors">
                   {currentPlant.healthOverview.lastFertilized}
                 </p>
               </button>
@@ -1046,13 +1119,25 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </div>
           </div>
 
+          {/* Visual Growth Timeline Tracker */}
+          <div id="growth-timeline-tracker" className="transition-all duration-300">
+            <GrowthTimelineTracker
+              plant={currentPlant}
+              onGrowthUpdated={(measurements) => {
+                if (onGrowthUpdated && currentPlant) {
+                  onGrowthUpdated(currentPlant.id, measurements);
+                }
+              }}
+            />
+          </div>
+
           {/* Care Timeline & AI Tip for You */}
-          <div className="bg-[#0b1711] border border-emerald-900/30 rounded-2xl p-5 shadow-lg">
+          <div className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 shadow-lg">
             <div className="flex items-center justify-between mb-3.5">
               <h3 className="text-sm font-bold text-slate-200">Care Timeline</h3>
               <button 
                 onClick={() => onNavigateToTab('calendar')}
-                className="flex items-center gap-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors"
+                className="flex items-center gap-1 text-xs font-semibold text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer"
               >
                 <span>View Calendar</span>
                 <ChevronDown className="w-3.5 h-3.5" />
@@ -1076,7 +1161,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
 
               {/* AI Tip for You Card Right */}
-              <div className="p-3.5 bg-[#08150e] border border-emerald-800/30 rounded-xl space-y-2.5 flex flex-col justify-between h-full">
+              <div className="p-3.5 bg-[#071610] border border-emerald-500/15 rounded-xl space-y-2.5 flex flex-col justify-between h-full">
                 <div>
                   <p className="text-xs font-bold text-emerald-400 mb-1">AI Tip for You</p>
                   <p className="text-[11px] text-slate-300 leading-relaxed">
@@ -1086,7 +1171,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                 <button 
                   onClick={() => onNavigateToTab('guide')}
-                  className="flex items-center justify-between w-full pt-2 border-t border-emerald-900/30 text-xs font-semibold text-emerald-300 hover:text-emerald-200 transition-colors"
+                  className="flex items-center justify-between w-full pt-2 border-t border-emerald-500/15 text-xs font-semibold text-emerald-300 hover:text-emerald-200 transition-colors cursor-pointer"
                 >
                   <span>View Detailed Guide</span>
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -1109,9 +1194,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* ================= BOTTOM FULL-WIDTH: Care Instructions ================= */}
-      <div className="bg-[#0b1711] border border-emerald-900/30 rounded-2xl p-5 md:p-6 shadow-lg">
+      <div className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 md:p-6 shadow-lg">
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+          <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/25">
             <Leaf className="w-4 h-4" />
           </div>
           <h3 className="text-base font-bold text-white">Care Instructions</h3>
@@ -1125,15 +1210,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
           {/* 4 Care Icons on the right */}
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-2.5">
-            <div className="p-3 bg-[#08130d] border border-emerald-900/30 rounded-xl flex items-center gap-2.5">
-              <Droplets className="w-4 h-4 text-cyan-400 shrink-0" />
+            <div className="p-3 bg-[#071610] border border-emerald-500/15 rounded-xl flex items-center gap-2.5">
+              <Droplets className="w-4 h-4 text-emerald-400 shrink-0" />
               <div>
                 <span className="text-[10px] text-slate-400 block uppercase">Water</span>
                 <span className="text-xs font-bold text-slate-200">{currentPlant.careInstructions.water}</span>
               </div>
             </div>
 
-            <div className="p-3 bg-[#08130d] border border-emerald-900/30 rounded-xl flex items-center gap-2.5">
+            <div className="p-3 bg-[#071610] border border-emerald-500/15 rounded-xl flex items-center gap-2.5">
               <Sun className="w-4 h-4 text-amber-400 shrink-0" />
               <div>
                 <span className="text-[10px] text-slate-400 block uppercase">Light</span>
@@ -1141,7 +1226,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             </div>
 
-            <div className="p-3 bg-[#08130d] border border-emerald-900/30 rounded-xl flex items-center gap-2.5">
+            <div className="p-3 bg-[#071610] border border-emerald-500/15 rounded-xl flex items-center gap-2.5">
               <Thermometer className="w-4 h-4 text-rose-400 shrink-0" />
               <div>
                 <span className="text-[10px] text-slate-400 block uppercase">Temp</span>
@@ -1149,7 +1234,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               </div>
             </div>
 
-            <div className="p-3 bg-[#08130d] border border-emerald-900/30 rounded-xl flex items-center gap-2.5">
+            <div className="p-3 bg-[#071610] border border-emerald-500/15 rounded-xl flex items-center gap-2.5">
               <Wind className="w-4 h-4 text-emerald-400 shrink-0" />
               <div>
                 <span className="text-[10px] text-slate-400 block uppercase">Air</span>

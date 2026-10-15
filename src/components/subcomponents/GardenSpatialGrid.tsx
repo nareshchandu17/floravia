@@ -575,7 +575,7 @@ export const GardenSpatialGrid: React.FC<GardenSpatialGridProps> = ({
   return (
     <div className="w-full space-y-6">
       {/* Top Header Controls Bar */}
-      <div className="bg-[#0b1712] border border-emerald-900/40 rounded-2xl p-4 md:p-5 shadow-xl">
+      <div className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-4 md:p-5 shadow-xl">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           {/* Room Preset Selector */}
           <div className="space-y-1">
@@ -599,7 +599,7 @@ export const GardenSpatialGrid: React.FC<GardenSpatialGridProps> = ({
                 className={`px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 transition-all cursor-pointer ${
                   selectedPresetId === preset.id
                     ? 'bg-emerald-500 text-slate-950 shadow-[0_0_20px_rgba(16,185,129,0.3)] font-bold'
-                    : 'bg-[#102219] hover:bg-[#152e22] text-slate-300 border border-emerald-900/30'
+                    : 'bg-[#071610] hover:bg-[#0c2419] text-slate-300 border border-emerald-500/15'
                 }`}
               >
                 <span>{preset.icon}</span>
@@ -610,8 +610,8 @@ export const GardenSpatialGrid: React.FC<GardenSpatialGridProps> = ({
         </div>
 
         {/* Room Info Strip & Score Badges */}
-        <div className="mt-4 pt-4 border-t border-emerald-900/30 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-          <div className="bg-[#070f0b]/80 border border-emerald-900/30 rounded-xl p-2.5">
+        <div className="mt-4 pt-4 border-t border-emerald-500/10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <div className="bg-[#071610] border border-emerald-500/15 rounded-xl p-2.5">
             <span className="text-[10px] text-slate-400 block uppercase font-mono">Room Compatibility</span>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className={`text-base font-black ${
@@ -625,7 +625,7 @@ export const GardenSpatialGrid: React.FC<GardenSpatialGridProps> = ({
             </div>
           </div>
 
-          <div className="bg-[#070f0b]/80 border border-emerald-900/30 rounded-xl p-2.5">
+          <div className="bg-[#071610] border border-emerald-500/15 rounded-xl p-2.5">
             <span className="text-[10px] text-slate-400 block uppercase font-mono">Placed Plants</span>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="text-base font-black text-white">{placedPlants.length}</span>
@@ -633,7 +633,7 @@ export const GardenSpatialGrid: React.FC<GardenSpatialGridProps> = ({
             </div>
           </div>
 
-          <div className="bg-[#070f0b]/80 border border-emerald-900/30 rounded-xl p-2.5">
+          <div className="bg-[#071610] border border-emerald-500/15 rounded-xl p-2.5">
             <span className="text-[10px] text-slate-400 block uppercase font-mono">Solar Orientation</span>
             <div className="flex items-center gap-1.5 mt-0.5 text-slate-200 font-bold">
               <Sun className="w-3.5 h-3.5 text-amber-400" />
@@ -641,7 +641,7 @@ export const GardenSpatialGrid: React.FC<GardenSpatialGridProps> = ({
             </div>
           </div>
 
-          <div className="bg-[#070f0b]/80 border border-emerald-900/30 rounded-xl p-2.5">
+          <div className="bg-[#071610] border border-emerald-500/15 rounded-xl p-2.5">
             <span className="text-[10px] text-slate-400 block uppercase font-mono">Base Microclimate</span>
             <div className="flex items-center gap-2 mt-0.5 text-slate-300">
               <span className="flex items-center gap-1"><Thermometer className="w-3 h-3 text-emerald-400" />{currentPreset.baseTemp}</span>
@@ -656,7 +656,7 @@ export const GardenSpatialGrid: React.FC<GardenSpatialGridProps> = ({
         {/* LEFT / CENTER: The Interactive Spatial Grid Canvas */}
         <div className="lg:col-span-3 space-y-4">
           {/* Spatial Grid Toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0d1e15] border border-emerald-900/40 rounded-xl px-4 py-2.5 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#0b1f16] border border-emerald-500/15 rounded-xl px-4 py-2.5 text-xs">
             {/* Time of Day Sun Sim Slider */}
             <div className="flex items-center gap-2">
               <span className="text-slate-400 text-[11px] font-semibold flex items-center gap-1">
@@ -715,7 +715,7 @@ export const GardenSpatialGrid: React.FC<GardenSpatialGridProps> = ({
           </div>
 
           {/* SPATIAL ROOM GRID CANVAS CONTAINER */}
-          <div className="relative bg-[#08120d] border-2 border-emerald-900/40 rounded-2xl p-4 md:p-6 shadow-2xl overflow-hidden min-h-[460px] flex flex-col justify-between select-none">
+          <div className="relative bg-[#071610] border-2 border-emerald-500/15 rounded-2xl p-4 md:p-6 shadow-2xl overflow-hidden min-h-[460px] flex flex-col justify-between select-none">
             {/* Top Room Edge Marker (e.g. South Window / Patio Boundary) */}
             {currentPreset.windowPosition === 'top' && (
               <div className="mb-4 w-full py-1.5 px-4 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-400/25 to-amber-500/10 border border-amber-400/30 flex items-center justify-between text-[11px] font-mono text-amber-200">
@@ -899,7 +899,7 @@ export const GardenSpatialGrid: React.FC<GardenSpatialGridProps> = ({
         {/* RIGHT SIDEBAR: Plant Dock Tray & Microclimate Toolset */}
         <div className="space-y-4 flex flex-col justify-between">
           {/* Plant Dock Card */}
-          <div className="bg-[#0b1712] border border-emerald-900/40 rounded-2xl p-4 shadow-xl space-y-3 flex-1 flex flex-col">
+          <div className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-4 shadow-xl space-y-3 flex-1 flex flex-col">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
                 <LayoutGrid className="w-3.5 h-3.5 text-emerald-400" />
@@ -1020,7 +1020,7 @@ export const GardenSpatialGrid: React.FC<GardenSpatialGridProps> = ({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 15 }}
               onClick={(e) => e.stopPropagation()}
-              className="bg-[#0b1712] border border-emerald-500/40 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 text-white"
+              className="bg-[#0b1f16] border border-emerald-500/30 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4 text-white"
             >
               <div className="flex items-start gap-4">
                 <img 

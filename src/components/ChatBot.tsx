@@ -183,7 +183,7 @@ export const ChatBot: React.FC = () => {
   if (!user) return null;
 
   return (
-    <div className="flex h-[calc(100vh-80px)] bg-void overflow-hidden border border-white/5 rounded-3xl">
+    <div className="flex h-[calc(100vh-80px)] bg-[#06130d] overflow-hidden border border-emerald-500/15 rounded-3xl">
       {/* Sidebar - Historical Continuums */}
       <AnimatePresence mode="wait">
         {isSidebarOpen && (
@@ -191,15 +191,15 @@ export const ChatBot: React.FC = () => {
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: 300, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
-            className="h-full bg-surface border-r border-white/5 flex flex-col overflow-hidden"
+            className="h-full bg-[#081911] border-r border-emerald-500/15 flex flex-col overflow-hidden"
           >
             {/* New Chat Button */}
             <div className="p-4">
               <motion.button
-                whileHover={{ scale: 1.02, backgroundColor: 'rgba(52, 211, 153, 0.1)' }}
+                whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={createNewChat}
-                className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl border border-green-500/20 text-green-400 text-sm font-bold transition-all shadow-[0_0_20px_rgba(34,197,94,0.05)] cursor-pointer"
+                className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-sm font-bold transition-all shadow-sm cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 New Garden Session
@@ -209,8 +209,8 @@ export const ChatBot: React.FC = () => {
             {/* Thread List */}
             <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1">
               <div className="px-3 py-2 flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted">Historical Continuums</span>
-                {isHistoryLoading && <Loader2 className="w-3 h-3 text-green-400 animate-spin" />}
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Historical Continuums</span>
+                {isHistoryLoading && <Loader2 className="w-3 h-3 text-emerald-400 animate-spin" />}
               </div>
               {threads.map((thread) => (
                 <div key={thread.id} className="group relative">
@@ -218,19 +218,19 @@ export const ChatBot: React.FC = () => {
                     onClick={() => switchThread(thread.id!)}
                     className={`w-full flex items-start gap-3 px-3 py-3 rounded-xl text-left transition-all cursor-pointer ${
                       currentThreadId === thread.id 
-                        ? 'bg-white/5 border border-white/10 shadow-inner' 
-                        : 'hover:bg-white/[0.03] border border-transparent'
+                        ? 'bg-emerald-500/20 border border-emerald-500/30 shadow-inner' 
+                        : 'hover:bg-[#0c2419] border border-transparent'
                     }`}
                   >
-                    <div className={`mt-0.5 flex-shrink-0 ${currentThreadId === thread.id ? 'text-green-400' : 'text-muted'}`}>
+                    <div className={`mt-0.5 flex-shrink-0 ${currentThreadId === thread.id ? 'text-emerald-400' : 'text-slate-400'}`}>
                       {getThreadIcon(thread.title, thread.snippet)}
                     </div>
                     <div className="flex-1 min-w-0 pr-6">
-                      <p className={`text-xs font-bold truncate mb-0.5 ${currentThreadId === thread.id ? 'text-primary' : 'text-secondary font-medium'}`}>
+                      <p className={`text-xs font-bold truncate mb-0.5 ${currentThreadId === thread.id ? 'text-white' : 'text-slate-300 font-medium'}`}>
                         {thread.title}
                       </p>
                       {thread.snippet && (
-                        <p className="text-[10px] text-muted truncate opacity-50 font-medium">
+                        <p className="text-[10px] text-slate-400 truncate opacity-70 font-medium">
                           {thread.snippet}
                         </p>
                       )}
@@ -243,7 +243,7 @@ export const ChatBot: React.FC = () => {
                       setThreadToDelete(thread.id!);
                       setShowDeleteModal(true);
                     }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-muted hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all cursor-pointer bg-void/50 rounded-lg backdrop-blur-sm"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all cursor-pointer bg-[#071610]/80 rounded-lg backdrop-blur-sm"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -252,14 +252,14 @@ export const ChatBot: React.FC = () => {
             </div>
 
             {/* Sidebar Footer */}
-            <div className="p-4 border-t border-white/5 bg-void/30">
+            <div className="p-4 border-t border-emerald-500/10 bg-[#071610]">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center border border-green-500/20">
-                  <User className="w-4 h-4 text-green-400" />
+                <div className="w-8 h-8 rounded-full bg-emerald-500/15 flex items-center justify-center border border-emerald-500/25">
+                  <User className="w-4 h-4 text-emerald-400" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-primary truncate">{user.displayName || user.email}</p>
-                  <p className="text-[10px] text-muted truncate">Master Gardener</p>
+                  <p className="text-xs font-bold text-white truncate">{user.displayName || user.email}</p>
+                  <p className="text-[10px] text-slate-400 truncate">Master Gardener</p>
                 </div>
               </div>
             </div>
@@ -268,9 +268,9 @@ export const ChatBot: React.FC = () => {
       </AnimatePresence>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col relative bg-void/50">
+      <div className="flex-1 flex flex-col relative bg-[#06130d]">
         {/* Chat Header */}
-        <header className="h-14 px-4 border-b border-white/5 flex items-center justify-between bg-surface/50 backdrop-blur-md">
+        <header className="h-14 px-4 border-b border-emerald-500/10 flex items-center justify-between bg-[#071710]/95 backdrop-blur-md">
           <div className="flex items-center gap-3">
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -634,14 +634,14 @@ export const ChatBot: React.FC = () => {
               </motion.div>
             ) : (
               /* STANDARD INPUT BAR (With Mic Audio Button) */
-              <div className="flex items-center gap-2 md:gap-3 p-2 bg-surface/80 backdrop-blur-xl border border-white/10 focus-within:border-green-500/40 rounded-2xl md:rounded-3xl shadow-2xl transition-all">
+              <div className="flex items-center gap-2 md:gap-3 p-2 bg-[#071610]/95 backdrop-blur-xl border border-emerald-500/20 focus-within:border-emerald-500/50 rounded-2xl md:rounded-3xl shadow-2xl transition-all">
                 {/* Image Upload Button */}
                 <motion.button
                   whileHover={{ scale: 1.08 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => fileInputRef.current?.click()}
                   className={`p-3 md:p-3.5 rounded-xl md:rounded-2xl transition-all cursor-pointer ${
-                    selectedImage ? 'text-green-400 bg-green-400/15 border border-green-400/30' : 'text-muted hover:text-white hover:bg-white/5'
+                    selectedImage ? 'text-emerald-400 bg-emerald-500/15 border border-emerald-500/30' : 'text-slate-400 hover:text-white hover:bg-white/5'
                   }`}
                   title="Upload Plant Image for Diagnostic"
                 >
@@ -660,7 +660,7 @@ export const ChatBot: React.FC = () => {
                   whileHover={{ scale: 1.08 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleMicClick}
-                  className="p-3 md:p-3.5 rounded-xl md:rounded-2xl text-green-400 hover:bg-green-500/15 border border-green-500/20 hover:border-green-500/40 transition-all cursor-pointer relative shadow-[0_0_15px_rgba(34,197,94,0.1)]"
+                  className="p-3 md:p-3.5 rounded-xl md:rounded-2xl text-emerald-400 hover:bg-emerald-500/15 border border-emerald-500/20 hover:border-emerald-500/40 transition-all cursor-pointer relative shadow-[0_0_15px_rgba(16,185,129,0.1)]"
                   title="Ask via Voice (Microphone Audio Recording)"
                 >
                   <Mic className="w-5 h-5" />
@@ -672,7 +672,7 @@ export const ChatBot: React.FC = () => {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                   placeholder={selectedImage ? "Add questions about this image or press Enter..." : "Ask Sage a plant question or tap mic to speak..."}
-                  className="flex-1 bg-transparent border-none focus:ring-0 px-2 py-3 placeholder:text-muted/50 text-sm md:text-base outline-none text-primary"
+                  className="flex-1 bg-transparent border-none focus:ring-0 px-2 py-3 placeholder:text-slate-500 text-sm md:text-base outline-none text-white"
                 />
                 
                 {/* Send Button */}
@@ -683,8 +683,8 @@ export const ChatBot: React.FC = () => {
                   disabled={isLoading || (!input.trim() && !selectedImage)}
                   className={`p-3 md:p-3.5 rounded-xl md:rounded-2xl flex items-center justify-center transition-all cursor-pointer ${
                     (input.trim() || selectedImage) && !isLoading 
-                    ? 'bg-green-500 hover:bg-green-400 text-slate-950 shadow-[0_0_20px_rgba(34,197,94,0.3)] font-bold' 
-                    : 'bg-white/5 text-muted cursor-not-allowed opacity-40'
+                    ? 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-[0_0_20px_rgba(16,185,129,0.3)] font-bold' 
+                    : 'bg-white/5 text-slate-500 cursor-not-allowed opacity-40'
                   }`}
                   title="Send Message"
                 >
@@ -711,7 +711,7 @@ export const ChatBot: React.FC = () => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-sm glass-card p-6 border-red-500/20"
+              className="relative w-full max-w-sm bg-[#0b1f16] border border-rose-500/20 rounded-2xl p-6 shadow-2xl"
             >
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/20">

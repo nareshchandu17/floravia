@@ -14,13 +14,48 @@ import {
 } from '../services/firebase';
 import { useAuth } from './useAuth';
 
+export interface ToastData {
+  title: string;
+  body: string;
+  type?: 'success' | 'warning' | 'error' | 'reminder' | 'info';
+}
+
+const toastListeners = new Set<(toast: ToastData | null) => void>();
+let currentGlobalToast: ToastData | null = null;
+let toastTimer: any = null;
+
+export const showGlobalToast = (toast: ToastData | null, durationMs = 8000) => {
+  currentGlobalToast = toast;
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+    toastTimer = null;
+  }
+  toastListeners.forEach((listener) => listener(toast));
+  if (toast && durationMs > 0) {
+    toastTimer = setTimeout(() => {
+      showGlobalToast(null, 0);
+    }, durationMs);
+  }
+};
+
 export function useNotifications() {
   const { user } = useAuth();
-  const [toast, setToast] = useState<{ title: string; body: string } | null>(null);
+  const [toast, setLocalToast] = useState<ToastData | null>(currentGlobalToast);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [enabled, setEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isToggling, setIsToggling] = useState(false);
+
+  useEffect(() => {
+    toastListeners.add(setLocalToast);
+    return () => {
+      toastListeners.delete(setLocalToast);
+    };
+  }, []);
+
+  const setToast = useCallback((t: ToastData | null) => {
+    showGlobalToast(t);
+  }, []);
   
   const notifiedRemindersRef = useRef<Set<string>>(new Set());
 
@@ -60,15 +95,15 @@ export function useNotifications() {
           if (now - createdAt < 10000) {
             setToast({
               title: latest.title,
-              body: latest.body
+              body: latest.body,
+              type: latest.type
             });
-            setTimeout(() => setToast(null), 8000);
           }
         }
       });
       return unsubscribe;
     }
-  }, [user]);
+  }, [user, setToast]);
 
   const markRead = async (id: string) => {
     await markNotificationRead(id);
@@ -79,7 +114,14 @@ export function useNotifications() {
   };
 
   const notify = useCallback(async (title: string, body: string, type: Notification['type'] = 'info') => {
-    await sendNotification({ title, body, type });
+    // 1. Immediately emit toast for instant UI feedback
+    showGlobalToast({ title, body, type });
+    // 2. Persist to Firestore if user is authenticated
+    try {
+      await sendNotification({ title, body, type });
+    } catch (e) {
+      console.warn("Could not persist notification to Firestore:", e);
+    }
   }, []);
 
   // Monitor Reminders in Real-Time

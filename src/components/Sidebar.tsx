@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   Home, 
   Camera, 
@@ -16,9 +16,11 @@ import {
   LogOut,
   LogIn,
   ShieldAlert,
-  UserPlus
+  UserPlus,
+  PanelLeftClose
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { getActiveSubscription } from '../services/razorpay';
 
 export type NavigationTab = 
   | 'home' 
@@ -38,16 +40,35 @@ interface SidebarProps {
   setActiveTab: (tab: NavigationTab) => void;
   onOpenUpgradeModal: () => void;
   onOpenAuthModal?: (mode?: 'login' | 'signup' | 'verify-email') => void;
+  onToggleCollapse?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   activeTab, 
   setActiveTab,
   onOpenUpgradeModal,
-  onOpenAuthModal
+  onOpenAuthModal,
+  onToggleCollapse
 }) => {
   const { user, isEmailVerified, signOut } = useAuth();
   const [showUserMenu, setShowUserMenu] = React.useState(false);
+  const [activePlan, setActivePlan] = useState<string | null>(() => {
+    const sub = getActiveSubscription();
+    return sub ? sub.planName : null;
+  });
+
+  useEffect(() => {
+    const handleStorage = () => {
+      const sub = getActiveSubscription();
+      setActivePlan(sub ? sub.planName : null);
+    };
+    window.addEventListener('storage', handleStorage);
+    const timer = setInterval(handleStorage, 2500);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      clearInterval(timer);
+    };
+  }, []);
 
   const navItems: { id: NavigationTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'home', label: 'Home', icon: Home },
@@ -63,25 +84,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   return (
-    <aside className="w-64 bg-[#08120d] border-r border-emerald-900/20 flex flex-col justify-between h-screen sticky top-0 shrink-0 z-40 select-none">
-      {/* Top Brand / Logo */}
-      <div className="p-5 pb-2">
+    <aside className="w-64 bg-[#081911] border-r border-emerald-500/15 flex flex-col justify-between h-full shrink-0 z-40 select-none">
+      {/* Top Brand / Logo & Collapse Button */}
+      <div className="p-4 pb-2 flex items-center justify-between gap-2">
         <div 
           onClick={() => setActiveTab('home')}
-          className="flex items-center gap-3 cursor-pointer group"
+          className="flex items-center gap-3 cursor-pointer group flex-1 min-w-0"
         >
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)] group-hover:scale-105 transition-transform">
+          <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/35 flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.25)] group-hover:scale-105 transition-transform shrink-0">
             <Leaf className="w-5 h-5 fill-emerald-400/20 text-emerald-400" />
           </div>
-          <div>
-            <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
+          <div className="min-w-0">
+            <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-1.5 truncate">
               Floravia
             </h1>
-            <p className="text-[11px] text-emerald-400/70 font-medium tracking-wide">
+            <p className="text-[11px] text-emerald-400/80 font-medium tracking-wide truncate">
               AI Plant Care Companion
             </p>
           </div>
         </div>
+
+        {onToggleCollapse && (
+          <button
+            onClick={onToggleCollapse}
+            className="p-1.5 text-emerald-300/70 hover:text-white rounded-lg hover:bg-emerald-500/15 border border-transparent hover:border-emerald-500/30 transition-colors cursor-pointer shrink-0"
+            title="Collapse sidebar (Ctrl+B)"
+            aria-label="Collapse sidebar"
+          >
+            <PanelLeftClose className="w-4 h-4 text-emerald-400" />
+          </button>
+        )}
       </div>
 
       {/* Middle Navigation Menu */}
@@ -93,15 +125,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left group ${
+              className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all text-left group cursor-pointer ${
                 isActive
-                  ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/25 shadow-[inset_0_1px_0_rgba(255,255,255,0.05),0_0_20px_rgba(16,185,129,0.1)]'
-                  : 'text-slate-400 hover:text-emerald-100 hover:bg-emerald-950/20 border border-transparent'
+                  ? 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_0_20px_rgba(16,185,129,0.15)] font-semibold'
+                  : 'text-emerald-100/65 hover:text-emerald-100 hover:bg-emerald-500/10 border border-transparent'
               }`}
             >
               <Icon 
                 className={`w-4 h-4 transition-transform duration-200 group-hover:scale-110 ${
-                  isActive ? 'text-emerald-400' : 'text-slate-400 group-hover:text-emerald-300'
+                  isActive ? 'text-emerald-400' : 'text-emerald-400/60 group-hover:text-emerald-300'
                 }`} 
               />
               <span className="truncate">{item.label}</span>
@@ -113,19 +145,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Bottom Area: Premium Card + User Profile Pill */}
       <div className="p-3 pt-0 space-y-3">
         {/* Premium Card */}
-        <div className="p-3.5 rounded-2xl bg-[#0d1c15] border border-emerald-800/30 relative overflow-hidden group">
+        <div className="p-3.5 rounded-2xl bg-[#0b1f16] border border-emerald-500/20 relative overflow-hidden group shadow-lg">
           <div className="flex items-center gap-2 mb-1.5">
-            <Crown className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-bold text-amber-300 tracking-wide">Premium Plan</span>
+            <Crown className={`w-4 h-4 ${activePlan ? 'text-emerald-400' : 'text-amber-400'}`} />
+            <span className="text-xs font-bold text-emerald-300 tracking-wide">
+              {activePlan ? `${activePlan} Active` : 'Premium Plan'}
+            </span>
           </div>
-          <p className="text-[11px] text-slate-400 mb-3 leading-tight">
-            You have 23 scans left this month
+          <p className="text-[11px] text-slate-300 mb-3 leading-tight">
+            {activePlan ? 'Unlimited neural scans & diagnostic AI active' : 'You have 23 scans left this month'}
           </p>
           <button 
             onClick={onOpenUpgradeModal}
             className="w-full py-2 px-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs rounded-xl transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.45)] cursor-pointer"
           >
-            Upgrade Plan
+            {activePlan ? 'Manage Plan' : 'Upgrade Plan'}
           </button>
         </div>
 
@@ -136,7 +170,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className={`flex items-center justify-between p-2 rounded-xl border transition-colors cursor-pointer ${
               user && !isEmailVerified
                 ? 'bg-amber-950/40 border-amber-500/40 hover:border-amber-500/60'
-                : 'bg-[#0d1a13] border-emerald-900/30 hover:border-emerald-700/40'
+                : 'bg-[#071610] border-emerald-500/20 hover:border-emerald-500/40'
             }`}
           >
             <div className="flex items-center gap-2.5 min-w-0">
@@ -147,7 +181,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   className="w-8 h-8 rounded-full object-cover border border-emerald-500/30" 
                 />
                 {user && !isEmailVerified && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-[#0d1a13]" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-amber-400 border-2 border-[#071610]" />
                 )}
               </div>
               <div className="min-w-0">
@@ -164,7 +198,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* User Popover Menu */}
           {showUserMenu && (
-            <div className="absolute bottom-full left-0 right-0 mb-2 p-1.5 bg-[#0e1d16] border border-emerald-800/40 rounded-xl shadow-2xl z-50 space-y-1">
+            <div className="absolute bottom-full left-0 right-0 mb-2 p-1.5 bg-[#0b1f16] border border-emerald-500/30 rounded-xl shadow-2xl z-50 space-y-1">
               {user && !isEmailVerified && (
                 <button 
                   onClick={() => {

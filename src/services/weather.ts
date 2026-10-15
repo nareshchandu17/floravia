@@ -118,3 +118,189 @@ export function getWateringAdvice(weather: WeatherData, plantName: string): { ad
     intensity: 'medium'
   };
 }
+
+export interface MicroclimateActionItem {
+  category: 'Sunlight' | 'Ventilation' | 'Hydration' | 'Atmosphere';
+  headline: string;
+  detail: string;
+  badge: string;
+  isWarning: boolean;
+  iconType: 'sun' | 'wind' | 'droplet' | 'gauge';
+}
+
+export interface MicroclimateAdvice {
+  city: string;
+  temp: number;
+  humidity: number;
+  condition: string;
+  headline: string;
+  primaryAdvice: string;
+  secondaryAdvice: string;
+  sunlightAdvice: string;
+  ventilationAdvice: string;
+  hydrationAdvice: string;
+  vpdIndex: string;
+  vpdStatus: 'low' | 'optimal' | 'high';
+  vpdDescription: string;
+  urgencyLevel: 'caution' | 'warning' | 'optimal';
+  actionItems: MicroclimateActionItem[];
+  summary: string;
+}
+
+/**
+ * Calculates tailored micro-climate advice for indoor & patio plants
+ * based on ambient temperature, relative humidity, and weather conditions.
+ */
+export function getMicroclimateTailoredAdvice(weather: WeatherData, plantName: string = 'your plant'): MicroclimateAdvice {
+  const { temp, humidity, condition, city } = weather;
+  const isHot = temp >= 30;
+  const isCold = temp < 18;
+  const isHighHumidity = humidity >= 70;
+  const isLowHumidity = humidity <= 38;
+  const isSunny = condition.toLowerCase().includes('clear') || condition.toLowerCase().includes('sun') || condition.toLowerCase().includes('arid');
+  const isRainy = condition.toLowerCase().includes('rain');
+
+  // Vapor Pressure Deficit (VPD) in kPa:
+  // Saturation vapor pressure: es = 0.61078 * exp((17.27 * T) / (T + 237.3))
+  const es = 0.61078 * Math.exp((17.27 * temp) / (temp + 237.3));
+  const ea = es * (humidity / 100);
+  const vpdVal = Math.max(0.1, Number((es - ea).toFixed(2)));
+  const vpdIndex = `${vpdVal} kPa`;
+
+  let vpdStatus: 'low' | 'optimal' | 'high' = 'optimal';
+  let vpdDescription = 'Optimal vegetative transpiration zone (0.8–1.2 kPa). Stomata operate at peak metabolic balance.';
+
+  if (vpdVal < 0.6) {
+    vpdStatus = 'low';
+    vpdDescription = 'Low evaporative demand due to high ambient humidity. Stomatal transpiration is sluggish; moisture lingers on foliage.';
+  } else if (vpdVal > 1.3) {
+    vpdStatus = 'high';
+    vpdDescription = 'High evaporative tension from arid conditions. Rapid moisture loss through foliage increases dehydration stress.';
+  }
+
+  // 1. Tailored Sunlight Advice:
+  let sunlightAdvice = 'Provide bright, indirect sunlight. Ambient illumination is optimal for photosynthesis.';
+  let sunlightBadge = 'Filtered Light';
+  let sunlightIsWarning = false;
+
+  if (isHot || (isSunny && temp >= 28)) {
+    sunlightAdvice = 'Avoid direct sunlight today: High thermal irradiance may cause chlorophyll photo-oxidation and tip leaf scorch.';
+    sunlightBadge = 'Avoid Direct Sunlight';
+    sunlightIsWarning = true;
+  } else if (isRainy || condition.toLowerCase().includes('cloud') || condition.toLowerCase().includes('overcast')) {
+    sunlightAdvice = 'Diffused overcast light: Shift shade-tolerant and light-sensitive plants closer to ambient window exposure.';
+    sunlightBadge = 'Diffused Light';
+  }
+
+  // 2. Tailored Ventilation Advice:
+  let ventilationAdvice = 'Standard ambient airflow: Natural room circulation supports steady transpiration.';
+  let ventilationBadge = 'Standard Airflow';
+  let ventilationIsWarning = false;
+
+  if (isHighHumidity) {
+    ventilationAdvice = 'High humidity: Increase ventilation and room air exchange to discourage powdery mildew and fungal spore germination.';
+    ventilationBadge = 'Increase Ventilation';
+    ventilationIsWarning = true;
+  } else if (isLowHumidity) {
+    ventilationAdvice = 'Dry stagnant air: Shield foliage from active HVAC blowers and heater exhaust to prevent desiccating moisture loss.';
+    ventilationBadge = 'Shield from Dry Drafts';
+    ventilationIsWarning = true;
+  }
+
+  // 3. Tailored Hydration Advice:
+  let hydrationAdvice = 'Standard hydration routine: Verify the top 2 inches of soil are dry before rehydrating.';
+  let hydrationBadge = 'Standard Hydration';
+  let hydrationIsWarning = false;
+
+  if (isRainy) {
+    hydrationAdvice = `Atmospheric moisture is high from rain in ${city}. Delay scheduled watering by 24–48 hours to preserve root oxygen.`;
+    hydrationBadge = 'Delay Watering';
+    hydrationIsWarning = false;
+  } else if (isHot && isLowHumidity) {
+    hydrationAdvice = 'Dual stress detected (High heat & dry air). Provide deep root hydration plus morning foliar misting.';
+    hydrationBadge = 'Hydrate & Mist';
+    hydrationIsWarning = true;
+  } else if (isLowHumidity) {
+    hydrationAdvice = 'Low humidity alert: Mist leaves or place a pebble humidity tray beneath the pot to maintain cellular turgor.';
+    hydrationBadge = 'Foliar Misting Needed';
+    hydrationIsWarning = true;
+  }
+
+  // 4. Determine Primary Headline:
+  let headline = 'Balanced microclimate: Transpiration in equilibrium';
+  let urgencyLevel: 'caution' | 'warning' | 'optimal' = 'optimal';
+
+  if (isHighHumidity) {
+    headline = 'High humidity: Increase ventilation';
+    urgencyLevel = 'caution';
+  } else if (isHot || (isSunny && temp >= 28)) {
+    headline = 'Avoid direct sunlight today';
+    urgencyLevel = 'warning';
+  } else if (isLowHumidity) {
+    headline = 'Low humidity: Boost ambient moisture';
+    urgencyLevel = 'caution';
+  } else if (isCold) {
+    headline = 'Chilly microclimate: Guard against cold drafts';
+    urgencyLevel = 'caution';
+  }
+
+  const actionItems: MicroclimateActionItem[] = [
+    {
+      category: 'Sunlight',
+      headline: isHot || (isSunny && temp >= 28) ? 'Avoid direct sunlight today' : 'Maintain bright filtered exposure',
+      detail: sunlightAdvice,
+      badge: sunlightBadge,
+      isWarning: sunlightIsWarning,
+      iconType: 'sun'
+    },
+    {
+      category: 'Ventilation',
+      headline: isHighHumidity ? 'High humidity: Increase ventilation' : isLowHumidity ? 'Shield from drying air streams' : 'Circulate fresh ambient air',
+      detail: ventilationAdvice,
+      badge: ventilationBadge,
+      isWarning: ventilationIsWarning,
+      iconType: 'wind'
+    },
+    {
+      category: 'Hydration',
+      headline: isLowHumidity ? 'Elevate foliar misting' : isRainy ? 'Delay soil watering' : 'Standard hydration check',
+      detail: hydrationAdvice,
+      badge: hydrationBadge,
+      isWarning: hydrationIsWarning,
+      iconType: 'droplet'
+    },
+    {
+      category: 'Atmosphere',
+      headline: `Vapor Pressure Deficit: ${vpdIndex}`,
+      detail: vpdDescription,
+      badge: `${vpdStatus.toUpperCase()} VPD`,
+      isWarning: vpdStatus !== 'optimal',
+      iconType: 'gauge'
+    }
+  ];
+
+  return {
+    city,
+    temp,
+    humidity,
+    condition,
+    headline,
+    primaryAdvice: headline,
+    secondaryAdvice: isHighHumidity
+      ? `Elevated moisture in ${city} (${humidity}% RH) slows natural foliar evaporation. Space canopies apart.`
+      : isHot
+        ? `Thermal peaks in ${city} (${temp}°C) risk foliar scorching. Filter direct solar rays through sheer curtains.`
+        : isLowHumidity
+          ? `Dry air detected in ${city} (${humidity}% RH). Mist leaves to maintain turgor pressure.`
+          : `Current atmospheric parameters in ${city} (${temp}°C, ${humidity}% RH) provide a healthy vegetative window.`,
+    sunlightAdvice,
+    ventilationAdvice,
+    hydrationAdvice,
+    vpdIndex,
+    vpdStatus,
+    vpdDescription,
+    urgencyLevel,
+    actionItems,
+    summary: `${city} Microclimate: ${headline}. Follow tailored sunlight, ventilation, and watering protocols to keep ${plantName} in optimal health.`
+  };
+}

@@ -26,13 +26,17 @@ interface MyGardenProps {
   onWaterPlant?: (plantId: string) => void;
   onSelectPlant?: (plant: DashboardPlant) => void;
   onOpenAuthModal?: () => void;
+  onNavigateToTab?: (tab: string) => void;
+  onLoadDemoPlants?: () => void;
 }
 
 export const MyGarden: React.FC<MyGardenProps> = ({
-  appPlants = DEFAULT_PLANTS,
+  appPlants = [],
   onWaterPlant,
   onSelectPlant,
-  onOpenAuthModal
+  onOpenAuthModal,
+  onNavigateToTab,
+  onLoadDemoPlants
 }) => {
   const { user, isEmailVerified } = useAuth();
   const {
@@ -84,22 +88,28 @@ export const MyGarden: React.FC<MyGardenProps> = ({
     };
   }, [plants]);
 
-  if (!user) {
+  if (!user && appPlants.length === 0) {
     return (
-      <div className="max-w-md mx-auto py-16 px-4 text-center space-y-4">
-        <div className="w-16 h-16 rounded-2xl bg-emerald-950/80 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mx-auto shadow-[0_0_30px_rgba(16,185,129,0.2)]">
-          <Sprout className="w-8 h-8" />
+      <div className="max-w-5xl mx-auto pb-12 px-4 md:px-0 space-y-6">
+        <div className="bg-[#0b1a13] border border-emerald-500/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5 text-emerald-300">
+            <Sprout className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>Have an existing botanical account? Sign in to restore your cloud-synchronized garden.</span>
+          </div>
+          {onOpenAuthModal && (
+            <button
+              onClick={onOpenAuthModal}
+              className="px-3.5 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold cursor-pointer shrink-0 transition-colors"
+            >
+              Sign In
+            </button>
+          )}
         </div>
-        <h3 className="text-lg font-bold text-white">Sign In to View Your Garden</h3>
-        <p className="text-xs text-emerald-200/70 leading-relaxed">
-          Create an account or sign in to save botanical discoveries, track health trends, and receive smart watering reminders.
-        </p>
-        <button
-          onClick={onOpenAuthModal}
-          className="px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
-        >
-          Sign In / Create Account
-        </button>
+
+        <EmptyGarden 
+          onNavigateToTab={onNavigateToTab} 
+          onLoadDemoPlants={onLoadDemoPlants} 
+        />
       </div>
     );
   }
@@ -124,7 +134,7 @@ export const MyGarden: React.FC<MyGardenProps> = ({
   return (
     <div className="max-w-5xl mx-auto pb-12 px-4 md:px-0 space-y-6">
       {/* Top View Mode Switcher Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#0a1610] border border-emerald-900/30 rounded-2xl p-3 md:p-4 shadow-lg">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-3 md:p-4 shadow-lg">
         <div className="flex items-center gap-2.5">
           <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
             <Sprout className="w-5 h-5" />
@@ -140,7 +150,7 @@ export const MyGarden: React.FC<MyGardenProps> = ({
         </div>
 
         {/* View Mode Tabs */}
-        <div className="inline-flex p-1 rounded-xl bg-[#060e0a] border border-emerald-900/40">
+        <div className="inline-flex p-1 rounded-xl bg-[#071610] border border-emerald-500/15">
           <button
             onClick={() => setViewMode('cards')}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
@@ -216,7 +226,10 @@ export const MyGarden: React.FC<MyGardenProps> = ({
                 </button>
               </div>
 
-              <EmptyGarden />
+              <EmptyGarden 
+                onNavigateToTab={onNavigateToTab} 
+                onLoadDemoPlants={onLoadDemoPlants} 
+              />
             </div>
           ) : (
             <>

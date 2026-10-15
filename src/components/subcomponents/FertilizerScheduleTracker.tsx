@@ -212,7 +212,7 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
   };
 
   return (
-    <div className={`bg-[#0b1711] border border-emerald-900/30 rounded-2xl p-5 shadow-lg space-y-4 relative overflow-hidden ${className}`}>
+    <div className={`bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 shadow-lg space-y-4 relative overflow-hidden ${className}`}>
       {/* Visual celebration particles when feeding is logged */}
       <AnimatePresence>
         {justFertilizedAnim && (
@@ -220,7 +220,7 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-emerald-950/90 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-center p-6 space-y-2 border border-emerald-500/50 rounded-2xl"
+            className="absolute inset-0 bg-[#071910]/95 backdrop-blur-sm z-30 flex flex-col items-center justify-center text-center p-6 space-y-2 border border-emerald-500/40 rounded-2xl"
           >
             <motion.div
               initial={{ scale: 0 }}
@@ -241,13 +241,13 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
       {/* Header with Title and Species Profile Badge */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+          <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 shrink-0">
             <Sprout className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-slate-200">Fertilizer Schedule Tracker</h3>
-              <span className="px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[10px] font-bold">
+              <h3 className="text-sm font-bold text-slate-100">Fertilizer Schedule Tracker</h3>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300 text-[10px] font-bold">
                 {profile.macronutrientFocus}
               </span>
             </div>
@@ -264,7 +264,7 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
               ? 'bg-rose-950/60 border-rose-500/40 text-rose-300' 
               : schedule.status === 'due-today' || schedule.status === 'due-soon'
               ? 'bg-amber-950/60 border-amber-500/40 text-amber-300'
-              : 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
+              : 'bg-[#071f14] border-emerald-500/30 text-emerald-300'
           }`}>
             <span className={`w-2 h-2 rounded-full ${
               schedule.status === 'overdue' ? 'bg-rose-400 animate-ping' :
@@ -277,7 +277,7 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
       </div>
 
       {/* Progress Bar with Cycle Markers */}
-      <div className="space-y-1.5 bg-[#08130d] border border-emerald-900/30 rounded-xl p-3.5">
+      <div className="space-y-1.5 bg-[#071610] border border-emerald-500/15 rounded-xl p-3.5">
         <div className="flex items-center justify-between text-xs">
           <span className="text-slate-400 flex items-center gap-1 font-medium">
             <Clock className="w-3.5 h-3.5 text-slate-500" />
@@ -289,7 +289,7 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
         </div>
 
         {/* Bar */}
-        <div className="h-2.5 w-full bg-[#040806] rounded-full overflow-hidden border border-emerald-900/40 relative">
+        <div className="h-2.5 w-full bg-[#040d08] rounded-full overflow-hidden border border-emerald-500/15 relative">
           <motion.div 
             initial={{ width: 0 }}
             animate={{ width: `${schedule.progressPercent}%` }}
@@ -320,7 +320,7 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
       {/* 3 Metric Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
         {/* Recommended Formula */}
-        <div className="p-3 bg-[#08130d] border border-emerald-900/30 rounded-xl space-y-1">
+        <div className="p-3 bg-[#071610] border border-emerald-500/15 rounded-xl space-y-1">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-400">
             <Beaker className="w-3.5 h-3.5" />
             <span>NPK Formula</span>
@@ -332,7 +332,7 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
         </div>
 
         {/* Dosage & Dilution */}
-        <div className="p-3 bg-[#08130d] border border-emerald-900/30 rounded-xl space-y-1">
+        <div className="p-3 bg-[#071610] border border-emerald-500/15 rounded-xl space-y-1">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-cyan-400">
             <Droplets className="w-3.5 h-3.5" />
             <span>Dosage & Dilution</span>
@@ -346,7 +346,7 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
         </div>
 
         {/* Season & Winter Care */}
-        <div className="p-3 bg-[#08130d] border border-emerald-900/30 rounded-xl space-y-1">
+        <div className="p-3 bg-[#071610] border border-emerald-500/15 rounded-xl space-y-1">
           <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
             <Sun className="w-3.5 h-3.5" />
             <span>Preferred Season</span>
@@ -375,7 +375,7 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
           {/* Custom Log Dialog Trigger */}
           <button
             onClick={() => setIsLogModalOpen(true)}
-            className="px-3 py-2 rounded-xl bg-[#08140e] hover:bg-[#0c1f16] border border-emerald-800/40 text-emerald-300 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+            className="px-3 py-2 rounded-xl bg-[#071610] hover:bg-[#0c2419] border border-emerald-500/20 text-emerald-300 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <Calendar className="w-3.5 h-3.5 text-emerald-400" />
             <span>Log Custom Feed</span>
@@ -397,7 +397,7 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
             <button
               onClick={handleSyncToGoogleCalendar}
               disabled={calendarSyncStatus.isSyncing}
-              className="px-3 py-2 rounded-xl bg-[#08140e] hover:bg-[#0c1f16] border border-cyan-800/40 text-cyan-300 hover:text-cyan-200 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+              className="px-3 py-2 rounded-xl bg-[#071610] hover:bg-[#0c2419] border border-cyan-800/40 text-cyan-300 hover:text-cyan-200 font-semibold text-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
               title="Sync upcoming feeding cycle to Google Calendar with push notification alarms"
             >
               {calendarSyncStatus.isSyncing ? (
@@ -552,7 +552,7 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               className="w-full max-w-md bg-[#08150f] border border-emerald-500/30 rounded-2xl p-5 shadow-2xl space-y-4"
             >
-              <div className="flex items-center justify-between border-b border-emerald-900/40 pb-3">
+              <div className="flex items-center justify-between border-b border-emerald-500/15 pb-3">
                 <div className="flex items-center gap-2">
                   <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400">
                     <Beaker className="w-4 h-4" />
@@ -586,7 +586,7 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
                           className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-all flex items-center justify-between ${
                             isSelected
                               ? 'bg-emerald-500/20 border-emerald-400 text-white shadow-sm'
-                              : 'bg-[#050c08] border-emerald-900/30 text-slate-300 hover:border-emerald-700/50'
+                              : 'bg-[#071610] border-emerald-500/15 text-slate-300 hover:border-emerald-500/30'
                           }`}
                         >
                           <div className="flex items-center gap-2">
@@ -596,7 +596,7 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
                               <p className="text-[10px] text-slate-400">{type.desc}</p>
                             </div>
                           </div>
-                          <span className="px-1.5 py-0.5 rounded bg-[#0b1711] border border-emerald-900/40 text-emerald-300 font-mono text-[10px] font-bold shrink-0 ml-2">
+                          <span className="px-1.5 py-0.5 rounded bg-[#0b1f16] border border-emerald-500/20 text-emerald-300 font-mono text-[10px] font-bold shrink-0 ml-2">
                             {type.npk}
                           </span>
                         </div>
@@ -614,7 +614,7 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
                     type="date"
                     value={customDate}
                     onChange={(e) => setCustomDate(e.target.value)}
-                    className="w-full bg-[#050c08] border border-emerald-900/40 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-[#071610] border border-emerald-500/20 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500"
                   />
                 </div>
 
@@ -628,12 +628,12 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
                     placeholder="e.g., Half-strength diluted in rainwater"
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="w-full bg-[#050c08] border border-emerald-900/40 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-[#071610] border border-emerald-500/20 rounded-xl px-3 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                   />
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center justify-end gap-2 pt-2 border-t border-emerald-900/40">
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-emerald-500/15">
                   <button
                     type="button"
                     onClick={() => setIsLogModalOpen(false)}

@@ -93,11 +93,26 @@ service cloud.firestore {
       allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
 
+    function isValidUserDoc(data) {
+      return data.userId == request.auth.uid
+        && (!('displayName' in data) || (data.displayName is string && data.displayName.size() >= 2 && data.displayName.size() <= 80))
+        && (!('bio' in data) || (data.bio == null || (data.bio is string && data.bio.size() <= 300)))
+        && (!('location' in data) || (data.location == null || (data.location is string && data.location.size() <= 100)))
+        && (!('photoURL' in data) || (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 500)))
+        && (!('fcmToken' in data) || (data.fcmToken == null || (data.fcmToken is string && data.fcmToken.size() <= 500)))
+        && (!('expertise' in data) || (data.expertise in ['beginner', 'intermediate', 'expert']))
+        && (!('gardeningStyle' in data) || (data.gardeningStyle is string && data.gardeningStyle.size() <= 100))
+        && (!('timezone' in data) || (data.timezone is string && data.timezone.size() <= 100))
+        && (!('preferredReminderTime' in data) || (data.preferredReminderTime is string && data.preferredReminderTime.size() <= 10))
+        && (!('updatedAt' in data) || data.updatedAt == request.time);
+    }
+
     match /users/{userId} {
       allow read: if isSignedIn() && userId == request.auth.uid;
-      allow write: if isSignedIn() && userId == request.auth.uid 
-        && incoming().keys().hasOnly(['fcmToken'])
-        && (incoming().fcmToken == null || incoming().fcmToken is string);
+      allow write: if isSignedIn() && userId == request.auth.uid && (
+        (incoming().keys().hasOnly(['fcmToken']) && (incoming().fcmToken == null || incoming().fcmToken is string)) ||
+        isValidUserDoc(incoming())
+      );
     }
 
     function isValidCareLogCreate(data) {
@@ -216,13 +231,16 @@ service cloud.firestore {
 
     function isValidUserPreferences(data) {
       return data.keys().hasAll(['userId', 'updatedAt'])
-        && (data.keys().size() >= 2 && data.keys().size() <= 6)
+        && (data.keys().size() >= 2 && data.keys().size() <= 10)
         && data.userId == request.auth.uid
         && data.updatedAt == request.time
+        && (!('timezone' in data) || (data.timezone is string && data.timezone.size() <= 100))
         && (!('expertise' in data) || (data.expertise in ['beginner', 'intermediate', 'expert']))
-        && (!('gardeningStyle' in data) || data.gardeningStyle is string)
+        && (!('gardeningStyle' in data) || (data.gardeningStyle is string && data.gardeningStyle.size() <= 100))
         && (!('sageTone' in data) || (data.sageTone in ['Clinical', 'Friendly', 'Supportive', 'Direct']))
-        && (!('specialInterests' in data) || data.specialInterests is list);
+        && (!('specialInterests' in data) || (data.specialInterests is list && data.specialInterests.size() <= 20))
+        && (!('temperatureUnit' in data) || (data.temperatureUnit in ['celsius', 'fahrenheit']))
+        && (!('voiceAutoPlay' in data) || data.voiceAutoPlay is bool);
     }
 
     match /userPreferences/{userId} {
@@ -316,6 +334,31 @@ service cloud.firestore {
         && incoming().targetType in ['post', 'comment']
         && incoming().createdAt == request.time;
       allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['userId', 'paymentId', 'planName', 'amount', 'currency', 'billingCycle', 'createdAt'])
+        && (data.keys().size() >= 7 && data.keys().size() <= 15)
+        && data.userId == request.auth.uid
+        && data.paymentId is string && data.paymentId.size() <= 128
+        && data.planName is string && data.planName.size() <= 200
+        && (data.amount is int || data.amount is float)
+        && data.currency is string && data.currency.size() <= 10
+        && (data.billingCycle == 'monthly' || data.billingCycle == 'yearly')
+        && (!('orderId' in data) || (data.orderId == null || data.orderId is string))
+        && (!('signature' in data) || (data.signature == null || data.signature is string))
+        && (!('userEmail' in data) || (data.userEmail == null || data.userEmail is string))
+        && (!('planId' in data) || (data.planId == null || data.planId is string))
+        && (!('method' in data) || (data.method == null || data.method is string))
+        && (!('status' in data) || (data.status in ['captured', 'failed', 'refunded', 'success']))
+        && data.createdAt == request.time;
+    }
+
+    match /transactions/{transactionId} {
+      allow create: if isSignedIn() && isValidId(transactionId) && isValidTransaction(incoming());
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
     }
   }
 }

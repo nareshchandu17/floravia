@@ -1,94 +1,98 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Sprout, Plus, Activity, CloudRain, History, TrendingUp } from 'lucide-react';
+import { Sprout, Plus, Activity, CloudRain, History, TrendingUp, Sparkles, BookOpen } from 'lucide-react';
+import { EmptyState } from '../EmptyState';
 
-export const EmptyGarden: React.FC = () => {
+interface EmptyGardenProps {
+  onNavigateToTab?: (tab: string) => void;
+  onLoadDemoPlants?: () => void;
+}
+
+export const EmptyGarden: React.FC<EmptyGardenProps> = ({ 
+  onNavigateToTab,
+  onLoadDemoPlants 
+}) => {
   return (
-    <div className="max-w-xl mx-auto py-12 px-4 space-y-12">
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center space-y-6"
+    <div className="max-w-3xl mx-auto py-4 px-4 space-y-8">
+      <EmptyState
+        variant="hero"
+        icon={Sprout}
+        badge="Botanical Sanctuary"
+        title="Your Garden is Empty"
+        description="You haven't added or scanned any botanical specimens yet. Identify your first houseplant or flower using AI camera vision to start building your personal sanctuary with automated care schedules."
+        action={{
+          label: "Scan & Identify Plant",
+          onClick: () => onNavigateToTab ? onNavigateToTab('identify') : (window.location.hash = '#identify'),
+          icon: Plus
+        }}
+        secondaryAction={{
+          label: "Browse Care Guides",
+          onClick: () => onNavigateToTab ? onNavigateToTab('care') : (window.location.hash = '#care'),
+          icon: BookOpen
+        }}
+        actions={
+          onLoadDemoPlants ? (
+            <button 
+              onClick={onLoadDemoPlants}
+              className="px-4 py-2.5 rounded-xl bg-emerald-950/50 border border-emerald-500/20 hover:border-emerald-400/40 text-emerald-300 font-medium text-xs sm:text-sm transition-all cursor-pointer hover:bg-emerald-900/30 flex items-center gap-1.5"
+              title="Populate with sample botanical collection to explore the UI"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Load Sample Plants</span>
+            </button>
+          ) : undefined
+        }
       >
-        <div className="relative inline-block">
-          <div className="absolute inset-0 bg-green-500/20 blur-3xl rounded-full" />
-          <div className="glass-card p-6 relative z-10 border-green-500/20 shadow-glow-green inline-block rounded-3xl">
-            <Sprout className="w-12 h-12 text-green-400" />
-          </div>
+        <div className="grid gap-3.5 sm:grid-cols-2 pt-6 text-left">
+          {[
+            { 
+              icon: Activity, 
+              title: "Bio-Signature Monitoring", 
+              desc: "Track health vigor, hydration status, and leaf stress indices over time with Gemini neural vision.",
+              color: "text-cyan-400",
+              bg: "bg-cyan-950/20 border-cyan-500/20"
+            },
+            { 
+              icon: CloudRain, 
+              title: "Atmospheric Sync", 
+              desc: "Real-time watering intervals dynamically adjusted based on your local microclimate temperature and humidity.",
+              color: "text-teal-400",
+              bg: "bg-teal-950/20 border-teal-500/20"
+            },
+            { 
+              icon: History, 
+              title: "Temporal Care Logs", 
+              desc: "Keep precise historical records of every hydration, misting, and nutrient feeding event.",
+              color: "text-amber-400",
+              bg: "bg-amber-950/20 border-amber-500/20"
+            },
+            { 
+              icon: TrendingUp, 
+              title: "Vitality Forecasting", 
+              desc: "Predict upcoming watering and repotting dates based on seasonal shifts and light availability.",
+              color: "text-emerald-400",
+              bg: "bg-emerald-950/20 border-emerald-500/20"
+            }
+          ].map((feature, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 + (i * 0.08) }}
+              className={`p-4 rounded-2xl border flex gap-3.5 hover:border-emerald-500/30 transition-all ${feature.bg}`}
+            >
+              <div className={`p-2.5 rounded-xl bg-[#06100b] border border-white/5 h-fit ${feature.color}`}>
+                <feature.icon className="w-4 h-4" />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-xs font-bold text-white tracking-wide">{feature.title}</h4>
+                <p className="text-[11px] text-slate-400 leading-relaxed font-ui">{feature.desc}</p>
+              </div>
+            </motion.div>
+          ))}
         </div>
-        
-        <div className="space-y-4">
-          <h3 className="text-4xl font-display font-bold text-primary tracking-tight">Your Digital Sanctuary</h3>
-          <p className="text-secondary font-ui leading-relaxed">
-            Start building your garden by identifying your first plant. 
-            Unlock advanced bio-tracking, local weather sync, and AI-powered care schedules.
-          </p>
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-          <button 
-            onClick={() => window.location.hash = '#'} 
-            className="px-8 py-3 rounded-2xl bg-green-500 text-void font-bold shadow-glow-green hover:bg-green-400 transition-all flex items-center justify-center gap-2"
-          >
-            <Plus className="w-5 h-5" /> Begin Identification
-          </button>
-          <button 
-            onClick={() => window.location.hash = '#guide'} 
-            className="px-8 py-3 rounded-2xl bg-surface border border-white/10 text-primary font-bold hover:bg-white/5 transition-all"
-          >
-            Browse Care Guides
-          </button>
-        </div>
-      </motion.div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        {[
-          { 
-            icon: Activity, 
-            title: "Bio-Signature Monitoring", 
-            desc: "Track health vigor and stress indices over time with neural analysis.",
-            color: "text-blue-400",
-            bg: "bg-blue-400/5"
-          },
-          { 
-            icon: CloudRain, 
-            title: "Atmospheric Sync", 
-            desc: "Real-time watering adjustments based on your local micro-climate.",
-            color: "text-teal-400",
-            bg: "bg-teal-400/5"
-          },
-          { 
-            icon: History, 
-            title: "Temporal Care Logs", 
-            desc: "Maintain precise records of every hydration and fertilization event.",
-            color: "text-amber-400",
-            bg: "bg-amber-400/5"
-          },
-          { 
-            icon: TrendingUp, 
-            title: "Vitality Forecasting", 
-            desc: "Predict future needs using Gemini-powered growth trend models.",
-            color: "text-green-400",
-            bg: "bg-green-400/5"
-          }
-        ].map((feature, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 + (i * 0.1) }}
-            className={`glass-card p-4 border-white/5 flex gap-4 hover:border-white/10 transition-colors ${feature.bg}`}
-          >
-            <div className={`p-3 rounded-xl bg-void/50 border border-white/5 h-fit ${feature.color}`}>
-              <feature.icon className="w-5 h-5" />
-            </div>
-            <div className="space-y-1">
-              <h4 className="text-[10px] sm:text-xs font-black uppercase tracking-widest text-primary">{feature.title}</h4>
-              <p className="text-[10px] sm:text-xs text-muted leading-relaxed font-ui">{feature.desc}</p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      </EmptyState>
     </div>
   );
 };
+

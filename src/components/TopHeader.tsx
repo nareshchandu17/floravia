@@ -15,7 +15,9 @@ import {
   AlertCircle, 
   Check,
   Sprout,
-  Volume2
+  Volume2,
+  PanelLeftClose,
+  PanelLeftOpen
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../hooks/useAuth';
@@ -34,6 +36,8 @@ interface TopHeaderProps {
   gardenPlants?: DashboardPlant[];
   onSelectPlant?: (plant: DashboardPlant) => void;
   onOpenAuthModal?: () => void;
+  isSidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({
@@ -46,7 +50,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   onToggleMobileSidebar,
   gardenPlants = [],
   onSelectPlant,
-  onOpenAuthModal
+  onOpenAuthModal,
+  isSidebarOpen = true,
+  onToggleSidebar
 }) => {
   const { user, isEmailVerified } = useAuth();
   const { notifications } = useNotifications();
@@ -141,24 +147,29 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   };
 
   return (
-    <header className="h-16 px-4 md:px-6 bg-[#070f0b]/90 backdrop-blur-md border-b border-emerald-900/20 flex items-center justify-between gap-4 sticky top-0 z-30">
-      {/* Left: Mobile Menu Trigger + Search Bar */}
-      <div className="flex items-center gap-3 flex-1 max-w-xl relative">
+    <header className="h-16 px-4 md:px-6 bg-[#071710]/95 backdrop-blur-md border-b border-emerald-500/15 flex items-center justify-between gap-4 sticky top-0 z-30">
+      {/* Left: Mobile Menu Trigger + Desktop Sidebar Toggle + Search Bar */}
+      <div className="flex items-center gap-2.5 flex-1 max-w-xl relative">
         {onToggleMobileSidebar && (
           <button 
             onClick={onToggleMobileSidebar}
-            className="md:hidden p-2 text-slate-300 hover:text-white rounded-lg hover:bg-emerald-950/40 cursor-pointer"
+            className="md:hidden p-2 text-emerald-200 hover:text-white rounded-xl hover:bg-emerald-500/15 border border-emerald-500/25 cursor-pointer shrink-0"
+            title="Open Mobile Navigation"
+            aria-label="Open Mobile Navigation"
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-5 h-5 text-emerald-400" />
           </button>
         )}
+
+        {/* Desktop Sidebar Toggle (Opens/Closes w.r.t the right data panel) */}
+    
 
         {/* ACTIVE VOICE RECORDING SEARCH BAR */}
         {isRecording ? (
           <motion.div
             initial={{ scale: 0.96, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-full bg-[#0b1f16] border border-cyan-500/50 rounded-full px-3.5 py-1.5 flex items-center justify-between gap-2 shadow-[0_0_25px_rgba(6,182,212,0.25)] relative overflow-hidden"
+            className="w-full bg-[#0b1f16] border border-emerald-500/50 rounded-full px-3.5 py-1.5 flex items-center justify-between gap-2 shadow-[0_0_25px_rgba(16,185,129,0.25)] relative overflow-hidden"
           >
             {/* Pulsing Recording Indicator */}
             <div className="flex items-center gap-2 shrink-0">
@@ -177,7 +188,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                     key={idx}
                     animate={{ height }}
                     transition={{ duration: 0.1 }}
-                    className="w-0.5 bg-cyan-400 rounded-full shadow-[0_0_6px_rgba(34,211,238,0.6)]"
+                    className="w-0.5 bg-emerald-400 rounded-full shadow-[0_0_6px_rgba(52,211,153,0.6)]"
                   />
                 );
               })}
@@ -185,7 +196,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
 
             {/* Spoken Text / Placeholder */}
             <div className="flex-1 min-w-0 px-2 text-left">
-              <p className="text-xs text-cyan-200 truncate italic">
+              <p className="text-xs text-emerald-200 truncate italic">
                 {interimTranscript ? `"${interimTranscript}"` : "Listening... Speak a plant name (e.g., 'Monstera')"}
               </p>
             </div>
@@ -203,7 +214,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               <button
                 type="button"
                 onClick={handleStopVoiceSearch}
-                className="px-2.5 py-1 rounded-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center gap-1 shadow-md transition-all cursor-pointer"
+                className="px-2.5 py-1 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1 shadow-md transition-all cursor-pointer"
                 title="Search spoken query"
               >
                 <Check className="w-3.5 h-3.5" />
@@ -214,7 +225,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         ) : (
           /* STANDARD SEARCH INPUT WITH VOICE SEARCH TRIGGER BUTTON */
           <form onSubmit={handleSearchSubmit} className="relative w-full">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Search className="w-4 h-4 text-emerald-500/60 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input 
               type="text"
               value={searchQuery}
@@ -223,7 +234,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 onSearch(e.target.value);
               }}
               placeholder="Search plants, symptoms, or click mic to speak..."
-              className="w-full bg-[#0d1c15] border border-emerald-900/40 rounded-full pl-10 pr-16 py-2 text-xs md:text-sm text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+              className="w-full bg-[#081811] border border-emerald-500/25 rounded-full pl-10 pr-16 py-2 text-xs md:text-sm text-emerald-100 placeholder:text-emerald-400/50 focus:outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400/30 transition-all"
             />
             
             <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -247,13 +258,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 onClick={handleVoiceTrigger}
                 className={`p-1.5 rounded-full transition-all cursor-pointer flex items-center justify-center ${
                   isTranscribing 
-                    ? 'text-cyan-300 bg-cyan-950/60 border border-cyan-500/50' 
+                    ? 'text-emerald-300 bg-emerald-950/60 border border-emerald-500/50' 
                     : 'text-emerald-400 hover:text-emerald-200 hover:bg-emerald-500/20'
                 }`}
                 title="Voice Search (Speak plant name)"
               >
                 {isTranscribing ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
+                  <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
                 ) : (
                   <Mic className="w-4 h-4" />
                 )}
@@ -269,9 +280,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
-              className="absolute top-full left-0 mt-2 z-50 px-3 py-1.5 bg-[#0b1f16] border border-cyan-500/40 rounded-xl shadow-xl flex items-center gap-2 text-cyan-200 text-xs"
+              className="absolute top-full left-0 mt-2 z-50 px-3 py-1.5 bg-[#0b1f16] border border-emerald-500/40 rounded-xl shadow-xl flex items-center gap-2 text-emerald-200 text-xs"
             >
-              <Loader2 className="w-3.5 h-3.5 animate-spin text-cyan-400" />
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-400" />
               <span>Transcribing voice query with Gemini AI...</span>
             </motion.div>
           )}
@@ -281,7 +292,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
               initial={{ opacity: 0, y: 10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -6 }}
-              className="absolute top-full left-0 mt-2 z-50 px-3.5 py-2 bg-[#091a12] border border-emerald-500/40 rounded-xl shadow-2xl flex items-center gap-2 text-emerald-200 text-xs backdrop-blur-md"
+              className="absolute top-full left-0 mt-2 z-50 px-3.5 py-2 bg-[#091f15] border border-emerald-500/40 rounded-xl shadow-2xl flex items-center gap-2 text-emerald-200 text-xs backdrop-blur-md"
             >
               <Sprout className="w-4 h-4 text-emerald-400 shrink-0" />
               <span className="font-semibold">{voiceToast}</span>
@@ -321,16 +332,16 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         <div className="relative">
           <button 
             onClick={() => setShowCityPicker(!showCityPicker)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400 hover:text-emerald-300 px-2 py-1 rounded-lg hover:bg-emerald-950/30 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 text-xs font-semibold text-emerald-300 hover:text-emerald-200 px-2.5 py-1.5 rounded-xl bg-[#081811] border border-emerald-500/20 hover:border-emerald-500/40 transition-colors cursor-pointer"
           >
             <MapPin className="w-3.5 h-3.5 text-emerald-400" />
             <span className="truncate max-w-[100px]">{selectedCity}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            <ChevronDown className="w-3.5 h-3.5 text-emerald-400/60" />
           </button>
 
           {showCityPicker && (
-            <div className="absolute top-full right-0 mt-2 w-44 bg-[#0e1d16] border border-emerald-800/40 rounded-xl shadow-2xl p-2 z-50">
-              <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold px-2 py-1">
+            <div className="absolute top-full right-0 mt-2 w-48 bg-[#0b1f16] border border-emerald-500/30 rounded-xl shadow-2xl p-2 z-50">
+              <p className="text-[10px] uppercase tracking-wider text-emerald-400/70 font-bold px-2 py-1">
                 Select Location
               </p>
               <div className="max-h-48 overflow-y-auto space-y-0.5">
@@ -343,8 +354,8 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                     }}
                     className={`w-full text-left px-2.5 py-1.5 text-xs rounded-lg transition-colors cursor-pointer ${
                       selectedCity === city 
-                        ? 'bg-emerald-500/20 text-emerald-300 font-bold' 
-                        : 'text-slate-300 hover:bg-emerald-950/40'
+                        ? 'bg-emerald-500/25 text-emerald-200 font-bold border border-emerald-500/30' 
+                        : 'text-slate-300 hover:bg-emerald-500/10 hover:text-white'
                     }`}
                   >
                     {city}
@@ -356,14 +367,14 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         </div>
 
         {/* Weather Indicator */}
-        <div className="hidden sm:flex items-center gap-3 text-xs font-medium text-slate-300 bg-[#0d1c15] px-3 py-1.5 rounded-full border border-emerald-900/30">
+        <div className="hidden sm:flex items-center gap-3 text-xs font-medium text-emerald-100 bg-[#081811] px-3 py-1.5 rounded-full border border-emerald-500/25">
           <div className="flex items-center gap-1 text-slate-200">
-            <Cloud className="w-3.5 h-3.5 text-slate-300" />
+            <Cloud className="w-3.5 h-3.5 text-emerald-300" />
             <span>{weatherTemp}°C</span>
           </div>
-          <div className="w-px h-3 bg-emerald-900/50" />
-          <div className="flex items-center gap-1 text-cyan-400">
-            <Droplets className="w-3.5 h-3.5 text-cyan-400" />
+          <div className="w-px h-3 bg-emerald-500/30" />
+          <div className="flex items-center gap-1 text-emerald-400">
+            <Droplets className="w-3.5 h-3.5 text-emerald-400" />
             <span>{weatherHumidity}%</span>
           </div>
         </div>
@@ -371,12 +382,12 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         {/* Notifications Icon Button */}
         <button 
           onClick={onOpenNotifications}
-          className="relative p-2 rounded-full bg-[#0d1c15] border border-emerald-900/40 text-slate-300 hover:text-white hover:border-emerald-700/50 transition-colors cursor-pointer"
+          className="relative p-2 rounded-full bg-[#081811] border border-emerald-500/25 text-emerald-200 hover:text-white hover:border-emerald-400/50 transition-colors cursor-pointer"
           title="Notifications"
         >
           <Bell className="w-4 h-4" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-[#070f0b] ring-1 ring-rose-400 animate-pulse" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-[#071710] ring-1 ring-rose-400 animate-pulse" />
           )}
         </button>
 
@@ -394,13 +405,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
                 className="w-8 h-8 rounded-full object-cover border border-emerald-500/40 shadow-[0_0_10px_rgba(16,185,129,0.2)]"
               />
               {!isEmailVerified && (
-                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-amber-400 border-2 border-[#070f0b] rounded-full" />
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-amber-400 border-2 border-[#071710] rounded-full" />
               )}
             </button>
           ) : (
             <button
               onClick={onOpenAuthModal}
-              className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all shadow-md shadow-emerald-500/20 cursor-pointer"
             >
               Sign In
             </button>

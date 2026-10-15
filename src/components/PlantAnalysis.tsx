@@ -106,10 +106,10 @@ export const PlantAnalysis: React.FC<PlantAnalysisProps> = ({ analysis, image })
               <p className="text-base md:text-lg italic text-secondary font-display">
                 {analysis.scientificName}
               </p>
-              <div className="h-4 w-px bg-white/10 mx-1" />
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 whitespace-nowrap">
-                <ShieldCheck className="w-3 h-3 text-blue-400" />
-                <span className="text-[9px] md:text-[10px] font-black text-blue-400 uppercase tracking-tighter">
+              <div className="h-4 w-px bg-emerald-500/20 mx-1" />
+              <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 whitespace-nowrap">
+                <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                <span className="text-[9px] md:text-[10px] font-black text-emerald-300 uppercase tracking-tighter">
                   Match {analysis.confidence.toFixed(1)}%
                 </span>
               </div>
@@ -121,13 +121,13 @@ export const PlantAnalysis: React.FC<PlantAnalysisProps> = ({ analysis, image })
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-4"
               >
-                <label className="text-[10px] uppercase tracking-widest text-muted font-bold block mb-1">Give it a nickname (Optional)</label>
+                <label className="text-[10px] uppercase tracking-widest text-slate-400 font-bold block mb-1">Give it a nickname (Optional)</label>
                 <input 
                   type="text" 
                   placeholder="e.g. Bessie the Basil"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
-                  className="w-full bg-surface border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-green-500 text-primary transition-colors"
+                  className="w-full bg-[#071610] border border-emerald-500/20 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-emerald-400 text-white placeholder:text-emerald-500/40 transition-colors"
                 />
               </motion.div>
             )}
@@ -137,10 +137,10 @@ export const PlantAnalysis: React.FC<PlantAnalysisProps> = ({ analysis, image })
             <button
               onClick={handleSave}
               disabled={saving || saved}
-              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-lg ${
+              className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all shadow-lg cursor-pointer ${
                 saved 
-                  ? 'bg-green-500/10 text-green-400 border border-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.15)]' 
-                  : 'bg-gradient-to-r from-green-500 to-teal-500 text-void hover:from-green-400 hover:to-teal-400 shadow-[0_0_30px_rgba(34,197,94,0.2)] hover:shadow-[0_0_40px_rgba(34,197,94,0.4)] hover:scale-105'
+                  ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)]' 
+                  : 'bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.3)] hover:shadow-[0_0_35px_rgba(16,185,129,0.45)] hover:scale-105 active:scale-95'
               }`}
             >
               {saved ? <CheckCircle2 className="w-4 h-4" /> : <BookmarkPlus className="w-4 h-4" />}
@@ -151,11 +151,11 @@ export const PlantAnalysis: React.FC<PlantAnalysisProps> = ({ analysis, image })
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
               onClick={handleShare}
-              className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 text-secondary hover:text-green-400 hover:border-green-500/30 transition-all flex items-center justify-center group relative shrink-0"
+              className="w-10 h-10 rounded-xl bg-[#071610] border border-emerald-500/20 text-emerald-300 hover:text-white hover:border-emerald-400/50 transition-all flex items-center justify-center group relative shrink-0 cursor-pointer shadow-sm"
               title="Share Identification"
             >
               <Share2 className="w-4 h-4" />
-              <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-surface border border-green-500/30 rounded-lg text-[8px] font-black uppercase tracking-[0.2em] text-green-400 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-glow-green/20 translate-y-2 group-hover:translate-y-0 z-50">
+              <div className="absolute -top-12 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-[#0b1f16] border border-emerald-500/30 rounded-lg text-[8px] font-black uppercase tracking-[0.2em] text-emerald-400 opacity-0 group-hover:opacity-100 transition-all pointer-events-none whitespace-nowrap shadow-lg translate-y-2 group-hover:translate-y-0 z-50">
                 Share Protocol
               </div>
             </motion.button>
@@ -190,11 +190,11 @@ export const PlantAnalysis: React.FC<PlantAnalysisProps> = ({ analysis, image })
         <WeatherWidget plantName={analysis.name} />
       </motion.div>
 
-      <motion.div variants={item} className="glass-card p-6 flex items-start gap-4">
-        <div className="bg-green-500/10 p-3 rounded-2xl shrink-0">
-          <Info className="w-6 h-6 text-green-400" />
+      <motion.div variants={item} className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-6 shadow-lg flex items-start gap-4">
+        <div className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 p-3 rounded-2xl shrink-0">
+          <Info className="w-6 h-6" />
         </div>
-        <p className="text-primary leading-relaxed font-ui text-base/7 pt-1">
+        <p className="text-slate-300 leading-relaxed font-ui text-base/7 pt-1">
           {analysis.summary}
         </p>
       </motion.div>
@@ -204,10 +204,10 @@ export const PlantAnalysis: React.FC<PlantAnalysisProps> = ({ analysis, image })
       </motion.div>
 
       <motion.div variants={item} className="space-y-4">
-        <h3 className="text-2xl md:text-3xl font-display text-primary flex items-center gap-2">
+        <h3 className="text-2xl md:text-3xl font-display text-white flex items-center gap-2">
           Care Instructions
         </h3>
-        <div className="markdown-body glass-card p-5 md:p-8 font-ui text-sm md:text-base">
+        <div className="markdown-body bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 md:p-8 shadow-lg font-ui text-sm md:text-base">
           <Markdown>{analysis.careInstructions}</Markdown>
         </div>
       </motion.div>

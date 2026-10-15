@@ -7,7 +7,7 @@ import { downloadPlantReport } from '../utils/plantReport';
 interface BioSignatureModalProps {
   isOpen: boolean;
   onClose: () => void;
-  plant: DashboardPlant;
+  plant: DashboardPlant | null;
 }
 
 export const BioSignatureModal: React.FC<BioSignatureModalProps> = ({
@@ -28,6 +28,8 @@ export const BioSignatureModal: React.FC<BioSignatureModalProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
+
+  if (!isOpen || !plant) return null;
 
   const bio = plant.bioSignature || {
     stomatalConductance: '0.42 mol/m²·s (Optimal)',
@@ -77,21 +79,21 @@ export const BioSignatureModal: React.FC<BioSignatureModalProps> = ({
               mass: 0.8
             }}
             onClick={(e) => e.stopPropagation()}
-            className="bg-[#0b1812] border border-emerald-500/30 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative overflow-hidden"
+            className="bg-[#0b1f16] border border-emerald-500/30 rounded-2xl max-w-lg w-full p-6 shadow-2xl relative overflow-hidden"
           >
             {/* Subtle glowing ambient background */}
             <div className="absolute -right-20 -top-20 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="flex items-center justify-between pb-4 border-b border-emerald-900/30">
+            <div className="flex items-center justify-between pb-4 border-b border-emerald-500/15">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+                <div className="p-2 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400">
                   <Dna className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white">
                     Neural Bio-Signature Analysis
                   </h3>
-                  <p className="text-xs text-emerald-400/80">
+                  <p className="text-xs text-emerald-300">
                     {plant.name} • {plant.scientificName}
                   </p>
                 </div>
@@ -108,12 +110,12 @@ export const BioSignatureModal: React.FC<BioSignatureModalProps> = ({
             <div className="py-5 space-y-4">
               {/* Vigor & Efficiency Bars */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3.5 bg-[#0e2118] border border-emerald-800/30 rounded-xl">
+                <div className="p-3.5 bg-[#071610] border border-emerald-500/15 rounded-xl">
                   <div className="flex items-center justify-between text-xs mb-1.5">
                     <span className="text-slate-300 font-medium">Cellular Hydration</span>
                     <span className="text-cyan-400 font-bold">{bio.cellularHydrationIndex}%</span>
                   </div>
-                  <div className="h-1.5 bg-emerald-950 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-[#040d08] rounded-full overflow-hidden border border-emerald-500/15">
                     <motion.div 
                       className="h-full bg-cyan-400 rounded-full"
                       initial={{ width: 0 }}
@@ -123,12 +125,12 @@ export const BioSignatureModal: React.FC<BioSignatureModalProps> = ({
                   </div>
                 </div>
 
-                <div className="p-3.5 bg-[#0e2118] border border-emerald-800/30 rounded-xl">
+                <div className="p-3.5 bg-[#071610] border border-emerald-500/15 rounded-xl">
                   <div className="flex items-center justify-between text-xs mb-1.5">
                     <span className="text-slate-300 font-medium">Metabolic Efficiency</span>
                     <span className="text-emerald-400 font-bold">{bio.metabolicEfficiency}%</span>
                   </div>
-                  <div className="h-1.5 bg-emerald-950 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-[#040d08] rounded-full overflow-hidden border border-emerald-500/15">
                     <motion.div 
                       className="h-full bg-emerald-400 rounded-full"
                       initial={{ width: 0 }}
@@ -154,7 +156,7 @@ export const BioSignatureModal: React.FC<BioSignatureModalProps> = ({
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: 0.1 + idx * 0.05 }}
-                      className="flex items-center justify-between p-3 bg-[#0d1a13] border border-emerald-900/40 rounded-xl text-xs"
+                      className="flex items-center justify-between p-3 bg-[#071610] border border-emerald-500/15 rounded-xl text-xs"
                     >
                       <div className="flex items-center gap-2 text-slate-300 font-medium">
                         <Icon className="w-4 h-4 text-emerald-400" />

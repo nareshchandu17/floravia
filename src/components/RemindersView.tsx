@@ -18,6 +18,7 @@ import {
 import { useNotifications } from '../hooks/useNotifications';
 import { createGoogleCalendarCareEvent } from '../services/googleCalendar';
 import { getUserTimezone, getTimezoneDisplayOffset } from '../utils/timezone';
+import { EmptyState } from './EmptyState';
 
 interface BotanicalReminder {
   id: string;
@@ -44,14 +45,18 @@ export const RemindersView: React.FC = () => {
   const [reminders, setReminders] = useState<BotanicalReminder[]>(() => {
     try {
       const saved = localStorage.getItem('floravia_reminders');
-      return saved ? JSON.parse(saved) : DEFAULT_REMINDERS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
     } catch {
-      return DEFAULT_REMINDERS;
+      // ignore
     }
+    return [];
   });
 
   const [showModal, setShowModal] = useState(false);
-  const [plantName, setPlantName] = useState('Orange Hybrid Tea Rose');
+  const [plantName, setPlantName] = useState('');
   const [reminderType, setReminderType] = useState<'water' | 'fertilize' | 'prune' | 'mist'>('water');
   const [frequencyDays, setFrequencyDays] = useState(3);
   const [reminderTime, setReminderTime] = useState('08:00');
@@ -202,7 +207,7 @@ export const RemindersView: React.FC = () => {
       </div>
 
       {/* List */}
-      <div className="bg-[#0b1711] border border-emerald-900/30 rounded-2xl p-5 shadow-lg space-y-4">
+      <div className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 shadow-lg space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-white">Active Botanical Cycles ({reminders.length})</h3>
           <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
@@ -212,20 +217,33 @@ export const RemindersView: React.FC = () => {
         </div>
 
         {reminders.length === 0 ? (
-          <div className="py-12 text-center text-slate-500 text-xs space-y-2">
-            <Bell className="w-8 h-8 mx-auto opacity-30 text-emerald-400" />
-            <p>No reminders configured yet. Click "New Reminder" to create one.</p>
-          </div>
+          <EmptyState
+            variant="dashed"
+            icon={Bell}
+            badge="Automated Care Cycles"
+            title="No Recurring Care Cycles"
+            description="Automated recurring care routines (such as watering every 3 days at 8:00 AM) trigger browser push alerts and sync directly to Google Calendar."
+            action={{
+              label: "Create First Reminder",
+              onClick: () => setShowModal(true),
+              icon: Plus
+            }}
+            secondaryAction={{
+              label: "Load Sample Cycles",
+              onClick: () => setReminders(DEFAULT_REMINDERS),
+              title: "Populate sample reminders to test browser alerts and Google Calendar sync"
+            }}
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {reminders.map((r) => (
               <div 
                 key={r.id}
-                className="p-4 rounded-xl bg-[#0d1c15] border border-emerald-800/30 flex flex-col justify-between gap-3"
+                className="p-4 rounded-xl bg-[#071610] border border-emerald-500/15 hover:border-emerald-500/30 transition-all flex flex-col justify-between gap-3 shadow-sm"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-xl bg-[#08130d] border border-emerald-900/40 text-emerald-400">
+                    <div className="p-2.5 rounded-xl bg-[#0b1f16] border border-emerald-500/20 text-emerald-400">
                       {r.type === 'water' ? <Droplets className="w-4 h-4 text-cyan-400" /> : <Sprout className="w-4 h-4 text-emerald-400" />}
                     </div>
                     <div>
@@ -257,7 +275,7 @@ export const RemindersView: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-emerald-900/30 text-xs">
+                <div className="flex items-center justify-between pt-2 border-t border-emerald-500/10 text-xs">
                   <div>
                     {r.googleCalendarSynced ? (
                       r.googleCalendarHtmlLink ? (
@@ -311,7 +329,7 @@ export const RemindersView: React.FC = () => {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="bg-[#0c1a13] border border-emerald-500/30 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="bg-[#0b1f16] border border-emerald-500/30 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <h3 className="text-base font-bold text-white">Create Plant Reminder</h3>
             <form onSubmit={handleCreate} className="space-y-3.5 text-xs">
               <div>
@@ -320,7 +338,7 @@ export const RemindersView: React.FC = () => {
                   type="text" 
                   value={plantName} 
                   onChange={(e) => setPlantName(e.target.value)} 
-                  className="w-full bg-[#07110c] border border-emerald-900/40 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-[#071610] border border-emerald-500/20 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500"
                   required
                 />
               </div>
@@ -331,7 +349,7 @@ export const RemindersView: React.FC = () => {
                   <select 
                     value={reminderType} 
                     onChange={(e: any) => setReminderType(e.target.value)} 
-                    className="w-full bg-[#07110c] border border-emerald-900/40 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-[#071610] border border-emerald-500/20 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500"
                   >
                     <option value="water">💧 Watering</option>
                     <option value="fertilize">🌱 Fertilizing</option>
@@ -348,7 +366,7 @@ export const RemindersView: React.FC = () => {
                     max="60"
                     value={frequencyDays} 
                     onChange={(e) => setFrequencyDays(Number(e.target.value))} 
-                    className="w-full bg-[#07110c] border border-emerald-900/40 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500"
+                    className="w-full bg-[#071610] border border-emerald-500/20 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500"
                     required
                   />
                 </div>
@@ -366,12 +384,12 @@ export const RemindersView: React.FC = () => {
                   type="time" 
                   value={reminderTime} 
                   onChange={(e) => setReminderTime(e.target.value)} 
-                  className="w-full bg-[#07110c] border border-emerald-900/40 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-[#071610] border border-emerald-500/20 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500"
                   required
                 />
               </div>
 
-              <div className="p-3 bg-[#07110c] border border-emerald-800/40 rounded-xl flex items-start gap-2.5">
+              <div className="p-3 bg-[#071610] border border-emerald-500/20 rounded-xl flex items-start gap-2.5">
                 <input
                   type="checkbox"
                   id="sync-rem-cal"
@@ -384,11 +402,11 @@ export const RemindersView: React.FC = () => {
                 </label>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-emerald-900/40">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-emerald-500/15">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 rounded-xl text-slate-400 hover:text-white"
+                  className="px-4 py-2 rounded-xl text-slate-400 hover:text-white cursor-pointer"
                 >
                   Cancel
                 </button>

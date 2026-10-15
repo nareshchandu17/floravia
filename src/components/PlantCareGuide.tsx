@@ -21,6 +21,7 @@ import { CommunityTip, subscribeToTips, submitTip } from '../services/communityT
 import { useAuth } from '../hooks/useAuth';
 import { FertilizerCalculator } from './FertilizerCalculator';
 import { DashboardPlant } from '../types/botanical';
+import { EmptyState } from './EmptyState';
 
 interface PlantCareGuideProps {
   gardenPlants?: DashboardPlant[];
@@ -260,15 +261,15 @@ export const PlantCareGuide: React.FC<PlantCareGuideProps> = ({
                 <motion.div 
                   variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { ease: [0.25, 0.46, 0.45, 0.94] } } }}
                   key={category.id} 
-                  className="bg-[#08140e] border border-emerald-900/30 rounded-3xl overflow-hidden shadow-xl"
+                  className="bg-[#0b1f16] border border-emerald-500/15 rounded-3xl overflow-hidden shadow-xl"
                 >
-                  <div className="bg-[#0b1b13] border-b border-emerald-900/30 p-5 flex items-center gap-4">
-                    <div className="p-3 bg-[#06100b] rounded-2xl text-emerald-400 border border-emerald-500/20 shadow-md">
+                  <div className="bg-[#071610] border-b border-emerald-500/10 p-5 flex items-center gap-4">
+                    <div className="p-3 bg-[#0b1f16] rounded-2xl text-emerald-400 border border-emerald-500/20 shadow-md">
                       <Icon className="w-5 h-5" />
                     </div>
                     <h3 className="font-display font-bold text-white text-lg tracking-wide">{category.title}</h3>
                   </div>
-                  <div className="divide-y divide-emerald-900/20 font-ui">
+                  <div className="divide-y divide-emerald-500/10 font-ui">
                     {category.topics.map((topic, index) => {
                       const topicId = `${category.id}-${index}`;
                       const isOpen = openTopic === topicId;
@@ -277,7 +278,7 @@ export const PlantCareGuide: React.FC<PlantCareGuideProps> = ({
                         <div key={topicId} className="group">
                           <button
                             onClick={() => toggleTopic(topicId)}
-                            className="w-full text-left px-6 py-4 flex items-center justify-between hover:bg-[#0c1e15] transition-colors focus:outline-none cursor-pointer"
+                            className="w-full text-left px-6 py-4 flex items-center justify-between hover:bg-[#0c2419] transition-colors focus:outline-none cursor-pointer"
                           >
                             <span className="font-semibold text-slate-200 group-hover:text-emerald-300 transition-colors text-sm">
                               {topic.title}
@@ -346,7 +347,7 @@ export const PlantCareGuide: React.FC<PlantCareGuideProps> = ({
                 key={tip.id}
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className={`bg-[#08140e] border border-emerald-900/30 rounded-2xl p-5 border-l-4 ${tip.isCurated ? 'border-l-amber-400' : 'border-l-emerald-500/40'}`}
+                className={`bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 border-l-4 shadow-lg ${tip.isCurated ? 'border-l-amber-400' : 'border-l-emerald-400'}`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider bg-white/5 px-2 py-0.5 rounded">
@@ -370,8 +371,19 @@ export const PlantCareGuide: React.FC<PlantCareGuideProps> = ({
               </motion.div>
             ))}
             {communityTips.length === 0 && (
-              <div className="md:col-span-2 py-12 text-center border-2 border-dashed border-emerald-900/30 rounded-3xl">
-                <p className="text-slate-400 text-xs font-ui">No community tips yet. Be the first to share your wisdom!</p>
+              <div className="md:col-span-2">
+                <EmptyState
+                  variant="dashed"
+                  icon={MessageSquare}
+                  badge="Care Wisdom"
+                  title="No Community Tips Yet"
+                  description="Be the first botanist to contribute your personal care protocol, watering trick, or pruning experience."
+                  action={{
+                    label: "Share First Tip",
+                    onClick: () => setShowSubmitForm(true),
+                    icon: Plus
+                  }}
+                />
               </div>
             )}
           </div>
@@ -386,7 +398,7 @@ export const PlantCareGuide: React.FC<PlantCareGuideProps> = ({
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-[#08140e] border border-emerald-500/30 rounded-3xl w-full max-w-lg p-6 md:p-8 relative overflow-hidden shadow-2xl"
+              className="bg-[#0b1f16] border border-emerald-500/30 rounded-3xl w-full max-w-lg p-6 md:p-8 relative overflow-hidden shadow-2xl"
             >
               <div className="absolute -right-20 -top-20 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
               

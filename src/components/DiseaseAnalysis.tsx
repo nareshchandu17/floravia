@@ -37,12 +37,12 @@ export const DiseaseAnalysis: React.FC<DiseaseAnalysisProps> = ({ diagnosis }) =
       className="w-full max-w-2xl mx-auto p-4 md:p-6 space-y-6 md:space-y-8"
     >
       <motion.div variants={item} className="space-y-4 text-center">
-        <div className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold font-ui uppercase tracking-widest text-[10px] md:text-sm shadow-[0_0_20px_rgba(0,0,0,0.5)] ${
+        <div className={`inline-flex items-center gap-2 px-6 py-2.5 rounded-2xl font-bold font-ui uppercase tracking-widest text-[10px] md:text-sm shadow-xl ${
           isHealthy 
-            ? 'glass-card text-green-400 border-green-500/30' 
-            : 'glass-card text-red-400 border-red-500/30'
+            ? 'bg-[#0b1f16] text-emerald-400 border border-emerald-500/30' 
+            : 'bg-[#0b1f16] text-rose-400 border border-rose-500/30'
         }`}>
-          {isHealthy ? <CheckCircle className="w-4 h-4 md:w-5 md:h-5 shadow-glow-green rounded-full bg-green-500/20" /> : <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 bg-red-500/20 rounded-full" />}
+          {isHealthy ? <CheckCircle className="w-4 h-4 md:w-5 md:h-5 text-emerald-400 rounded-full bg-emerald-500/20" /> : <AlertTriangle className="w-4 h-4 md:w-5 md:h-5 bg-rose-500/20 rounded-full" />}
           {isHealthy ? 'Plant Appears Healthy' : 'Disease Detected'}
         </div>
         
@@ -54,35 +54,35 @@ export const DiseaseAnalysis: React.FC<DiseaseAnalysisProps> = ({ diagnosis }) =
       </motion.div>
 
       {/* Health Score Visualization */}
-      <motion.div variants={item} className="glass-card p-6 border-white/5 bg-void/20">
+      <motion.div variants={item} className="bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-6 shadow-lg">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] uppercase tracking-widest text-muted font-bold">Health Vitality</span>
-          <span className={`text-sm font-bold ${diagnosis.healthScore > 70 ? 'text-green-400' : diagnosis.healthScore > 40 ? 'text-amber-400' : 'text-red-400'}`}>
+          <span className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Health Vitality</span>
+          <span className={`text-sm font-bold ${diagnosis.healthScore > 70 ? 'text-emerald-400' : diagnosis.healthScore > 40 ? 'text-amber-400' : 'text-rose-400'}`}>
             {diagnosis.healthScore}%
           </span>
         </div>
-        <div className="h-2 w-full bg-surface rounded-full overflow-hidden shadow-inner">
+        <div className="h-2 w-full bg-[#071610] rounded-full overflow-hidden shadow-inner border border-emerald-500/15">
           <motion.div 
             initial={{ width: 0 }}
             animate={{ width: `${diagnosis.healthScore}%` }}
             transition={{ duration: 1.5, ease: "easeOut" }}
             className={`h-full shadow-glow-sm ${
-              diagnosis.healthScore > 70 ? 'bg-green-500 shadow-glow-green' : 
+              diagnosis.healthScore > 70 ? 'bg-emerald-500 shadow-glow-green' : 
               diagnosis.healthScore > 40 ? 'bg-amber-500 shadow-glow-amber' : 
-              'bg-red-500 shadow-glow-red'
+              'bg-rose-500 shadow-glow-red'
             }`}
           />
         </div>
       </motion.div>
 
-      <motion.div variants={item} className={`glass-card p-6 border ${
-        isHealthy ? 'border-green-400/20 shadow-glow-green' : 'border-amber-400/20 shadow-[0_0_40px_rgba(251,191,36,0.1)]'
+      <motion.div variants={item} className={`bg-[#0b1f16] p-6 rounded-2xl border shadow-lg ${
+        isHealthy ? 'border-emerald-500/20' : 'border-amber-500/20'
       }`}>
-        <div className="flex items-center gap-3 mb-4 border-b border-white/5 pb-4">
-          <Stethoscope className={`w-6 h-6 ${isHealthy ? 'text-green-400' : 'text-amber-400'}`} />
-          <h3 className="font-ui font-semibold text-primary/90 text-lg">Diagnosis Analysis</h3>
+        <div className="flex items-center gap-3 mb-4 border-b border-emerald-500/10 pb-4">
+          <Stethoscope className={`w-6 h-6 ${isHealthy ? 'text-emerald-400' : 'text-amber-400'}`} />
+          <h3 className="font-ui font-semibold text-white text-lg">Diagnosis Analysis</h3>
         </div>
-        <p className="text-primary leading-relaxed font-ui text-base/7">
+        <p className="text-slate-200 leading-relaxed font-ui text-base/7">
           {diagnosis.analysis}
         </p>
       </motion.div>
@@ -91,19 +91,19 @@ export const DiseaseAnalysis: React.FC<DiseaseAnalysisProps> = ({ diagnosis }) =
         <>
           {diagnosis.severity && (
             <motion.div variants={item} className="grid grid-cols-1 gap-4">
-              <div className="glass-panel p-5 rounded-2xl flex items-center justify-between shadow-lg">
+              <div className="bg-[#0b1f16] border border-emerald-500/15 p-5 rounded-2xl flex items-center justify-between shadow-lg">
                 <div className="flex items-center gap-3">
-                  <div className="bg-red-500/10 p-2.5 rounded-xl border border-red-500/20">
-                    <Activity className="w-5 h-5 text-red-400" />
+                  <div className="bg-rose-500/10 p-2.5 rounded-xl border border-rose-500/20">
+                    <Activity className="w-5 h-5 text-rose-400" />
                   </div>
-                  <span className="font-semibold text-primary font-ui">Severity Level</span>
+                  <span className="font-semibold text-white font-ui">Severity Level</span>
                 </div>
                 <div className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest ${
                   diagnosis.severity === 'Severe' || diagnosis.severity === 'High' 
-                    ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                    ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' 
                     : diagnosis.severity === 'Medium'
                       ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                      : 'bg-teal-500/20 text-teal-400 border border-teal-500/30'
+                      : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                 }`}>
                   {diagnosis.severity}
                 </div>
@@ -113,11 +113,11 @@ export const DiseaseAnalysis: React.FC<DiseaseAnalysisProps> = ({ diagnosis }) =
 
           {diagnosis.treatment && (
             <motion.div variants={item} className="space-y-4">
-              <h3 className="text-2xl md:text-3xl font-display text-primary flex items-center gap-3">
-                <HeartPulse className="w-6 h-6 md:w-8 md:h-8 text-green-400 shadow-glow-green rounded-full" />
+              <h3 className="text-2xl md:text-3xl font-display text-white flex items-center gap-3">
+                <HeartPulse className="w-6 h-6 md:w-8 md:h-8 text-emerald-400 rounded-full" />
                 Treatment Plan
               </h3>
-              <div className="markdown-body glass-card p-5 md:p-8 font-ui text-sm md:text-base">
+              <div className="markdown-body bg-[#0b1f16] border border-emerald-500/15 rounded-2xl p-5 md:p-8 font-ui text-sm md:text-base text-slate-200 shadow-lg">
                 <Markdown>{diagnosis.treatment}</Markdown>
               </div>
             </motion.div>
