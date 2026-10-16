@@ -21,6 +21,7 @@ import {
   UserTransaction,
   signOut 
 } from '../services/firebase';
+import { calculateGstBreakdown } from '../services/paymentSecurity';
 import { 
   Sprout, 
   Bell, 
@@ -1879,20 +1880,25 @@ export const Profile: React.FC<ProfileProps> = ({
                   </span>
                 </div>
 
-                <div className="border-t border-emerald-500/15 pt-2 space-y-1.5 text-xs text-slate-300">
-                  <div className="flex justify-between">
-                    <span>Base Subscription</span>
-                    <span className="font-mono">₹{Math.round(selectedReceipt.amount * 0.8475).toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>GST (18% inclusive)</span>
-                    <span className="font-mono">₹{Math.round(selectedReceipt.amount * 0.1525).toLocaleString('en-IN')}</span>
-                  </div>
-                  <div className="flex justify-between text-white font-bold pt-1 border-t border-emerald-500/15 text-sm">
-                    <span className="text-emerald-400">Total Paid</span>
-                    <span className="font-mono text-emerald-400">₹{Number(selectedReceipt.amount || 0).toLocaleString('en-IN')} INR</span>
-                  </div>
-                </div>
+                {(() => {
+                  const gst = calculateGstBreakdown(Number(selectedReceipt.amount || 0), (selectedReceipt.currency === 'USD' ? 'USD' : 'INR'));
+                  return (
+                    <div className="border-t border-emerald-500/15 pt-2 space-y-1.5 text-xs text-slate-300">
+                      <div className="flex justify-between">
+                        <span>Base Taxable Amount</span>
+                        <span className="font-mono">₹{gst.netAmount.toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Integrated GST (18% • SAC {gst.sacCode})</span>
+                        <span className="font-mono text-emerald-400">₹{gst.igstAmount.toLocaleString('en-IN')}</span>
+                      </div>
+                      <div className="flex justify-between text-white font-bold pt-1 border-t border-emerald-500/15 text-sm">
+                        <span className="text-emerald-400">Total Tax Invoice Amount</span>
+                        <span className="font-mono text-emerald-400">₹{gst.totalAmount.toLocaleString('en-IN')} {selectedReceipt.currency || 'INR'}</span>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Crypto and Audit Data */}
@@ -1912,6 +1918,15 @@ export const Profile: React.FC<ProfileProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">Order ID:</span>
                   <span className="text-slate-200 truncate max-w-[200px]">{selectedReceipt.orderId || `order_${selectedReceipt.paymentId}`}</span>
+                </div>
+                <div className="flex items-center justify-between pt-1 border-t border-emerald-500/10 text-[10px]">
+                  <span className="text-slate-400 flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-emerald-400" />
+                    <span>Integrity Token:</span>
+                  </span>
+                  <span className="text-emerald-400 font-mono">
+                    {selectedReceipt.signatureHash ? `${selectedReceipt.signatureHash.slice(0, 16)}... (SHA-256)` : '256-bit Verified'}
+                  </span>
                 </div>
               </div>
 

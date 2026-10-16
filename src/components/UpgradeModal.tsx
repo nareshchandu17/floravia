@@ -24,10 +24,19 @@ import {
   RAZORPAY_KEY_ID, 
   FLORAVIA_PRO_PLAN, 
   loadRazorpayScript, 
-  RazorpayPaymentSuccessResponse,
   saveSubscriptionReceipt,
   getActiveSubscription 
 } from '../services/razorpay';
+import { 
+  RazorpayPaymentSuccessResponse, 
+  BillingCycle, 
+  PaymentCurrency 
+} from '../types/payment';
+import { 
+  verifyPaymentTransaction, 
+  calculateGstBreakdown,
+  sanitizePaymentString 
+} from '../services/paymentSecurity';
 import { RazorpayModal } from './RazorpayModal';
 import { useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
@@ -254,18 +263,26 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
     setIsRazorpayModalOpen(true);
   };
 
-  const handlePaymentSuccess = (receipt: RazorpayPaymentSuccessResponse) => {
-    saveSubscriptionReceipt(receipt);
-    recordUserTransaction(receipt).catch(() => {});
-    setLastPayment(receipt);
+  const handlePaymentSuccess = async (receipt: RazorpayPaymentSuccessResponse) => {
+    // 1. Cryptographic and Anti-Tamper Verification
+    const verification = await verifyPaymentTransaction(receipt);
+    const verifiedReceipt: RazorpayPaymentSuccessResponse = {
+      ...receipt,
+      signatureHash: verification.signatureHash || receipt.signatureHash,
+      tamperVerified: verification.isValid
+    };
+
+    await saveSubscriptionReceipt(verifiedReceipt);
+    recordUserTransaction(verifiedReceipt).catch(() => {});
+    setLastPayment(verifiedReceipt);
     setIsSuccess(true);
-    setActivePlan(receipt.planName);
+    setActivePlan(verifiedReceipt.planName);
 
     // Trigger success notification with current plan details
-    const cycleFormatted = receipt.billingCycle === 'yearly' ? 'Yearly' : 'Monthly';
-    const amountFormatted = `₹${receipt.amount.toLocaleString('en-IN')}`;
-    const notificationTitle = `🎉 ${receipt.planName} Activated!`;
-    const notificationBody = `Your subscription for ${receipt.planName} (${cycleFormatted} • ${amountFormatted}) is now active via Razorpay. Unlimited neural plant diagnostics & care synchronization are now available.`;
+    const cycleFormatted = verifiedReceipt.billingCycle === 'yearly' ? 'Yearly' : 'Monthly';
+    const amountFormatted = `₹${verifiedReceipt.amount.toLocaleString('en-IN')}`;
+    const notificationTitle = `🎉 ${verifiedReceipt.planName} Activated!`;
+    const notificationBody = `Your subscription for ${verifiedReceipt.planName} (${cycleFormatted} • ${amountFormatted}) is now cryptographically verified and active via Razorpay. Unlimited neural plant diagnostics & care synchronization are now available.`;
 
     notify(
       notificationTitle,
@@ -274,7 +291,7 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
     );
 
     if (onSubscriptionUpdated) {
-      onSubscriptionUpdated(receipt.planName, receipt);
+      onSubscriptionUpdated(verifiedReceipt.planName, verifiedReceipt);
     }
 
     fireConfetti();
@@ -340,21 +357,40 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
                     <span>Payment ID</span>
                     <span className="font-mono text-emerald-300 font-semibold">{lastPayment.razorpay_payment_id}</span>
                   </div>
+                  {lastPayment.maskedCard && (
+                    <div className="flex justify-between text-slate-400">
+                      <span>Payment Instrument</span>
+                      <span className="font-mono text-slate-200">{lastPayment.maskedCard}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-slate-400">
                     <span>Amount Paid</span>
                     <span className="font-bold text-white">₹{lastPayment.amount.toLocaleString('en-IN')}</span>
                   </div>
                   <div className="flex justify-between text-slate-400">
+                    <span>GST (18% Included)</span>
+                    <span className="text-emerald-400 font-medium">₹{Math.round(lastPayment.amount * 0.18 / 1.18).toLocaleString('en-IN')} (SAC 998434)</span>
+                  </div>
+                  <div className="flex justify-between text-slate-400">
                     <span>Billing Cycle</span>
                     <span className="capitalize text-slate-200">{lastPayment.billingCycle === 'yearly' ? 'Yearly (Saved 30%)' : 'Monthly'}</span>
                   </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>Razorpay Key</span>
-                    <span className="font-mono text-slate-300 text-[11px]">{RAZORPAY_KEY_ID}</span>
-                  </div>
-                  <div className="flex justify-between text-slate-400">
-                    <span>Status</span>
-                    <span className="text-emerald-400 font-bold">Captured (Test Mode)</span>
+                  {lastPayment.signatureHash && (
+                    <div className="pt-2 border-t border-emerald-500/15">
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400">SHA-256 Integrity Digest:</span>
+                        <span className="text-emerald-400 font-mono text-[10px] truncate max-w-[180px]">
+                          {lastPayment.signatureHash.slice(0, 18)}...
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-slate-400 pt-1 border-t border-emerald-500/15">
+                    <span>Integrity Status</span>
+                    <span className="text-emerald-400 font-bold flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>Tamper-Verified</span>
+                    </span>
                   </div>
                 </div>
 

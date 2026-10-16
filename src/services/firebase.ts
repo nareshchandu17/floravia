@@ -30,6 +30,9 @@ export interface FeedbackEntry {
   createdAt: any;
 }
 
+import { BillingCycle, PaymentCurrency, PaymentStatus } from '../types/payment';
+import { sanitizePaymentString } from './paymentSecurity';
+
 export interface UserTransaction {
   id?: string;
   userId: string;
@@ -40,11 +43,13 @@ export interface UserTransaction {
   planId: string;
   planName: string;
   amount: number;
-  currency: string;
-  billingCycle: 'monthly' | 'yearly';
+  currency: PaymentCurrency | string;
+  billingCycle: BillingCycle;
   method?: string;
-  status: 'captured' | 'failed' | 'refunded' | 'success';
+  status: PaymentStatus;
   createdAt: any;
+  signatureHash?: string;
+  tamperVerified?: boolean;
 }
 
 export async function recordUserTransaction(receipt: {
@@ -54,29 +59,60 @@ export async function recordUserTransaction(receipt: {
   planId?: string;
   planName: string;
   amount: number;
-  currency?: string;
-  billingCycle: 'monthly' | 'yearly';
+  currency?: PaymentCurrency | string;
+  billingCycle: BillingCycle;
   timestamp?: string;
   userEmail?: string;
   method?: string;
-  status?: string;
+  status?: PaymentStatus | string;
+  signatureHash?: string;
 }): Promise<string | null> {
   if (!auth.currentUser) return null;
+
+  // Strict input sanitization and verification
+  const cleanPaymentId = (receipt.razorpay_payment_id || '').trim();
+  if (!cleanPaymentId || !/^pay_[a-zA-Z0-9_-]{6,64}$/.test(cleanPaymentId)) {
+    console.warn("Invalid payment ID format rejected:", cleanPaymentId);
+    return null;
+  }
+
+  const cleanAmount = Number(receipt.amount);
+  if (isNaN(cleanAmount) || cleanAmount <= 0) {
+    console.warn("Invalid transaction amount rejected:", receipt.amount);
+    return null;
+  }
+
+  const cleanCurrency = (receipt.currency === 'USD' ? 'USD' : 'INR') as PaymentCurrency;
+  const cleanCycle: BillingCycle = receipt.billingCycle === 'monthly' ? 'monthly' : 'yearly';
+  const cleanPlanName = sanitizePaymentString(receipt.planName) || 'Floravia Pro Plan';
+  const cleanPlanId = sanitizePaymentString(receipt.planId) || 'pro';
+  const cleanOrderId = receipt.razorpay_order_id 
+    ? sanitizePaymentString(receipt.razorpay_order_id) 
+    : `order_${cleanPaymentId.replace(/^pay_/, '')}`;
+  const cleanSignature = receipt.razorpay_signature 
+    ? sanitizePaymentString(receipt.razorpay_signature)
+    : `sig_${cleanPaymentId}_captured`;
+  const cleanEmail = sanitizePaymentString(receipt.userEmail || auth.currentUser.email || '');
+  const cleanMethod = sanitizePaymentString(receipt.method || 'CARD');
+  const cleanStatus: PaymentStatus = (receipt.status === 'success' || receipt.status === 'captured')
+    ? 'captured'
+    : 'captured';
+
   const path = 'transactions';
   try {
     const docRef = await addDoc(collection(db, path), {
       userId: auth.currentUser.uid,
-      userEmail: receipt.userEmail || auth.currentUser.email || '',
-      paymentId: receipt.razorpay_payment_id,
-      orderId: receipt.razorpay_order_id || `order_${receipt.razorpay_payment_id.replace(/^pay_/, '')}`,
-      signature: receipt.razorpay_signature || `sig_${receipt.razorpay_payment_id}_captured`,
-      planId: receipt.planId || 'pro',
-      planName: receipt.planName,
-      amount: receipt.amount,
-      currency: receipt.currency || 'INR',
-      billingCycle: receipt.billingCycle,
-      method: receipt.method || 'CARD',
-      status: (receipt.status as any) || 'captured',
+      userEmail: cleanEmail,
+      paymentId: cleanPaymentId,
+      orderId: cleanOrderId,
+      signature: cleanSignature,
+      planId: cleanPlanId,
+      planName: cleanPlanName,
+      amount: cleanAmount,
+      currency: cleanCurrency,
+      billingCycle: cleanCycle,
+      method: cleanMethod,
+      status: cleanStatus,
       createdAt: serverTimestamp()
     });
     return docRef.id;
