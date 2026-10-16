@@ -49,6 +49,10 @@ export async function getCalendarAccessToken(forcePrompt = false): Promise<strin
     cachedAccessToken = credential.accessToken;
     return cachedAccessToken;
   } catch (err: any) {
+    if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+      console.info('Google Calendar OAuth popup closed by user.');
+      throw err;
+    }
     console.error('Google Calendar OAuth error:', err);
     throw err;
   } finally {

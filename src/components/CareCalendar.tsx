@@ -121,6 +121,9 @@ export const CareCalendar: React.FC = () => {
       });
       setTimeout(() => setCalendarToast(null), 5000);
     } catch (err: any) {
+      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+        return;
+      }
       console.error('Calendar connect error', err);
       setCalendarToast({
         title: 'Connection Notice',
@@ -163,6 +166,9 @@ export const CareCalendar: React.FC = () => {
       });
       setTimeout(() => setCalendarToast(null), 6000);
     } catch (err: any) {
+      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+        return;
+      }
       console.error('Error syncing single event:', err);
       setCalendarToast({
         title: 'Sync Error',
@@ -231,6 +237,9 @@ export const CareCalendar: React.FC = () => {
       });
       setTimeout(() => setCalendarToast(null), 6000);
     } catch (err: any) {
+      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+        return;
+      }
       console.error('Batch sync error', err);
       setCalendarToast({
         title: 'Sync Interrupted',

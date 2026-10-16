@@ -18,6 +18,17 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  const handleSignIn = async () => {
+    try {
+      await signIn();
+    } catch (err: any) {
+      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+        return;
+      }
+      console.warn("Sign in cancelled or failed:", err);
+    }
+  };
+
   return (
     <>
       <header className="sticky top-0 z-50 glass-panel border-b border-green-400/10 px-4 py-3">
@@ -108,7 +119,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab, setActiveTab }) => {
               </button>
             ) : (
               <button
-                 onClick={signIn}
+                 onClick={handleSignIn}
                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold text-void bg-gradient-to-r from-green-400 to-teal-400 hover:from-green-300 hover:to-teal-300 transition-colors flex-shrink-0 shadow-[0_0_20px_rgba(34,197,94,0.4)]"
               >
                 <LogIn className="w-4 h-4" />

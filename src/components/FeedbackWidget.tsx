@@ -22,7 +22,10 @@ export const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ analysisType }) 
       if (!user) {
         try {
           await signIn();
-        } catch (signInErr) {
+        } catch (signInErr: any) {
+          if (signInErr?.code === 'auth/popup-closed-by-user' || signInErr?.code === 'auth/cancelled-popup-request') {
+            return;
+          }
           setError("You must sign in to submit feedback.");
           return;
         }

@@ -125,6 +125,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       case 'auth/too-many-requests':
         return 'Too many attempts. Please wait a moment before trying again.';
       case 'auth/popup-closed-by-user':
+      case 'auth/cancelled-popup-request':
         return 'Google Sign-in was dismissed.';
       default:
         return err?.message || 'Authentication encountered an issue. Please try again.';
@@ -197,6 +198,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         onClose();
       }
     } catch (err: any) {
+      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+        // User closed or dismissed the popup window voluntarily; reset state cleanly
+        return;
+      }
       setError(mapAuthError(err));
     } finally {
       setLoading(false);
