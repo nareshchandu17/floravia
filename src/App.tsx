@@ -25,6 +25,7 @@ import { useAppState } from './hooks/useAppState';
 import { useAuth } from './hooks/useAuth';
 import { DashboardPlant, GrowthMeasurement } from './types/botanical';
 import { DEFAULT_PLANTS } from './data/defaultPlants';
+import { PlantSpeciesGuide } from './data/plantCareData';
 import { Leaf, Sparkles, Activity, Sprout, Bell, X, PanelLeftOpen } from 'lucide-react';
 import { POPULAR_CITY_WEATHER } from './services/weather';
 import { Analytics } from '@vercel/analytics/react';
@@ -207,6 +208,12 @@ export default function App() {
 
   const { toast, setToast } = useNotifications();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [chatInitialPrompt, setChatInitialPrompt] = useState<string | null>(null);
+
+  const handleOpenChatWithTopic = useCallback((topic: string) => {
+    setChatInitialPrompt(topic);
+    setActiveTab('chat');
+  }, [setActiveTab]);
 
   const handleUnauthorizedUpload = useCallback(() => {
     setToast({
@@ -354,6 +361,98 @@ export default function App() {
       }
     } : null));
   };
+
+  const handleAddPlantFromGuide = useCallback((plantGuide: PlantSpeciesGuide) => {
+    const existing = gardenPlants.find(p => 
+      p.scientificName?.toLowerCase() === plantGuide.scientificName?.toLowerCase() ||
+      p.name?.toLowerCase() === plantGuide.commonName?.toLowerCase()
+    );
+
+    if (existing) {
+      setCurrentPlant(existing);
+      setToast({
+        title: 'Already in Your Garden',
+        body: `${plantGuide.commonName} is already part of your botanical collection.`,
+        type: 'info'
+      });
+      return;
+    }
+
+    const newPlant: DashboardPlant = {
+      id: `guide-plant-${Date.now()}`,
+      name: plantGuide.commonName,
+      scientificName: plantGuide.scientificName,
+      nickname: plantGuide.commonName.split(' ')[0],
+      matchScore: 99.5,
+      confidence: 'High Confidence',
+      imageUrl: plantGuide.imageUrl,
+      galleryImages: [plantGuide.imageUrl],
+      healthScore: 96,
+      vigorIndexLabel: 'Vigor Index',
+      mood: 'Vibrant',
+      hydrationStatus: 'Optimal',
+      pathologyRisk: 'Low Risk',
+      neuralStress: 'Minimal',
+      aiAssessment: {
+        mood: 'Vibrant',
+        points: [
+          'Added from Floravia Plant Care Guide',
+          `Light preference: ${plantGuide.quickSpecs?.light || 'Bright indirect daylight'}`,
+          `Watering routine: ${plantGuide.quickSpecs?.water || 'Check topsoil before watering'}`
+        ]
+      },
+      priorityAdjustments: {
+        soilHydro: plantGuide.quickSpecs?.water || 'Allow topsoil to dry before watering',
+        luminance: plantGuide.quickSpecs?.light || 'Bright indirect daylight'
+      },
+      weatherInsight: {
+        city: selectedCity,
+        condition: 'Indoor Sanctuary',
+        temp: weatherTemp,
+        humidity: weatherHumidity,
+        advice: `Keep ${plantGuide.commonName} away from cold drafts and check soil moisture regularly.`
+      },
+      careEssentials: {
+        water: plantGuide.quickSpecs?.water || 'Every 1 to 2 weeks',
+        light: plantGuide.quickSpecs?.light || 'Bright indirect daylight',
+        temp: '65–80°F',
+        air: plantGuide.quickSpecs?.humidity || 'Moderate humidity',
+        summary: plantGuide.summary,
+        userRating: 5
+      },
+      healthOverview: {
+        period: 'This Week',
+        trend: [
+          { date: 'Today', score: 96, mood: 'Vibrant' }
+        ],
+        lastWatered: 'Just added',
+        lastFertilized: 'Not fertilized yet',
+        nextWatering: 'Check in 2–3 days',
+        nextPruning: 'Inspect in 30 days'
+      },
+      timeline: [
+        { date: 'Today', action: 'Added from Plant Care Guide', type: 'identified', color: 'emerald' }
+      ],
+      aiTip: {
+        tip: `Keep in ${plantGuide.quickSpecs?.light?.toLowerCase() || 'bright indirect light'} and test soil with finger before watering.`
+      },
+      careInstructions: {
+        detailedText: plantGuide.summary,
+        water: plantGuide.quickSpecs?.water || 'Every 1 to 2 weeks',
+        light: plantGuide.quickSpecs?.light || 'Bright indirect light',
+        temp: '65–80°F',
+        air: plantGuide.quickSpecs?.humidity || 'Moderate'
+      }
+    };
+
+    setGardenPlants(prev => [newPlant, ...prev]);
+    setCurrentPlant(newPlant);
+    setToast({
+      title: 'Added to Your Garden! 🌿',
+      body: `${plantGuide.commonName} has been added to your collection.`,
+      type: 'success'
+    });
+  }, [gardenPlants, selectedCity, weatherTemp, weatherHumidity, setToast]);
 
   const handleWaterPlant = (plantId: string) => {
     const updatePlant = (p: DashboardPlant): DashboardPlant => {
@@ -582,7 +681,7 @@ export default function App() {
                   onNavigateToTab={(tab) => setActiveTab(tab)}
                   onWaterPlant={handleWaterPlant}
                   onFertilizePlant={handleFertilizePlant}
-                  onOpenChatWithTopic={() => setActiveTab('chat')}
+                  onOpenChatWithTopic={handleOpenChatWithTopic}
                   onGrowthUpdated={handleGrowthUpdated}
                   onLoadStarterPlants={() => setGardenPlants(DEFAULT_PLANTS)}
                 />
@@ -720,18 +819,26 @@ export default function App() {
               </motion.div>
             )}
 
-            {/* 7. PLANT ENCYCLOPEDIA / GUIDE */}
+            {/* 7. PLANT CARE GUIDE */}
             {activeTab === 'guide' && (
               <motion.div
                 key="guide-tab"
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="max-w-5xl mx-auto p-4"
+                className="max-w-6xl mx-auto p-2 md:p-4"
               >
                 <PlantCareGuide 
                   gardenPlants={gardenPlants}
                   onNavigateToCalendar={() => setActiveTab('calendar')}
+                  onNavigateToGarden={() => setActiveTab('garden')}
+                  onAddPlantToGarden={handleAddPlantFromGuide}
+                  onOpenChatWithTopic={handleOpenChatWithTopic}
+                  onSelectPlant={(plant) => {
+                    setCurrentPlant(plant);
+                    setActiveTab('home');
+                  }}
+                  onOpenAuthModal={() => openAuthModal('login')}
                 />
               </motion.div>
             )}
@@ -745,7 +852,10 @@ export default function App() {
                 exit={{ opacity: 0 }}
                 className="w-full flex flex-col p-2 md:p-4"
               >
-                <ChatBot />
+                <ChatBot 
+                  initialPrompt={chatInitialPrompt}
+                  onClearInitialPrompt={() => setChatInitialPrompt(null)}
+                />
               </motion.div>
             )}
 

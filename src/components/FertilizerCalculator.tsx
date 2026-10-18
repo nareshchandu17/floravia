@@ -232,7 +232,7 @@ export const GROWTH_STAGES: {
     intervalMultiplier: 1.5,
     npkRecommendation: '1-1-1 or ultra-diluted Seaweed',
     focus: 'Root hair establishment & safe acclimation',
-    description: 'Immature root systems are extremely vulnerable to osmotic burn. Keep concentration below 25% label rate.',
+    description: 'Immature root systems are extremely vulnerable to root damage caused by a fertilizer solution that is too strong. Keep concentration below 25% label rate.',
     icon: Sprout,
     colorClass: 'emerald'
   },
@@ -491,13 +491,13 @@ Safety Note: ${currentSpecies.specialNotes}`;
         <div className="space-y-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold uppercase tracking-wider">
             <FlaskConical className="w-3.5 h-3.5" />
-            Precision Nutrition Engine
+            Plant Food & Nutrition Calculator
           </div>
           <h2 className="text-2xl md:text-3xl font-display font-bold text-white tracking-tight flex items-center gap-2.5">
-            Fertilizer Dosage & Frequency Calculator
+            How Much Plant Food Should I Use?
           </h2>
           <p className="text-xs md:text-sm text-slate-300 max-w-2xl leading-relaxed font-ui">
-            Calculate scientifically calibrated nutrient concentrations, NPK ratios, dilution rates, and feeding intervals matched to your plant's species and developmental stage.
+            Find the right amount of plant food for your plant species, growth stage, and pot size so you give roots just what they need without risking fertilizer damage.
           </p>
         </div>
 

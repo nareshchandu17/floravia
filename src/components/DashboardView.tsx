@@ -1033,7 +1033,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   onClick={() => onNavigateToTab('guide')}
                   className="text-[11px] font-semibold text-emerald-300 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
                 >
-                  <span>Species Encyclopedia</span>
+                  <span>Plant Care Guide</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </button>
               </div>

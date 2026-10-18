@@ -37,7 +37,12 @@ import { useVoice } from '../hooks/useVoice';
 import { useAuth } from '../hooks/useAuth';
 import { AuthModal } from './AuthModal';
 
-export const ChatBot: React.FC = () => {
+export interface ChatBotProps {
+  initialPrompt?: string | null;
+  onClearInitialPrompt?: () => void;
+}
+
+export const ChatBot: React.FC<ChatBotProps> = ({ initialPrompt, onClearInitialPrompt }) => {
   const { user } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'signup' | 'verify-email'>('verify-email');
@@ -66,6 +71,13 @@ export const ChatBot: React.FC = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
+  
+  useEffect(() => {
+    if (initialPrompt && initialPrompt.trim()) {
+      setInput(initialPrompt);
+      onClearInitialPrompt?.();
+    }
+  }, [initialPrompt, setInput, onClearInitialPrompt]);
 
   const {
     isRecording,

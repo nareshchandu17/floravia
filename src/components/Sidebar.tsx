@@ -61,7 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'garden', label: 'My Garden', icon: Sprout },
     { id: 'calendar', label: 'Care Calendar', icon: Calendar },
     { id: 'community', label: 'Community Forum', icon: Users },
-    { id: 'guide', label: 'Plant Encyclopedia', icon: BookOpen },
+    { id: 'guide', label: 'Plant Care Guide', icon: BookOpen },
     { id: 'chat', label: 'AI Assistant', icon: Sparkles },
     { id: 'reminders', label: 'Reminders', icon: Bell },
     { id: 'shop', label: 'Shop', icon: ShoppingBag },
