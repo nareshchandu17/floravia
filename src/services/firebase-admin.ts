@@ -1,4 +1,5 @@
 import { cert, initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { getMessaging } from 'firebase-admin/messaging';
 
@@ -17,15 +18,20 @@ const getFirebaseAdmin = () => {
       credential: cert(serviceAccount)
     });
 
-    const firestoreConfig = require('../../firebase-applet-config.json');
+    let firestoreConfig: any = {};
+    try {
+      firestoreConfig = require('../../firebase-applet-config.json');
+    } catch {}
     const db = getFirestore(app);
-    if (firestoreConfig?.firestoreDatabaseId) {
-       db.settings({ databaseId: firestoreConfig.firestoreDatabaseId });
+    const databaseId = process.env.VITE_FIRESTORE_DATABASE_ID || process.env.FIRESTORE_DATABASE_ID || firestoreConfig?.firestoreDatabaseId;
+    if (databaseId) {
+       db.settings({ databaseId });
     }
     
     return {
       adminApp: app,
       adminDb: db,
+      adminAuth: getAuth(app),
       adminMessaging: getMessaging(app)
     };
   } catch (e) {

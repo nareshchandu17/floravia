@@ -80,7 +80,7 @@ export const MyGarden: React.FC<MyGardenProps> = ({
       acc[p.mood || 'Vibrant'] = (acc[p.mood || 'Vibrant'] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
-    const moodEntries = Object.entries(mostCommonMood).sort((a, b) => b[1] - a[1]);
+    const moodEntries = Object.entries(mostCommonMood).sort((a, b) => Number(b[1]) - Number(a[1]));
     
     return {
       avgHealth,

@@ -1,6 +1,6 @@
 import { GoogleGenAI, GenerateContentResponse, Modality } from "@google/genai";
 
-const apiKey = process.env.GEMINI_API_KEY || "";
+const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY || "";
 const ai = new GoogleGenAI({ apiKey });
 
 export interface PlantAnalysis {

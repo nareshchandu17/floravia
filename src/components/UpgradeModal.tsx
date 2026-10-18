@@ -16,7 +16,9 @@ import {
   Info,
   Calendar,
   Activity,
-  Sprout
+  Sprout,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { fireConfetti } from '../utils/confetti';
@@ -24,6 +26,9 @@ import {
   RAZORPAY_KEY_ID, 
   FLORAVIA_PRO_PLAN, 
   loadRazorpayScript, 
+  createBackendOrder,
+  verifyBackendPayment,
+  launchRazorpayCheckout,
   saveSubscriptionReceipt,
   getActiveSubscription 
 } from '../services/razorpay';
@@ -33,14 +38,11 @@ import {
   PaymentCurrency 
 } from '../types/payment';
 import { 
-  verifyPaymentTransaction, 
   calculateGstBreakdown,
   sanitizePaymentString 
 } from '../services/paymentSecurity';
-import { RazorpayModal } from './RazorpayModal';
 import { useAuth } from '../hooks/useAuth';
 import { useNotifications } from '../hooks/useNotifications';
-import { recordUserTransaction } from '../services/firebase';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -187,8 +189,10 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
   const [viewMode, setViewMode] = useState<'checkout' | 'comparison'>('checkout');
   const [isSuccess, setIsSuccess] = useState(false);
   const [lastPayment, setLastPayment] = useState<RazorpayPaymentSuccessResponse | null>(null);
-  const [isRazorpayModalOpen, setIsRazorpayModalOpen] = useState(false);
   const [activePlan, setActivePlan] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStatus, setProcessingStatus] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -196,7 +200,6 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
       if (active) {
         setActivePlan(active.planName);
       }
-      // Preload Razorpay Checkout.js script
       loadRazorpayScript();
     }
   }, [isOpen]);
@@ -209,92 +212,105 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
   const monthlyRateUSD = billingCycle === 'yearly' ? currentPlan.priceUSDAnnual : currentPlan.priceUSDMonthly;
   const monthlyRateINR = billingCycle === 'yearly' ? currentPlan.priceINRAnnual : currentPlan.priceINRMonthly;
 
-  const handleStartPayment = () => {
-    // If official Razorpay checkout script loaded and available
-    if ((window as any).Razorpay) {
-      try {
-        const options = {
-          key: RAZORPAY_KEY_ID,
-          amount: amountINR * 100, // paise
-          currency: 'INR',
-          name: 'Floravia Botanical AI',
-          description: `Floravia Pro (${billingCycle === 'yearly' ? 'Yearly' : 'Monthly'})`,
-          image: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=128&q=80',
-          handler: function (response: any) {
-            handlePaymentSuccess({
-              razorpay_payment_id: response.razorpay_payment_id || `pay_${Date.now()}`,
-              razorpay_order_id: response.razorpay_order_id || `order_${Date.now()}`,
-              razorpay_signature: response.razorpay_signature || 'sig_verified',
-              planId: 'pro',
-              planName: currentPlan.name,
-              amount: amountINR,
-              currency: 'INR',
-              billingCycle,
-              timestamp: new Date().toISOString(),
-              userEmail: user?.email || 'botanist@floravia.ai',
-              method: 'RAZORPAY_CHECKOUT'
+  const handleStartPayment = async () => {
+    setCheckoutError(null);
+    if (!user) {
+      setCheckoutError('Please sign in to upgrade to Floravia Pro.');
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      setProcessingStatus('Securing authoritative order from server...');
+      const token = await user.getIdToken();
+
+      // 1. Authoritative order creation on backend
+      const order = await createBackendOrder({
+        planId: 'pro',
+        billingCycle,
+        token
+      });
+
+      setProcessingStatus('Launching official Razorpay checkout...');
+
+      // 2. Launch official Razorpay Checkout SDK
+      await launchRazorpayCheckout({
+        order,
+        userEmail: user.email || undefined,
+        userName: user.displayName || undefined,
+        onSuccess: async (response) => {
+          setProcessingStatus('Verifying cryptographic HMAC signature on server...');
+          try {
+            // 3. Server-side verification
+            const verifyRes = await verifyBackendPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              token
             });
-          },
-          prefill: {
-            name: user?.displayName || 'Floravia Botanist',
-            email: user?.email || 'botanist@floravia.ai',
-            contact: '9999999999'
-          },
-          theme: {
-            color: '#10b981'
+
+            if (verifyRes.success) {
+              const receipt: RazorpayPaymentSuccessResponse = {
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                planId: 'pro',
+                planName: currentPlan.name,
+                amount: amountINR,
+                currency: 'INR',
+                billingCycle,
+                timestamp: new Date().toISOString(),
+                userEmail: user?.email || 'botanist@floravia.ai',
+                method: 'RAZORPAY_CHECKOUT'
+              };
+
+              await saveSubscriptionReceipt(receipt);
+              setLastPayment(receipt);
+              setIsSuccess(true);
+              setActivePlan(currentPlan.name);
+              setIsProcessing(false);
+              setProcessingStatus(null);
+
+              window.dispatchEvent(new CustomEvent('floravia_subscription_changed', { detail: verifyRes.subscription }));
+
+              const cycleFormatted = billingCycle === 'yearly' ? 'Yearly' : 'Monthly';
+              const amountFormatted = `₹${amountINR.toLocaleString('en-IN')}`;
+              notify(
+                `🎉 ${currentPlan.name} Activated!`,
+                `Your subscription (${cycleFormatted} • ${amountFormatted}) is cryptographically verified and active. Unlimited neural plant diagnostics & care synchronization are now available.`,
+                'success'
+              );
+
+              if (onSubscriptionUpdated) {
+                onSubscriptionUpdated(currentPlan.name, receipt);
+              }
+
+              fireConfetti();
+            }
+          } catch (vErr: any) {
+            console.error('Payment verification failed:', vErr);
+            setCheckoutError(vErr.message || 'Server verification failed. Please contact support.');
+            setIsProcessing(false);
+            setProcessingStatus(null);
           }
-        };
-
-        const rzp = new (window as any).Razorpay(options);
-        rzp.on('payment.failed', function () {
-          // Open integrated test modal on failure or sandbox block
-          setIsRazorpayModalOpen(true);
-        });
-        rzp.open();
-        return;
-      } catch {
-        // Fallback to integrated Razorpay modal
-        setIsRazorpayModalOpen(true);
-        return;
-      }
+        },
+        onDismiss: () => {
+          setIsProcessing(false);
+          setProcessingStatus(null);
+        },
+        onError: (err) => {
+          console.error('Razorpay checkout error:', err);
+          setCheckoutError(err.message || 'Payment failed or was cancelled.');
+          setIsProcessing(false);
+          setProcessingStatus(null);
+        }
+      });
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      setCheckoutError(err.message || 'Could not initiate checkout. Please try again.');
+      setIsProcessing(false);
+      setProcessingStatus(null);
     }
-
-    // Default to integrated Razorpay test sandbox modal
-    setIsRazorpayModalOpen(true);
-  };
-
-  const handlePaymentSuccess = async (receipt: RazorpayPaymentSuccessResponse) => {
-    // 1. Cryptographic and Anti-Tamper Verification
-    const verification = await verifyPaymentTransaction(receipt);
-    const verifiedReceipt: RazorpayPaymentSuccessResponse = {
-      ...receipt,
-      signatureHash: verification.signatureHash || receipt.signatureHash,
-      tamperVerified: verification.isValid
-    };
-
-    await saveSubscriptionReceipt(verifiedReceipt);
-    recordUserTransaction(verifiedReceipt).catch(() => {});
-    setLastPayment(verifiedReceipt);
-    setIsSuccess(true);
-    setActivePlan(verifiedReceipt.planName);
-
-    // Trigger success notification with current plan details
-    const cycleFormatted = verifiedReceipt.billingCycle === 'yearly' ? 'Yearly' : 'Monthly';
-    const amountFormatted = `₹${verifiedReceipt.amount.toLocaleString('en-IN')}`;
-    const notificationTitle = `🎉 ${verifiedReceipt.planName} Activated!`;
-    const notificationBody = `Your subscription for ${verifiedReceipt.planName} (${cycleFormatted} • ${amountFormatted}) is now cryptographically verified and active via Razorpay. Unlimited neural plant diagnostics & care synchronization are now available.`;
-
-    notify(
-      notificationTitle,
-      notificationBody,
-      'success'
-    );
-
-    if (onSubscriptionUpdated) {
-      onSubscriptionUpdated(verifiedReceipt.planName, verifiedReceipt);
-    }
-
-    fireConfetti();
   };
 
   return (
@@ -535,14 +551,40 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
                       <Lock className="w-4 h-4 text-emerald-400" />
                     </div>
 
+                    {/* Error Banner */}
+                    {checkoutError && (
+                      <div className="p-3 mb-4 rounded-xl bg-red-950/70 border border-red-500/40 text-red-200 text-xs flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+                        <span>{checkoutError}</span>
+                      </div>
+                    )}
+
+                    {/* Processing State Indicator */}
+                    {isProcessing && processingStatus && (
+                      <div className="p-3 mb-4 rounded-xl bg-emerald-950/70 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 text-emerald-400 animate-spin shrink-0" />
+                        <span>{processingStatus}</span>
+                      </div>
+                    )}
+
                     {/* Action Button */}
                     <button
                       onClick={handleStartPayment}
-                      className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-extrabold text-sm rounded-xl transition-all shadow-[0_0_30px_rgba(16,185,129,0.35)] cursor-pointer flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
+                      disabled={isProcessing}
+                      className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-extrabold text-sm rounded-xl transition-all shadow-[0_0_30px_rgba(16,185,129,0.35)] cursor-pointer flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
                     >
-                      <CreditCard className="w-4 h-4" />
-                      <span>Pay ₹{amountINR.toLocaleString('en-IN')} with Razorpay</span>
-                      <ArrowRight className="w-4 h-4" />
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <span>Processing Secure Payment...</span>
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="w-4 h-4" />
+                          <span>Pay ₹{amountINR.toLocaleString('en-IN')} with Razorpay</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </>
+                      )}
                     </button>
                   </>
                 ) : (
@@ -770,22 +812,6 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
           </motion.div>
         </div>
       </AnimatePresence>
-
-      {/* Razorpay Test Mode Checkout Modal */}
-      <RazorpayModal
-        isOpen={isRazorpayModalOpen}
-        onClose={() => setIsRazorpayModalOpen(false)}
-        planName={currentPlan.name}
-        amountINR={amountINR}
-        amountUSD={amountUSD}
-        billingCycle={billingCycle}
-        userEmail={user?.email || 'botanist@floravia.ai'}
-        userName={user?.displayName || 'Floravia Botanist'}
-        onSuccess={(receipt) => {
-          setIsRazorpayModalOpen(false);
-          handlePaymentSuccess(receipt);
-        }}
-      />
     </>
   );
 };

@@ -20,7 +20,7 @@ import {
   PanelLeftClose
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
-import { getActiveSubscription } from '../services/razorpay';
+import { useSubscription } from '../hooks/useSubscription';
 
 export type NavigationTab = 
   | 'home' 
@@ -51,24 +51,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse
 }) => {
   const { user, isEmailVerified, signOut } = useAuth();
+  const { isPro, subscription } = useSubscription();
   const [showUserMenu, setShowUserMenu] = React.useState(false);
-  const [activePlan, setActivePlan] = useState<string | null>(() => {
-    const sub = getActiveSubscription();
-    return sub ? sub.planName : null;
-  });
-
-  useEffect(() => {
-    const handleStorage = () => {
-      const sub = getActiveSubscription();
-      setActivePlan(sub ? sub.planName : null);
-    };
-    window.addEventListener('storage', handleStorage);
-    const timer = setInterval(handleStorage, 2500);
-    return () => {
-      window.removeEventListener('storage', handleStorage);
-      clearInterval(timer);
-    };
-  }, []);
+  const activePlan = isPro ? (subscription?.planName || 'Floravia Pro Plan') : null;
 
   const navItems: { id: NavigationTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'home', label: 'Home', icon: Home },

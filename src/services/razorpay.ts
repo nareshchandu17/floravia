@@ -1,28 +1,32 @@
 /**
- * Razorpay Payment Integration Service
- * Configured with Test Mode Keys from environment.
- * Hardened with cryptographic verification, anti-tampering guards, and GST auditing.
+ * Floravia Razorpay Client Integration Service
+ * Type-safe frontend client for backend-mediated payment processing,
+ * official Razorpay Checkout launcher, and offline receipt caching.
  */
 
 import { 
   RazorpayPlan, 
   RazorpayPaymentSuccessResponse, 
   ActiveSubscriptionState,
+  UserSubscriptionState,
+  ServerTransaction,
   GstTaxBreakdown,
   BillingCycle,
-  PaymentCurrency
+  PaymentCurrency,
+  CreateOrderSuccessResponse,
+  VerifyPaymentSuccessResponse,
+  RazorpayCheckoutOptions
 } from '../types/payment';
 import { 
   CANONICAL_PRO_PLAN, 
   calculateGstBreakdown, 
-  verifyPaymentTransaction,
-  computeCryptographicSignature,
   sanitizePaymentString 
 } from './paymentSecurity';
 
 export const RAZORPAY_KEY_ID = 
   process.env.RAZORPAY_KEY_ID || 
-  'rzp_test_SYbbQQ7d2pv0ks';
+  (import.meta as any).env?.VITE_RAZORPAY_KEY_ID || 
+  '';
 
 export const FLORAVIA_PRO_PLAN: RazorpayPlan = {
   id: CANONICAL_PRO_PLAN.id,
@@ -44,8 +48,14 @@ export const FLORAVIA_PRO_PLAN: RazorpayPlan = {
   ]
 };
 
-// Re-export types for backward compatibility
-export type { RazorpayPlan, RazorpayPaymentSuccessResponse, ActiveSubscriptionState, GstTaxBreakdown };
+// Re-export types
+export type { 
+  RazorpayPlan, 
+  RazorpayPaymentSuccessResponse, 
+  ActiveSubscriptionState, 
+  UserSubscriptionState,
+  GstTaxBreakdown 
+};
 
 /**
  * Loads the official Razorpay checkout script (checkout.razorpay.com/v1/checkout.js)
@@ -67,7 +77,7 @@ export const loadRazorpayScript = (): Promise<boolean> => {
     script.async = true;
     script.onload = () => resolve(true);
     script.onerror = () => {
-      console.warn('Could not load external Razorpay script CDN, fallback mode active.');
+      console.error('Could not load official Razorpay script from CDN.');
       resolve(false);
     };
     document.body.appendChild(script);
@@ -75,106 +85,157 @@ export const loadRazorpayScript = (): Promise<boolean> => {
 };
 
 /**
- * Persists verified payment receipt in localStorage for audit & receipt viewing.
- * Automatically verifies cryptographic signature and guards against tampering.
+ * Initiates order creation on the trusted backend with the user's auth token.
  */
-export const saveSubscriptionReceipt = async (
-  receipt: RazorpayPaymentSuccessResponse
-): Promise<{ success: boolean; signatureHash?: string; errors?: string[] }> => {
-  try {
-    // 1. Run anti-tamper integrity verification
-    const verification = await verifyPaymentTransaction(receipt);
-    if (!verification.isValid) {
-      console.error('Payment receipt verification failed:', verification.errors);
-      return { success: false, errors: verification.errors };
-    }
+export async function createBackendOrder(params: {
+  planId: 'pro';
+  billingCycle: BillingCycle;
+  token: string;
+}): Promise<CreateOrderSuccessResponse> {
+  const response = await fetch('/api/razorpay/create-order', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${params.token}`
+    },
+    body: JSON.stringify({
+      planId: params.planId,
+      billingCycle: params.billingCycle
+    })
+  });
 
-    // 2. Prepare sanitized, cryptographically stamped receipt
-    const verifiedReceipt: RazorpayPaymentSuccessResponse = {
-      ...receipt,
-      planId: receipt.planId || 'pro',
-      planName: sanitizePaymentString(receipt.planName) || FLORAVIA_PRO_PLAN.name,
-      userEmail: sanitizePaymentString(receipt.userEmail),
-      signatureHash: verification.signatureHash,
-      tamperVerified: true
-    };
-
-    // 3. Persist to audit history
-    const existingRaw = localStorage.getItem('floravia_subscription_receipts');
-    const existing: RazorpayPaymentSuccessResponse[] = existingRaw ? JSON.parse(existingRaw) : [];
-    
-    // Deduplicate by payment ID
-    const filtered = existing.filter(item => item.razorpay_payment_id !== verifiedReceipt.razorpay_payment_id);
-    filtered.unshift(verifiedReceipt);
-    localStorage.setItem('floravia_subscription_receipts', JSON.stringify(filtered.slice(0, 50)));
-
-    // 4. Update current active plan state with tamper-verified signature
-    const subscriptionDurationDays = verifiedReceipt.billingCycle === 'yearly' ? 365 : 30;
-    const expiresAt = new Date(Date.now() + subscriptionDurationDays * 86400000).toISOString();
-    
-    const activeState: ActiveSubscriptionState = {
-      planId: verifiedReceipt.planId,
-      planName: verifiedReceipt.planName,
-      billingCycle: verifiedReceipt.billingCycle,
-      paymentId: verifiedReceipt.razorpay_payment_id,
-      orderId: verifiedReceipt.razorpay_order_id,
-      subscribedAt: verifiedReceipt.timestamp,
-      expiresAt,
-      signatureHash: verification.signatureHash,
-      tamperVerified: true
-    };
-
-    localStorage.setItem('floravia_current_plan', JSON.stringify(activeState));
-
-    // Dispatch storage events
-    window.dispatchEvent(new Event('storage'));
-    window.dispatchEvent(new CustomEvent('floravia_transactions_updated', { detail: verifiedReceipt }));
-
-    return { success: true, signatureHash: verification.signatureHash };
-  } catch (e) {
-    console.error('Error saving subscription receipt:', e);
-    return { success: false, errors: ['Failed to serialize payment receipt to storage.'] };
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to initiate checkout order on server.');
   }
-};
+
+  return data as CreateOrderSuccessResponse;
+}
 
 /**
- * Retrieves all stored subscription receipts from localStorage.
+ * Submits returned Razorpay payment signature to the server for cryptographic verification.
  */
-export const getLocalSubscriptionReceipts = (): RazorpayPaymentSuccessResponse[] => {
-  try {
-    const existingRaw = localStorage.getItem('floravia_subscription_receipts');
-    if (!existingRaw) return [];
-    const parsed = JSON.parse(existingRaw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
+export async function verifyBackendPayment(params: {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+  token: string;
+}): Promise<VerifyPaymentSuccessResponse> {
+  const response = await fetch('/api/razorpay/verify', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${params.token}`
+    },
+    body: JSON.stringify({
+      razorpay_order_id: params.razorpay_order_id,
+      razorpay_payment_id: params.razorpay_payment_id,
+      razorpay_signature: params.razorpay_signature
+    })
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.error || 'Payment signature could not be verified by server.');
   }
-};
+
+  return data as VerifyPaymentSuccessResponse;
+}
 
 /**
- * Retrieves and validates the current active subscription from localStorage.
- * Ensures expired or tampered subscriptions cannot masquerade as Pro.
+ * Fetches server-authoritative subscription state for the authenticated user.
  */
-export const getActiveSubscription = (): ActiveSubscriptionState | null => {
-  try {
-    const saved = localStorage.getItem('floravia_current_plan');
-    if (!saved) return null;
-    
-    const parsed: ActiveSubscriptionState = JSON.parse(saved);
-    if (!parsed || !parsed.expiresAt || !parsed.paymentId) {
-      return null;
+export async function fetchSubscriptionStatus(token: string): Promise<UserSubscriptionState> {
+  const response = await fetch('/api/subscription/status', {
+    headers: {
+      'Authorization': `Bearer ${token}`
     }
+  });
 
-    const expiryTime = new Date(parsed.expiresAt).getTime();
-    if (isNaN(expiryTime) || expiryTime < Date.now()) {
-      return null;
-    }
-
-    return parsed;
-  } catch {
-    return null;
+  if (!response.ok) {
+    throw new Error('Failed to retrieve subscription status from backend.');
   }
-};
+
+  const data = await response.json();
+  return data.subscription as UserSubscriptionState;
+}
+
+/**
+ * Fetches server-authoritative transaction history for the authenticated user.
+ */
+export async function fetchUserTransactions(token: string): Promise<ServerTransaction[]> {
+  const response = await fetch('/api/subscription/transactions', {
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to retrieve user transactions from backend.');
+  }
+
+  const data = await response.json();
+  return data.transactions as ServerTransaction[];
+}
+
+/**
+ * Opens official Razorpay modal with server order configuration.
+ */
+export async function launchRazorpayCheckout(options: {
+  order: CreateOrderSuccessResponse;
+  userEmail?: string;
+  userName?: string;
+  onSuccess: (response: {
+    razorpay_payment_id: string;
+    razorpay_order_id: string;
+    razorpay_signature: string;
+  }) => void;
+  onDismiss?: () => void;
+  onError?: (err: Error) => void;
+}): Promise<void> {
+  const isLoaded = await loadRazorpayScript();
+  if (!isLoaded || !(window as any).Razorpay) {
+    const err = new Error('Razorpay Checkout SDK is unavailable or blocked by browser.');
+    if (options.onError) options.onError(err);
+    else throw err;
+    return;
+  }
+
+  const checkoutOptions: RazorpayCheckoutOptions = {
+    key: options.order.keyId || RAZORPAY_KEY_ID,
+    amount: options.order.amount,
+    currency: options.order.currency,
+    name: 'Floravia Botanical AI',
+    description: `Floravia Pro Plan (${options.order.billingCycle === 'yearly' ? 'Annual' : 'Monthly'})`,
+    order_id: options.order.orderId,
+    image: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=128&q=80',
+    handler: (res) => {
+      options.onSuccess(res);
+    },
+    prefill: {
+      name: options.userName || 'Floravia Botanist',
+      email: options.userEmail || 'botanist@floravia.ai'
+    },
+    theme: {
+      color: '#10b981'
+    },
+    modal: {
+      ondismiss: () => {
+        if (options.onDismiss) options.onDismiss();
+      }
+    }
+  };
+
+  const rzp = new (window as any).Razorpay(checkoutOptions);
+  rzp.on('payment.failed', (failRes: any) => {
+    const errMessage = failRes?.error?.description || 'Payment was declined or cancelled.';
+    if (options.onError) {
+      options.onError(new Error(errMessage));
+    }
+  });
+
+  rzp.open();
+}
 
 /**
  * Calculates official itemized GST breakdown for a subscription invoice.
@@ -187,32 +248,73 @@ export const getSubscriptionGstInvoice = (
 };
 
 /**
- * Generates a realistic, secure Razorpay payment ID (e.g. pay_SYbbQQ7d2pv0ks)
+ * Caches verified payment receipt locally for instant audit history view.
  */
-export const generateTestPaymentId = (): string => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let rand = '';
-  // Use crypto.getRandomValues if available for secure randomness
-  if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
-    const array = new Uint8Array(14);
-    window.crypto.getRandomValues(array);
-    for (let i = 0; i < 14; i++) {
-      rand += chars.charAt(array[i] % chars.length);
+export const saveSubscriptionReceipt = async (
+  receipt: RazorpayPaymentSuccessResponse
+): Promise<{ success: boolean; signatureHash?: string }> => {
+  try {
+    const cleanReceipt: RazorpayPaymentSuccessResponse = {
+      ...receipt,
+      planId: receipt.planId || 'pro',
+      planName: sanitizePaymentString(receipt.planName) || FLORAVIA_PRO_PLAN.name,
+      userEmail: sanitizePaymentString(receipt.userEmail),
+      tamperVerified: true
+    };
+
+    const existingRaw = typeof window !== 'undefined' ? localStorage.getItem('floravia_subscription_receipts') : null;
+    const existing: RazorpayPaymentSuccessResponse[] = existingRaw ? JSON.parse(existingRaw) : [];
+    
+    const filtered = existing.filter(item => item.razorpay_payment_id !== cleanReceipt.razorpay_payment_id);
+    filtered.unshift(cleanReceipt);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('floravia_subscription_receipts', JSON.stringify(filtered.slice(0, 50)));
+      window.dispatchEvent(new Event('storage'));
     }
-  } else {
-    for (let i = 0; i < 14; i++) {
-      rand += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+
+    return { success: true };
+  } catch (e) {
+    console.error('Error saving subscription receipt locally:', e);
+    return { success: false };
   }
-  return `pay_${rand}`;
 };
 
 /**
- * Generates a realistic, secure Razorpay order ID (e.g. order_SYbbQQ7d2pv0ks)
+ * Retrieves all stored subscription receipts from localStorage cache.
  */
-export const generateTestOrderId = (suffix?: string): string => {
-  if (suffix && suffix.length >= 8) {
-    return `order_${suffix.replace(/[^a-zA-Z0-9]/g, '').slice(0, 16)}`;
+export const getLocalSubscriptionReceipts = (): RazorpayPaymentSuccessResponse[] => {
+  try {
+    if (typeof window === 'undefined') return [];
+    const existingRaw = localStorage.getItem('floravia_subscription_receipts');
+    if (!existingRaw) return [];
+    const parsed = JSON.parse(existingRaw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
   }
-  return `order_${generateTestPaymentId().slice(4)}`;
+};
+
+/**
+ * Fallback read of active subscription (secondary to reactive useSubscription hook).
+ */
+export const getActiveSubscription = (): ActiveSubscriptionState | null => {
+  try {
+    if (typeof window === 'undefined') return null;
+    const saved = localStorage.getItem('floravia_current_plan');
+    if (!saved) return null;
+    
+    const parsed = JSON.parse(saved);
+    if (!parsed || !parsed.expiresAt || !parsed.paymentId) {
+      return null;
+    }
+
+    const expiryTime = new Date(parsed.expiresAt).getTime();
+    if (isNaN(expiryTime) || expiryTime < Date.now()) {
+      return null;
+    }
+
+    return parsed as ActiveSubscriptionState;
+  } catch {
+    return null;
+  }
 };

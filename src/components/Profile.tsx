@@ -81,6 +81,7 @@ import {
   getActiveSubscription, 
   RAZORPAY_KEY_ID 
 } from '../services/razorpay';
+import { useSubscription } from '../hooks/useSubscription';
 
 export type SettingsTab = 'account' | 'persona' | 'scheduling' | 'preferences' | 'billing' | 'data';
 
@@ -645,7 +646,8 @@ export const Profile: React.FC<ProfileProps> = ({
     }
   };
 
-  const activeSub = getActiveSubscription();
+  const { subscription: serverSub } = useSubscription();
+  const activeSub = (serverSub && serverSub.isPro) ? (serverSub as any) : getActiveSubscription();
 
   const SETTINGS_TABS: { id: SettingsTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'account', label: 'Profile & Account Form', icon: UserIcon },

@@ -104,6 +104,10 @@ service cloud.firestore {
         && (!('gardeningStyle' in data) || (data.gardeningStyle is string && data.gardeningStyle.size() <= 100))
         && (!('timezone' in data) || (data.timezone is string && data.timezone.size() <= 100))
         && (!('preferredReminderTime' in data) || (data.preferredReminderTime is string && data.preferredReminderTime.size() <= 10))
+        && (!('isPro' in data))
+        && (!('subscription' in data))
+        && (!('entitlementExpiresAt' in data))
+        && (!('planId' in data))
         && (!('updatedAt' in data) || data.updatedAt == request.time);
     }
 
@@ -336,29 +340,18 @@ service cloud.firestore {
       allow delete: if isSignedIn() && existing().userId == request.auth.uid;
     }
 
-    function isValidTransaction(data) {
-      return data.keys().hasAll(['userId', 'paymentId', 'planName', 'amount', 'currency', 'billingCycle', 'createdAt'])
-        && (data.keys().size() >= 7 && data.keys().size() <= 15)
-        && data.userId == request.auth.uid
-        && data.paymentId is string && data.paymentId.size() <= 128
-        && data.planName is string && data.planName.size() <= 200
-        && (data.amount is int || data.amount is float)
-        && data.currency is string && data.currency.size() <= 10
-        && (data.billingCycle == 'monthly' || data.billingCycle == 'yearly')
-        && (!('orderId' in data) || (data.orderId == null || data.orderId is string))
-        && (!('signature' in data) || (data.signature == null || data.signature is string))
-        && (!('userEmail' in data) || (data.userEmail == null || data.userEmail is string))
-        && (!('planId' in data) || (data.planId == null || data.planId is string))
-        && (!('method' in data) || (data.method == null || data.method is string))
-        && (!('status' in data) || (data.status in ['captured', 'failed', 'refunded', 'success']))
-        && data.createdAt == request.time;
+    // Authoritative Subscription State (Read-only for clients, strictly server-administered)
+    match /subscriptions/{userId} {
+      allow get: if isSignedIn() && userId == request.auth.uid;
+      allow list: if isSignedIn() && userId == request.auth.uid;
+      allow write: if false;
     }
 
+    // Authoritative Transactions Ledger (Read-only for clients, strictly server-administered)
     match /transactions/{transactionId} {
-      allow create: if isSignedIn() && isValidId(transactionId) && isValidTransaction(incoming());
       allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
       allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow update, delete: if false;
+      allow create, update, delete: if false;
     }
   }
 }
