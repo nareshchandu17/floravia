@@ -45,24 +45,7 @@ export const GrowthTimelineTracker: React.FC<GrowthTimelineTrackerProps> = ({
 
   const storageKey = `floravia_growth_${plant.id}`;
 
-  // Generate initial default measurements if none exist for this plant
-  const getInitialMeasurements = (): GrowthMeasurement[] => {
-    // Generate realistic historical progression
-    const now = new Date();
-    const formatDate = (daysAgo: number) => {
-      const d = new Date(now.getTime() - daysAgo * 86400000);
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    };
-
-    return [
-      { id: 'm1', date: formatDate(45), heightCm: 18.0, note: 'Initial baseline scan recorded' },
-      { id: 'm2', date: formatDate(30), heightCm: 20.5, note: 'Apical shoot expansion observed' },
-      { id: 'm3', date: formatDate(14), heightCm: 23.2, note: 'Two fresh lateral leaves emerged' },
-      { id: 'm4', date: 'Today', heightCm: 25.8, note: 'Active vegetative vertical push' }
-    ];
-  };
-
-  // Load from localStorage or seed
+  // Load from localStorage or plant history
   useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey);
@@ -79,14 +62,9 @@ export const GrowthTimelineTracker: React.FC<GrowthTimelineTrackerProps> = ({
 
     const initial = plant.growthHistory && plant.growthHistory.length > 0 
       ? plant.growthHistory 
-      : getInitialMeasurements();
+      : [];
     
     setMeasurements(initial);
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(initial));
-    } catch {
-      // Ignore
-    }
   }, [plant.id]);
 
   // Set default date when opening add form
@@ -155,11 +133,6 @@ export const GrowthTimelineTracker: React.FC<GrowthTimelineTrackerProps> = ({
   const handleDelete = (id: string) => {
     const updated = measurements.filter(m => m.id !== id);
     persistMeasurements(updated);
-  };
-
-  const handleResetDemo = () => {
-    const initial = getInitialMeasurements();
-    persistMeasurements(initial);
   };
 
   const formatHeight = (cm: number, targetUnit: 'cm' | 'in') => {
@@ -558,13 +531,9 @@ export const GrowthTimelineTracker: React.FC<GrowthTimelineTrackerProps> = ({
           </div>
         ) : (
           <div className="p-8 text-center space-y-2">
-            <p className="text-xs text-slate-400">No height measurements logged yet.</p>
-            <button
-              onClick={handleResetDemo}
-              className="text-xs text-emerald-400 hover:underline font-bold cursor-pointer"
-            >
-              Load Demo History
-            </button>
+            <Ruler className="w-6 h-6 text-emerald-400/40 mx-auto" />
+            <p className="text-xs font-bold text-slate-300">No Height Measurements Logged</p>
+            <p className="text-[11px] text-slate-500">Record stem or leaf height over time to generate a vegetative progress curve.</p>
           </div>
         )}
       </div>
@@ -576,14 +545,6 @@ export const GrowthTimelineTracker: React.FC<GrowthTimelineTrackerProps> = ({
             <Sprout className="w-3.5 h-3.5 text-emerald-400" />
             Milestone Chronology ({measurements.length})
           </span>
-          {measurements.length === 0 && (
-            <button
-              onClick={handleResetDemo}
-              className="text-[11px] text-emerald-400 hover:underline cursor-pointer"
-            >
-              Seed Sample Logs
-            </button>
-          )}
         </div>
 
         {/* Milestone Cards Feed */}

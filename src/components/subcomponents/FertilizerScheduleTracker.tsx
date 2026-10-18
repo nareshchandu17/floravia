@@ -82,18 +82,7 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
       if (savedLogs) {
         setLogs(JSON.parse(savedLogs));
       } else {
-        // Initial mock log matching default timeline
-        setLogs([
-          {
-            id: `init-${plant.id}`,
-            plantId: plant.id,
-            date: plant.healthOverview.lastFertilized || '10 days ago',
-            fertilizerType: 'Balanced Species Formula',
-            npkRatio: 'Balanced NPK',
-            notes: 'Regular scheduled maintenance',
-            timestamp: Date.now() - 10 * 24 * 60 * 60 * 1000
-          }
-        ]);
+        setLogs([]);
       }
 
       const savedInterval = localStorage.getItem(`floravia_fert_interval_${plant.id}`);
@@ -516,27 +505,33 @@ export const FertilizerScheduleTracker: React.FC<FertilizerScheduleTrackerProps>
             </h4>
 
             <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-              {logs.map((log) => (
-                <div
-                  key={log.id}
-                  className="p-2.5 bg-[#07130d] border border-emerald-900/30 rounded-xl flex items-center justify-between text-xs"
-                >
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-200">{log.fertilizerType}</span>
-                      {log.npkRatio && (
-                        <span className="px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 font-mono text-[10px]">
-                          {log.npkRatio}
-                        </span>
-                      )}
-                    </div>
-                    {log.notes && <p className="text-[10px] text-slate-400 italic">{log.notes}</p>}
-                  </div>
-                  <span className="text-[11px] text-emerald-400 font-semibold shrink-0 ml-2">
-                    {log.date}
-                  </span>
+              {logs.length === 0 ? (
+                <div className="p-3 text-center text-xs text-slate-400 bg-[#07130d] rounded-xl border border-emerald-900/30">
+                  No feeding events logged yet. Tap "Log Application" above to record your first fertilizer dose.
                 </div>
-              ))}
+              ) : (
+                logs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="p-2.5 bg-[#07130d] border border-emerald-900/30 rounded-xl flex items-center justify-between text-xs"
+                  >
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-200">{log.fertilizerType}</span>
+                        {log.npkRatio && (
+                          <span className="px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 font-mono text-[10px]">
+                            {log.npkRatio}
+                          </span>
+                        )}
+                      </div>
+                      {log.notes && <p className="text-[10px] text-slate-400 italic">{log.notes}</p>}
+                    </div>
+                    <span className="text-[11px] text-emerald-400 font-semibold shrink-0 ml-2">
+                      {log.date}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </motion.div>
         )}

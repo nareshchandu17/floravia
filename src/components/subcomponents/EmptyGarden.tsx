@@ -5,12 +5,10 @@ import { EmptyState } from '../EmptyState';
 
 interface EmptyGardenProps {
   onNavigateToTab?: (tab: string) => void;
-  onLoadDemoPlants?: () => void;
 }
 
 export const EmptyGarden: React.FC<EmptyGardenProps> = ({ 
-  onNavigateToTab,
-  onLoadDemoPlants 
+  onNavigateToTab
 }) => {
   return (
     <div className="max-w-3xl mx-auto py-4 px-4 space-y-8">
@@ -30,18 +28,6 @@ export const EmptyGarden: React.FC<EmptyGardenProps> = ({
           onClick: () => onNavigateToTab ? onNavigateToTab('care') : (window.location.hash = '#care'),
           icon: BookOpen
         }}
-        actions={
-          onLoadDemoPlants ? (
-            <button 
-              onClick={onLoadDemoPlants}
-              className="px-4 py-2.5 rounded-xl bg-emerald-950/50 border border-emerald-500/20 hover:border-emerald-400/40 text-emerald-300 font-medium text-xs sm:text-sm transition-all cursor-pointer hover:bg-emerald-900/30 flex items-center gap-1.5"
-              title="Populate with sample botanical collection to explore the UI"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Load Sample Plants</span>
-            </button>
-          ) : undefined
-        }
       >
         <div className="grid gap-3.5 sm:grid-cols-2 pt-6 text-left">
           {[

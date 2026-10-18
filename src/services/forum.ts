@@ -20,104 +20,6 @@ import { db, auth, handleFirestoreError, OperationType } from './firebase';
 import { ForumPost, ForumComment, ForumReport, ReportReason } from '../types/forum';
 import { checkContentSafety } from '../utils/moderation';
 
-export const INITIAL_FORUM_POSTS: Omit<ForumPost, 'id'>[] = [
-  {
-    userId: 'botanical-expert-1',
-    userName: 'Elena Vance (Master Gardener)',
-    userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80',
-    title: '🌿 How I cured powdery mildew on my English Rose without synthetic chemicals',
-    content: 'For weeks my climbing roses suffered in the humid summer mornings with white powdery film. I experimented with a 1:9 whole-milk to water foliar spray applied during full sunlight. The lactic acid and protein exposure oxidized the fungus within 48 hours without burning tender foliage!\n\n**Recipe:**\n- 100ml Organic whole milk\n- 900ml Filtered water\n- 3 drops cold-pressed neem oil\n\nSpray both tops and undersides of leaves twice weekly in mid-morning.',
-    category: 'tip',
-    photoUrl: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=1000&q=80',
-    plantTag: 'Rosa gallica (English Rose)',
-    likesCount: 38,
-    commentsCount: 9,
-    isPinned: true,
-    isSolved: false,
-    status: 'active',
-    flagCount: 0,
-    createdAt: new Date(Date.now() - 3600000 * 24 * 2)
-  },
-  {
-    userId: 'indoor-enthusiast-2',
-    userName: 'Dr. Marcus Thorne',
-    userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&q=80',
-    title: '❓ Monstera Deliciosa: Lower leaves yellowing after winter repotting — Help needed!',
-    content: 'I repotted my 3-year-old Monstera into an aroid mix (orchid bark, perlite, coconut coir, worm castings) last Sunday. Since then, the two lowest fenestrated leaves started turning limp and translucent yellow with brown necrotic margins. Is this transplant shock or overhydration?\n\nAmbient humidity is 60%, room temperature 22°C (72°F). Check the attached photo!',
-    category: 'question',
-    photoUrl: 'https://images.unsplash.com/photo-1614594975525-e45190c55d0b?auto=format&fit=crop&w=1000&q=80',
-    plantTag: 'Monstera deliciosa',
-    likesCount: 14,
-    commentsCount: 6,
-    isPinned: false,
-    isSolved: true,
-    status: 'active',
-    flagCount: 0,
-    createdAt: new Date(Date.now() - 3600000 * 18)
-  },
-  {
-    userId: 'balcony-grower-3',
-    userName: 'Aria Chen',
-    userAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80',
-    title: '🌸 Japanese Maple & Japanese Forest Grass Balcony Oasis Showcase',
-    content: 'Just finished redesigning my 5th-floor north-west facing balcony! Grouped Acer palmatum "Bloodgood" with Hakonechloa macra and dwarf Japanese Azaleas. The multi-tiered planters create a serene microclimate that drops ambient heat by nearly 3 degrees.\n\nHappy to answer any questions on urban wind-sheltering techniques!',
-    category: 'showcase',
-    photoUrl: 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&w=1000&q=80',
-    plantTag: 'Acer palmatum & Hakonechloa',
-    likesCount: 52,
-    commentsCount: 12,
-    isPinned: false,
-    isSolved: false,
-    status: 'active',
-    flagCount: 0,
-    createdAt: new Date(Date.now() - 3600000 * 40)
-  },
-  {
-    userId: 'forager-botanist-4',
-    userName: 'Kaelen O\'Connor',
-    userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80',
-    title: '🔍 Wildflower spotted in shade woodland — Can someone verify identification?',
-    content: 'Found this delicate nodding white flower blooming along a shaded creek bank in USDA Zone 7. Trifoliate leaves with scalloped edges. Is this Anemone quinquefolia (Wood Anemone) or a variety of Trillium?',
-    category: 'identification',
-    photoUrl: 'https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?auto=format&fit=crop&w=1000&q=80',
-    plantTag: 'Anemone quinquefolia / Trillium',
-    likesCount: 8,
-    commentsCount: 4,
-    isPinned: false,
-    isSolved: false,
-    status: 'active',
-    flagCount: 0,
-    createdAt: new Date(Date.now() - 3600000 * 8)
-  }
-];
-
-export const INITIAL_FORUM_COMMENTS: Record<string, Omit<ForumComment, 'id'>[]> = {
-  'demo-post-2': [
-    {
-      postId: 'demo-post-2',
-      userId: 'botanical-expert-1',
-      userName: 'Elena Vance (Master Gardener)',
-      userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80',
-      content: 'Classic transplant stress compounded by root turgor adjustment. When repotting into chunky aroid mix, root hairs take 10-14 days to re-establish capillary contact. Prune off the lowest dying leaf so energy directs toward apical shoots, and hold off on fertilizing for 4 weeks.',
-      isSolution: true,
-      likesCount: 11,
-      status: 'active',
-      createdAt: new Date(Date.now() - 3600000 * 12)
-    },
-    {
-      postId: 'demo-post-2',
-      userId: 'soil-whisperer',
-      userName: 'Mateo Morales',
-      userAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=160&q=80',
-      content: 'Agreed with Elena. Also ensure the chunky perlite has good bottom aeration. If the saucer retains drainage water, siphon it immediately.',
-      isSolution: false,
-      likesCount: 3,
-      status: 'active',
-      createdAt: new Date(Date.now() - 3600000 * 6)
-    }
-  ]
-};
-
 // --- Posts CRUD ---
 
 export async function createForumPost(data: {
@@ -329,7 +231,7 @@ export function subscribeToPostComments(
       callback(comments);
     }, (err) => {
       console.warn('Comments snapshot warning:', err.message);
-      callback(INITIAL_FORUM_COMMENTS[postId] ? (INITIAL_FORUM_COMMENTS[postId].map((c, i) => ({ id: `init-c-${i}`, ...c })) as ForumComment[]) : []);
+      callback([]);
     });
   } catch (err) {
     console.error('Error listening to comments:', err);

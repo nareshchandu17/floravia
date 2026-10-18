@@ -16,7 +16,6 @@ import { useGarden, TabView } from '../hooks/useGarden';
 import { useAuth } from '../hooks/useAuth';
 import { EmailVerificationGate } from './EmailVerificationGate';
 import { DashboardPlant } from '../types/botanical';
-import { DEFAULT_PLANTS } from '../data/defaultPlants';
 
 type SortOption = 'date' | 'name' | 'scientific';
 type GardenViewMode = 'cards' | 'spatial-grid';
@@ -24,10 +23,9 @@ type GardenViewMode = 'cards' | 'spatial-grid';
 interface MyGardenProps {
   appPlants?: DashboardPlant[];
   onWaterPlant?: (plantId: string) => void;
-  onSelectPlant?: (plant: DashboardPlant) => void;
+  onSelectPlant?: (plant) => void;
   onOpenAuthModal?: () => void;
   onNavigateToTab?: (tab: string) => void;
-  onLoadDemoPlants?: () => void;
 }
 
 export const MyGarden: React.FC<MyGardenProps> = ({
@@ -35,8 +33,7 @@ export const MyGarden: React.FC<MyGardenProps> = ({
   onWaterPlant,
   onSelectPlant,
   onOpenAuthModal,
-  onNavigateToTab,
-  onLoadDemoPlants
+  onNavigateToTab
 }) => {
   const { user, isEmailVerified } = useAuth();
   const {
@@ -108,7 +105,6 @@ export const MyGarden: React.FC<MyGardenProps> = ({
 
         <EmptyGarden 
           onNavigateToTab={onNavigateToTab} 
-          onLoadDemoPlants={onLoadDemoPlants} 
         />
       </div>
     );
@@ -228,7 +224,6 @@ export const MyGarden: React.FC<MyGardenProps> = ({
 
               <EmptyGarden 
                 onNavigateToTab={onNavigateToTab} 
-                onLoadDemoPlants={onLoadDemoPlants} 
               />
             </div>
           ) : (

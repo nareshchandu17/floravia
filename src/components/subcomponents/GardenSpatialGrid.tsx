@@ -28,7 +28,6 @@ import {
 } from 'lucide-react';
 import { SavedPlant } from '../../services/firebase';
 import { DashboardPlant } from '../../types/botanical';
-import { DEFAULT_PLANTS } from '../../data/defaultPlants';
 
 export interface GridPlantItem {
   id: string;
@@ -129,7 +128,7 @@ interface GardenSpatialGridProps {
 
 export const GardenSpatialGrid: React.FC<GardenSpatialGridProps> = ({
   userPlants = [],
-  appPlants = DEFAULT_PLANTS,
+  appPlants = [],
   onSelectPlant,
   onWaterPlant
 }) => {
@@ -190,7 +189,7 @@ export const GardenSpatialGrid: React.FC<GardenSpatialGridProps> = ({
       });
     }
 
-    // 2. Supplement with App / Default Plants if list is small
+    // 2. Supplement with App scanned plants if available
     appPlants.forEach((p) => {
       if (!seenIds.has(p.id)) {
         seenIds.add(p.id);
@@ -916,60 +915,70 @@ export const GardenSpatialGrid: React.FC<GardenSpatialGridProps> = ({
 
             {/* Available Plants List */}
             <div className="space-y-2 overflow-y-auto max-h-[340px] pr-1 scrollbar-none flex-1">
-              {availablePlants.map((plant) => {
-                const isPlaced = placedPlants.some(p => p.id === plant.id);
-                const isSelected = selectedPlantIdForPlacement === plant.id;
+              {availablePlants.length === 0 ? (
+                <div className="py-8 px-4 text-center rounded-xl bg-[#06120c] border border-emerald-900/30 space-y-2">
+                  <LayoutGrid className="w-6 h-6 text-emerald-500/40 mx-auto" />
+                  <p className="text-xs font-bold text-slate-300">No Specimens Available</p>
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Identify or save a plant to position and calculate microclimate synergy on this floor plan.
+                  </p>
+                </div>
+              ) : (
+                availablePlants.map((plant) => {
+                  const isPlaced = placedPlants.some(p => p.id === plant.id);
+                  const isSelected = selectedPlantIdForPlacement === plant.id;
 
-                return (
-                  <motion.div
-                    key={plant.id}
-                    draggable={!isPlaced}
-                    onDragStart={() => handleDragStart(plant.id)}
-                    onClick={() => {
-                      if (isPlaced) {
-                        const found = placedPlants.find(p => p.id === plant.id);
-                        if (found) setInspectingPlant(found);
-                      } else {
-                        setSelectedPlantIdForPlacement(isSelected ? null : plant.id);
-                      }
-                    }}
-                    whileHover={{ scale: 1.02 }}
-                    className={`p-2.5 rounded-xl border flex items-center gap-3 transition-all cursor-grab active:cursor-grabbing ${
-                      isSelected
-                        ? 'bg-emerald-950/80 border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
-                        : isPlaced
-                        ? 'bg-[#060e0a]/60 border-emerald-900/20 opacity-60'
-                        : 'bg-[#0d1e15] hover:bg-[#12291d] border-emerald-900/40 text-white'
-                    }`}
-                  >
-                    <img 
-                      src={plant.imageUrl} 
-                      alt={plant.name} 
-                      className="w-10 h-10 rounded-lg object-cover border border-emerald-500/30 shrink-0"
-                    />
+                  return (
+                    <motion.div
+                      key={plant.id}
+                      draggable={!isPlaced}
+                      onDragStart={() => handleDragStart(plant.id)}
+                      onClick={() => {
+                        if (isPlaced) {
+                          const found = placedPlants.find(p => p.id === plant.id);
+                          if (found) setInspectingPlant(found);
+                        } else {
+                          setSelectedPlantIdForPlacement(isSelected ? null : plant.id);
+                        }
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                      className={`p-2.5 rounded-xl border flex items-center gap-3 transition-all cursor-grab active:cursor-grabbing ${
+                        isSelected
+                          ? 'bg-emerald-950/80 border-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                          : isPlaced
+                          ? 'bg-[#060e0a]/60 border-emerald-900/20 opacity-60'
+                          : 'bg-[#0d1e15] hover:bg-[#12291d] border-emerald-900/40 text-white'
+                      }`}
+                    >
+                      <img 
+                        src={plant.imageUrl} 
+                        alt={plant.name} 
+                        className="w-10 h-10 rounded-lg object-cover border border-emerald-500/30 shrink-0"
+                      />
 
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-white truncate">{plant.nickname || plant.name}</p>
-                      <p className="text-[10px] text-slate-400 truncate italic">{plant.scientificName}</p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className={`text-[9px] px-1.5 py-0.2 rounded font-semibold ${
-                          plant.lightNeed === 'full-sun' ? 'bg-amber-500/20 text-amber-300' :
-                          plant.lightNeed === 'bright-indirect' ? 'bg-emerald-500/20 text-emerald-300' :
-                          'bg-slate-700/40 text-slate-300'
-                        }`}>
-                          {plant.lightNeed.replace('-', ' ')}
-                        </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-white truncate">{plant.nickname || plant.name}</p>
+                        <p className="text-[10px] text-slate-400 truncate italic">{plant.scientificName}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-semibold ${
+                            plant.lightNeed === 'full-sun' ? 'bg-amber-500/20 text-amber-300' :
+                            plant.lightNeed === 'bright-indirect' ? 'bg-emerald-500/20 text-emerald-300' :
+                            'bg-slate-700/40 text-slate-300'
+                          }`}>
+                            {plant.lightNeed.replace('-', ' ')}
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
-                    {isPlaced && (
-                      <span className="text-[10px] font-bold text-emerald-400 px-2 py-0.5 rounded-md bg-emerald-950 border border-emerald-800/40">
-                        Placed
-                      </span>
-                    )}
-                  </motion.div>
-                );
-              })}
+                      {isPlaced && (
+                        <span className="text-[10px] font-bold text-emerald-400 px-2 py-0.5 rounded-md bg-emerald-950 border border-emerald-800/40">
+                          Placed
+                        </span>
+                      )}
+                    </motion.div>
+                  );
+                })
+              )}
             </div>
           </div>
 

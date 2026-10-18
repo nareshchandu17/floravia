@@ -22,7 +22,6 @@ import { EmailVerificationBanner } from './components/EmailVerificationBanner';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNotifications } from './hooks/useNotifications';
 import { useAppState } from './hooks/useAppState';
-import { DEFAULT_PLANTS } from './data/defaultPlants';
 import { DashboardPlant, GrowthMeasurement } from './types/botanical';
 import { Leaf, Sparkles, Activity, Sprout, Bell, X, PanelLeftOpen } from 'lucide-react';
 import { POPULAR_CITY_WEATHER } from './services/weather';
@@ -41,12 +40,12 @@ export default function App() {
       const saved = localStorage.getItem('floravia_local_garden');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch {
       // ignore
     }
-    return DEFAULT_PLANTS;
+    return [];
   });
   const [currentPlant, setCurrentPlant] = useState<DashboardPlant | null>(() => {
     try {
@@ -58,27 +57,19 @@ export default function App() {
     } catch {
       // ignore
     }
-    return DEFAULT_PLANTS[0];
+    return null;
   });
 
-  // Guarantee that specimen state is never left in an empty state
+  // Ensure currentPlant points to an existing specimen or null when garden is empty
   useEffect(() => {
-    if (gardenPlants.length === 0) {
-      setGardenPlants(DEFAULT_PLANTS);
-      setCurrentPlant(DEFAULT_PLANTS[0]);
-    } else if (!currentPlant) {
-      setCurrentPlant(gardenPlants[0]);
+    if (gardenPlants.length > 0) {
+      if (!currentPlant || !gardenPlants.some(p => p.id === currentPlant.id)) {
+        setCurrentPlant(gardenPlants[0]);
+      }
+    } else {
+      setCurrentPlant(null);
     }
-  }, [gardenPlants.length, currentPlant]);
-
-  const handleLoadDemoPlants = () => {
-    setGardenPlants(DEFAULT_PLANTS);
-    setCurrentPlant(DEFAULT_PLANTS[0]);
-    setToast({
-      title: 'Sample Botanical Specimens Loaded',
-      body: 'Loaded 4 demo botanical profiles so you can explore telemetry and care tools.'
-    });
-  };
+  }, [gardenPlants, currentPlant]);
 
   // Sync garden plants to localStorage
   useEffect(() => {
@@ -507,7 +498,6 @@ export default function App() {
                   onWaterPlant={handleWaterPlant}
                   onFertilizePlant={handleFertilizePlant}
                   onOpenChatWithTopic={() => setActiveTab('chat')}
-                  onLoadDemoPlants={handleLoadDemoPlants}
                   onGrowthUpdated={handleGrowthUpdated}
                 />
               </motion.div>
@@ -607,7 +597,6 @@ export default function App() {
                   }}
                   onOpenAuthModal={() => openAuthModal('login')}
                   onNavigateToTab={(tab) => setActiveTab(tab as NavigationTab)}
-                  onLoadDemoPlants={handleLoadDemoPlants}
                 />
               </motion.div>
             )}

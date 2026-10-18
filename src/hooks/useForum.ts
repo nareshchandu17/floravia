@@ -17,8 +17,7 @@ import {
   hideForumPost,
   submitForumReport,
   getPendingReports,
-  updateReportStatus,
-  INITIAL_FORUM_POSTS
+  updateReportStatus
 } from '../services/forum';
 import { useAuth } from './useAuth';
 import { isModerator, checkContentSafety } from '../utils/moderation';
@@ -77,16 +76,7 @@ export function useForum() {
   useEffect(() => {
     setIsLoading(true);
     const unsubscribe = subscribeToForumPosts((livePosts) => {
-      if (livePosts.length > 0) {
-        setPosts(livePosts);
-      } else {
-        // Hydrate demo seed if empty
-        const initialWithIds: ForumPost[] = INITIAL_FORUM_POSTS.map((p, idx) => ({
-          id: `demo-post-${idx + 1}`,
-          ...p
-        }));
-        setPosts(initialWithIds);
-      }
+      setPosts(livePosts);
       setIsLoading(false);
     }, activeCategory);
 

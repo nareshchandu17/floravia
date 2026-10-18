@@ -38,16 +38,6 @@ import { useAuth } from '../hooks/useAuth';
 import { getUserTimezone, getTimezoneDisplayOffset } from '../utils/timezone';
 import { EmptyState } from './EmptyState';
 
-const INITIAL_EVENTS: CareCalendarEvent[] = [
-  { id: '1', plantId: '1', plantName: 'Orange Hybrid Tea Rose', scientificName: 'Rosa hybrida', type: 'water', date: '2026-08-23', time: '08:00', completed: false, notes: 'Water base thoroughly before morning heat' },
-  { id: '2', plantId: '2', plantName: 'Monstera Deliciosa', scientificName: 'Monstera deliciosa', type: 'mist', date: '2026-08-23', time: '09:30', completed: true, notes: 'Mist aerial roots & wipe broad foliage' },
-  { id: '3', plantId: '3', plantName: 'Peace Lily', scientificName: 'Spathiphyllum', type: 'water', date: '2026-08-24', time: '08:00', completed: false, notes: 'Check moisture probe before soil drench' },
-  { id: '4', plantId: '1', plantName: 'Orange Hybrid Tea Rose', scientificName: 'Rosa hybrida', type: 'fertilize', date: '2026-08-26', time: '10:00', completed: false, notes: 'Apply 10-15-10 bloom booster diluted 50%' },
-  { id: '5', plantId: '4', plantName: 'Snake Plant', scientificName: 'Sansevieria trifasciata', type: 'water', date: '2026-08-29', time: '08:00', completed: false, notes: 'Light soil soak around pot rim' },
-  { id: '6', plantId: '2', plantName: 'Monstera Deliciosa', scientificName: 'Monstera deliciosa', type: 'fertilize', date: '2026-09-02', time: '10:30', completed: false, notes: 'Balanced 20-20-20 tropical foliage elixir' },
-  { id: '7', plantId: '5', plantName: 'Fiddle Leaf Fig', scientificName: 'Ficus lyrata', type: 'prune', date: '2026-09-05', time: '11:00', completed: false, notes: 'Prune dry lower leaves with sterilized shears' },
-];
-
 export const CareCalendar: React.FC = () => {
   const { user } = useAuth();
   const [currentMonth, setCurrentMonth] = useState('August 2026');
@@ -567,11 +557,6 @@ export const CareCalendar: React.FC = () => {
                   label: "Schedule First Task",
                   onClick: () => setShowAddModal(true),
                   icon: Plus
-                }}
-                secondaryAction={{
-                  label: "Load Sample Schedule",
-                  onClick: () => setEvents(INITIAL_EVENTS),
-                  title: "Populate sample tasks to test Google Calendar push notifications"
                 }}
               />
             ) : (

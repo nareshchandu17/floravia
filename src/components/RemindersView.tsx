@@ -33,13 +33,6 @@ interface BotanicalReminder {
   googleCalendarHtmlLink?: string;
 }
 
-const DEFAULT_REMINDERS: BotanicalReminder[] = [
-  { id: '1', plantName: 'Orange Hybrid Tea Rose', type: 'water', frequencyDays: 3, time: '08:00', enabled: true },
-  { id: '2', plantName: 'Orange Hybrid Tea Rose', type: 'fertilize', frequencyDays: 14, time: '09:00', enabled: true },
-  { id: '3', plantName: 'Monstera Deliciosa', type: 'mist', frequencyDays: 2, time: '08:30', enabled: true },
-  { id: '4', plantName: 'Peace Lily', type: 'water', frequencyDays: 4, time: '07:30', enabled: true },
-];
-
 export const RemindersView: React.FC = () => {
   const { notify } = useNotifications();
   const [reminders, setReminders] = useState<BotanicalReminder[]>(() => {
@@ -227,11 +220,6 @@ export const RemindersView: React.FC = () => {
               label: "Create First Reminder",
               onClick: () => setShowModal(true),
               icon: Plus
-            }}
-            secondaryAction={{
-              label: "Load Sample Cycles",
-              onClick: () => setReminders(DEFAULT_REMINDERS),
-              title: "Populate sample reminders to test browser alerts and Google Calendar sync"
             }}
           />
         ) : (

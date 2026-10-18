@@ -70,7 +70,6 @@ interface DashboardViewProps {
   onWaterPlant?: (plantId: string) => void;
   onFertilizePlant?: (plantId: string, details?: { fertilizerType: string; date: string; notes?: string }) => void;
   onOpenChatWithTopic?: (topic: string) => void;
-  onLoadDemoPlants?: () => void;
   onGrowthUpdated?: (plantId: string, measurements: GrowthMeasurement[]) => void;
 }
 
@@ -88,7 +87,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   onWaterPlant,
   onFertilizePlant,
   onOpenChatWithTopic,
-  onLoadDemoPlants,
   onGrowthUpdated
 }) => {
   const { user } = useAuth();
@@ -123,7 +121,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return (
       <DashboardEmptyState 
         onNavigateToTab={onNavigateToTab}
-        onLoadDemoPlants={onLoadDemoPlants}
       />
     );
   }
