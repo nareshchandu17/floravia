@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Sidebar, NavigationTab } from './components/Sidebar';
 import { TopHeader } from './components/TopHeader';
 import { DashboardView } from './components/DashboardView';
@@ -22,13 +22,81 @@ import { EmailVerificationBanner } from './components/EmailVerificationBanner';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNotifications } from './hooks/useNotifications';
 import { useAppState } from './hooks/useAppState';
+import { useAuth } from './hooks/useAuth';
 import { DashboardPlant, GrowthMeasurement } from './types/botanical';
+import { DEFAULT_PLANTS } from './data/defaultPlants';
 import { Leaf, Sparkles, Activity, Sprout, Bell, X, PanelLeftOpen } from 'lucide-react';
 import { POPULAR_CITY_WEATHER } from './services/weather';
 import { Analytics } from '@vercel/analytics/react';
 
+const VALID_TABS: readonly NavigationTab[] = [
+  'home',
+  'identify',
+  'diagnose',
+  'garden',
+  'calendar',
+  'community',
+  'guide',
+  'chat',
+  'reminders',
+  'shop',
+  'profile'
+] as const;
+
+function getTabFromUrl(): NavigationTab {
+  if (typeof window === 'undefined') return 'home';
+  // 1. Check pathname (e.g. /identify)
+  const cleanPath = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+  if (cleanPath && (VALID_TABS as readonly string[]).includes(cleanPath)) {
+    return cleanPath as NavigationTab;
+  }
+  // 2. Check hash fallback (e.g. #identify or #/identify)
+  const cleanHash = window.location.hash.replace(/^#[/]?/, '').toLowerCase();
+  if (cleanHash && (VALID_TABS as readonly string[]).includes(cleanHash)) {
+    return cleanHash as NavigationTab;
+  }
+  return 'home';
+}
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState<NavigationTab>('home');
+  const { user } = useAuth();
+  const [activeTab, setActiveTabState] = useState<NavigationTab>(() => getTabFromUrl());
+
+  const setActiveTab = useCallback((tab: NavigationTab, replace = false) => {
+    setActiveTabState(tab);
+    const targetPath = tab === 'home' ? '/' : `/${tab}`;
+    if (window.location.pathname !== targetPath) {
+      if (replace) {
+        window.history.replaceState({ tab }, '', targetPath);
+      } else {
+        window.history.pushState({ tab }, '', targetPath);
+      }
+    }
+  }, []);
+
+  // Sync route on popstate (browser back/forward) or hashchange
+  useEffect(() => {
+    const handleUrlChange = () => {
+      const tabFromUrl = getTabFromUrl();
+      setActiveTabState(tabFromUrl);
+    };
+
+    window.addEventListener('popstate', handleUrlChange);
+    window.addEventListener('hashchange', handleUrlChange);
+
+    // Sync initial pathname if directly loaded on a specific path or root
+    const initialTab = getTabFromUrl();
+    const expectedPath = initialTab === 'home' ? '/' : `/${initialTab}`;
+    if (window.location.pathname !== expectedPath && !window.location.pathname.startsWith('/api')) {
+      window.history.replaceState({ tab: initialTab }, '', expectedPath);
+    }
+
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('hashchange', handleUrlChange);
+    };
+  }, []);
+
   const mainScrollRef = useRef<HTMLDivElement>(null);
 
   // Automatically scroll main content to top whenever the active view changes
@@ -40,12 +108,12 @@ export default function App() {
       const saved = localStorage.getItem('floravia_local_garden');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
     } catch {
       // ignore
     }
-    return [];
+    return DEFAULT_PLANTS;
   });
   const [currentPlant, setCurrentPlant] = useState<DashboardPlant | null>(() => {
     try {
@@ -57,7 +125,7 @@ export default function App() {
     } catch {
       // ignore
     }
-    return null;
+    return DEFAULT_PLANTS[0] || null;
   });
 
   // Ensure currentPlant points to an existing specimen or null when garden is empty
@@ -139,6 +207,23 @@ export default function App() {
 
   const { toast, setToast } = useNotifications();
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  const handleUnauthorizedUpload = useCallback(() => {
+    setToast({
+      title: 'Authentication Required',
+      body: 'Please sign in or create an account to upload plant images and use AI botanical features.',
+      type: 'warning'
+    });
+    openAuthModal('login');
+  }, [setToast]);
+
+  const handleScanImage = useCallback((img: string, mode: 'identify' | 'diagnose') => {
+    if (!user) {
+      handleUnauthorizedUpload();
+      return;
+    }
+    handleImageSelected(img, mode);
+  }, [user, handleUnauthorizedUpload, handleImageSelected]);
 
   useEffect(() => {
     const hasOnboarded = localStorage.getItem('floravia_onboarded');
@@ -499,6 +584,7 @@ export default function App() {
                   onFertilizePlant={handleFertilizePlant}
                   onOpenChatWithTopic={() => setActiveTab('chat')}
                   onGrowthUpdated={handleGrowthUpdated}
+                  onLoadStarterPlants={() => setGardenPlants(DEFAULT_PLANTS)}
                 />
               </motion.div>
             )}
@@ -526,8 +612,10 @@ export default function App() {
                 </div>
 
                 <ImageUploader 
-                  onImageSelected={(img) => handleImageSelected(img, 'identify')} 
+                  onImageSelected={(img) => handleScanImage(img, 'identify')} 
                   isLoading={isLoading} 
+                  isAuthenticated={!!user}
+                  onUnauthorized={handleUnauthorizedUpload}
                 />
 
                 {error && (
@@ -561,12 +649,14 @@ export default function App() {
                 </div>
 
                 <ImageUploader 
-                  onImageSelected={(img) => handleImageSelected(img, 'diagnose')} 
+                  onImageSelected={(img) => handleScanImage(img, 'diagnose')} 
                   isLoading={isLoading}
                   title="Symptom Scanner"
                   subtitle="Position lesion in center frame"
                   loadingText="Isolating Pathogenic Bio-Signals..."
                   loadingSubtext="Querying Pathological Library"
+                  isAuthenticated={!!user}
+                  onUnauthorized={handleUnauthorizedUpload}
                 />
 
                 {error && (

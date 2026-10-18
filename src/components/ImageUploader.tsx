@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Camera, Upload, X, CheckCircle2, Circle, Zap, Sparkles, Image as ImageIcon } from 'lucide-react';
+import { Camera, Upload, X, CheckCircle2, Circle, Zap, Sparkles, Image as ImageIcon, Lock } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { compressImage, CompressionResult } from '../utils/imageCompressor';
 
@@ -10,6 +10,8 @@ interface ImageUploaderProps {
   subtitle?: string;
   loadingText?: string;
   loadingSubtext?: string;
+  isAuthenticated?: boolean;
+  onUnauthorized?: () => void;
 }
 
 export const ImageUploader: React.FC<ImageUploaderProps> = ({ 
@@ -18,7 +20,9 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   title = "Identify a Plant",
   subtitle = "Take a photo or drag & drop an image",
   loadingText = "Analyzing your plant...",
-  loadingSubtext = "Our AI expert is identifying the species"
+  loadingSubtext = "Our AI expert is identifying the species",
+  isAuthenticated = true,
+  onUnauthorized
 }) => {
   const [preview, setPreview] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
@@ -85,9 +89,38 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     }
   };
 
+  const handleTriggerUpload = (type: 'file' | 'camera') => {
+    if (!isAuthenticated) {
+      onUnauthorized?.();
+      return;
+    }
+    if (type === 'camera') {
+      cameraInputRef.current?.click();
+    } else {
+      fileInputRef.current?.click();
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (!isAuthenticated) {
+      onUnauthorized?.();
+      return;
+    }
+    handleFileChange(e);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement> | React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
+    
+    if (!isAuthenticated) {
+      onUnauthorized?.();
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      if (cameraInputRef.current) cameraInputRef.current.value = '';
+      return;
+    }
     
     let file: File | undefined;
     
@@ -133,13 +166,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             exit={{ opacity: 0, scale: 0.95 }}
             onDragOver={(e: any) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={(e: any) => { e.preventDefault(); setIsDragging(false); }}
-            onDrop={handleFileChange}
+            onDrop={handleDrop}
             className={`border-2 border-dashed rounded-3xl p-8 md:p-12 flex flex-col items-center justify-center gap-4 transition-all duration-300 group shadow-[inset_0_0_40px_rgba(34,197,94,0.03)] hover:shadow-[0_0_30px_rgba(34,197,94,0.1)] ${isDragging ? 'bg-green-500/10' : 'bg-[#0b1812]/50 hover:bg-[#0e2118]/80 backdrop-blur-sm'}`}
           >
             <motion.div 
               animate={{ y: isDragging ? -10 : 0 }}
               className="bg-emerald-950/60 border border-emerald-500/30 p-5 rounded-2xl shadow-lg group-hover:scale-110 transition-transform duration-300 relative cursor-pointer"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => handleTriggerUpload('file')}
             >
               <Camera className="w-8 h-8 text-emerald-400 relative z-10" />
               <div className="absolute inset-0 bg-emerald-500/15 rounded-2xl scale-0 group-hover:scale-150 transition-transform opacity-0 group-hover:opacity-100 duration-500" />
@@ -149,6 +182,17 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               <p className="text-lg font-ui font-bold text-white">{title}</p>
               <p className="text-xs md:text-sm text-emerald-200/70">{subtitle}</p>
             </div>
+
+            {/* Unauthorized Notice Banner */}
+            {!isAuthenticated && (
+              <div 
+                onClick={() => onUnauthorized?.()}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/35 text-amber-300 text-xs font-semibold cursor-pointer hover:bg-amber-500/25 transition-colors shadow-sm"
+              >
+                <Lock className="w-3.5 h-3.5 text-amber-400" />
+                <span>Sign in required to upload & analyze plants</span>
+              </div>
+            )}
 
             {/* Hidden native inputs */}
             <input
@@ -171,7 +215,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             <div className="flex flex-col sm:flex-row items-center gap-3 mt-2 w-full max-w-sm">
               <button
                 type="button"
-                onClick={() => cameraInputRef.current?.click()}
+                onClick={() => handleTriggerUpload('camera')}
                 disabled={isCompressing}
                 className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               >
@@ -181,7 +225,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => handleTriggerUpload('file')}
                 disabled={isCompressing}
                 className="w-full sm:flex-1 py-3 px-4 rounded-xl bg-[#12271d] hover:bg-[#183527] border border-emerald-500/30 text-emerald-200 hover:text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
               >

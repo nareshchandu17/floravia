@@ -1077,7 +1077,15 @@ export const signInWithGoogle = async (): Promise<User> => {
       console.info("Google Sign-in popup was dismissed by user.");
       throw error;
     }
-    console.error("Google Auth error:", error);
+    if (error?.code === 'auth/unauthorized-domain') {
+      console.error(
+        `Firebase Auth: Domain "${window.location.hostname}" is not authorized.\n` +
+        `Visit Firebase Console -> Authentication -> Settings -> Authorized domains and add "${window.location.hostname}".\n` +
+        `Direct link: https://console.firebase.google.com/project/${auth.app.options.projectId}/authentication/settings`
+      );
+    } else {
+      console.error("Google Auth error:", error);
+    }
     throw error;
   }
 };

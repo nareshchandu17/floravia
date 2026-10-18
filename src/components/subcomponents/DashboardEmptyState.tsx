@@ -19,10 +19,12 @@ import {
 
 interface DashboardEmptyStateProps {
   onNavigateToTab: (tab: any) => void;
+  onLoadStarterPlants?: () => void;
 }
 
 export const DashboardEmptyState: React.FC<DashboardEmptyStateProps> = ({
-  onNavigateToTab
+  onNavigateToTab,
+  onLoadStarterPlants
 }) => {
   return (
     <div className="w-full max-w-6xl mx-auto pb-16 px-4 md:px-6 space-y-10">
@@ -67,6 +69,16 @@ export const DashboardEmptyState: React.FC<DashboardEmptyStateProps> = ({
               <Stethoscope className="w-4 h-4 text-cyan-400" />
               <span>Diagnose Leaf Disease</span>
             </button>
+
+            {onLoadStarterPlants && (
+              <button
+                onClick={onLoadStarterPlants}
+                className="px-6 py-3.5 rounded-xl bg-[#0e2c1e] hover:bg-[#133a28] border border-emerald-500/40 text-emerald-200 hover:text-white font-bold text-sm flex items-center gap-2 transition-all cursor-pointer shadow-sm"
+              >
+                <Sparkles className="w-4 h-4 text-emerald-400" />
+                <span>Explore Sample Sanctuary</span>
+              </button>
+            )}
           </div>
         </div>
       </motion.div>

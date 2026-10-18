@@ -127,6 +127,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       case 'auth/popup-closed-by-user':
       case 'auth/cancelled-popup-request':
         return 'Google Sign-in was dismissed.';
+      case 'auth/unauthorized-domain':
+        return 'Domain unauthorized: Please add "localhost" to Authorized Domains in Firebase Console (Authentication > Settings > Authorized domains).';
       default:
         return err?.message || 'Authentication encountered an issue. Please try again.';
     }
