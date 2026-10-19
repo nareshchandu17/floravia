@@ -3,6 +3,7 @@ import { Sidebar, NavigationTab } from './components/Sidebar';
 import { TopHeader } from './components/TopHeader';
 import { DashboardView } from './components/DashboardView';
 import { ImageUploader } from './components/ImageUploader';
+import { IdentifyPlantView } from './components/IdentifyPlantView';
 import { DiseaseAnalysis } from './components/DiseaseAnalysis';
 import { MyGarden } from './components/MyGarden';
 import { CareCalendar } from './components/CareCalendar';
@@ -109,25 +110,50 @@ export default function App() {
       const saved = localStorage.getItem('floravia_local_garden');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) {
+          // Filter out default starter plants if any were saved in past sessions
+          const defaultIds = new Set(DEFAULT_PLANTS.map(p => p.id));
+          return parsed.filter(p => !defaultIds.has(p.id));
+        }
       }
     } catch {
       // ignore
     }
-    return DEFAULT_PLANTS;
+    return [];
   });
   const [currentPlant, setCurrentPlant] = useState<DashboardPlant | null>(() => {
     try {
       const saved = localStorage.getItem('floravia_local_garden');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed[0];
+        if (Array.isArray(parsed)) {
+          const defaultIds = new Set(DEFAULT_PLANTS.map(p => p.id));
+          const userOnly = parsed.filter(p => !defaultIds.has(p.id));
+          return userOnly[0] || null;
+        }
       }
     } catch {
       // ignore
     }
-    return DEFAULT_PLANTS[0] || null;
+    return null;
   });
+
+  // Automatically purge legacy default dummy plants from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('floravia_local_garden');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          const defaultIds = new Set(DEFAULT_PLANTS.map(p => p.id));
+          const userOnly = parsed.filter(p => !defaultIds.has(p.id));
+          if (userOnly.length !== parsed.length) {
+            localStorage.setItem('floravia_local_garden', JSON.stringify(userOnly));
+          }
+        }
+      }
+    } catch {}
+  }, []);
 
   // Ensure currentPlant points to an existing specimen or null when garden is empty
   useEffect(() => {
@@ -683,7 +709,6 @@ export default function App() {
                   onFertilizePlant={handleFertilizePlant}
                   onOpenChatWithTopic={handleOpenChatWithTopic}
                   onGrowthUpdated={handleGrowthUpdated}
-                  onLoadStarterPlants={() => setGardenPlants(DEFAULT_PLANTS)}
                 />
               </motion.div>
             )}
@@ -695,30 +720,19 @@ export default function App() {
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="max-w-4xl mx-auto p-4 space-y-6"
+                transition={{ duration: 0.3 }}
+                className="w-full"
               >
-                <div className="text-center space-y-2 pt-4 mb-8">
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-                    <Leaf className="w-3.5 h-3.5" />
-                    AI Botanical Scanner
-                  </div>
-                  <h2 className="text-3xl md:text-5xl font-bold text-white tracking-tight">
-                    Identify Any Plant Species
-                  </h2>
-                  <p className="text-xs md:text-sm text-slate-400 max-w-lg mx-auto leading-relaxed">
-                    Upload or snap a photo of any leaf, bloom, or foliage. Our neural-botanical engine provides instant species recognition and physiological analysis.
-                  </p>
-                </div>
-
-                <ImageUploader 
+                <IdentifyPlantView 
                   onImageSelected={(img) => handleScanImage(img, 'identify')} 
                   isLoading={isLoading} 
                   isAuthenticated={!!user}
                   onUnauthorized={handleUnauthorizedUpload}
+                  onNavigateToTab={(tab) => setActiveTab(tab)}
                 />
 
                 {error && (
-                  <div className="p-4 bg-rose-950/40 border border-rose-500/30 text-rose-300 text-xs rounded-xl text-center font-medium">
+                  <div className="max-w-xl mx-auto mt-4 p-4 bg-rose-950/40 border border-rose-500/30 text-rose-300 text-xs rounded-xl text-center font-medium">
                     {error}
                   </div>
                 )}

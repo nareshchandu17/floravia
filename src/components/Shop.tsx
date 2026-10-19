@@ -16,7 +16,7 @@ export const Shop: React.FC = () => {
       price: 18.99,
       rating: 4.9,
       reviewsCount: 342,
-      imageUrl: 'https://images.unsplash.com/photo-1585336261026-778848ff98e0?auto=format&fit=crop&w=600&q=80',
+      imageUrl: 'https://images.unsplash.com/photo-1617576683096-00fc8eecb3af?auto=format&fit=crop&w=600&q=80',
       description: 'Bio-active microbial extract formulated for hybrid tea roses and tropical ornamentals.',
       inStock: true
     },

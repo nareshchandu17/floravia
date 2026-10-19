@@ -143,7 +143,7 @@ export const PLANT_SPECIES_GUIDES: PlantSpeciesGuide[] = [
     family: 'Asparagaceae (Asparagus family)',
     nativeHabitat: 'Tropical West Africa from Nigeria east to the Congo',
     difficulty: 'Beginner Friendly',
-    imageUrl: 'https://images.unsplash.com/photo-1593482892290-f54927ae1bf6?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1592150621744-aca64f48394a?auto=format&fit=crop&w=800&q=80',
     summary: 'Nearly indestructible houseplant with upright, sword-like leaves. It forgives low light and weeks of forgotten waterings.',
     quickSpecs: {
       light: 'Low to bright indirect light',
@@ -196,7 +196,7 @@ export const PLANT_SPECIES_GUIDES: PlantSpeciesGuide[] = [
     family: 'Araceae (Arum family)',
     nativeHabitat: 'Mo\'orea in the Society Islands of French Polynesia',
     difficulty: 'Beginner Friendly',
-    imageUrl: 'https://images.unsplash.com/photo-1596724817758-a403bbfeaa40?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1596547609652-9cf5d8d76921?auto=format&fit=crop&w=800&q=80',
     summary: 'The ultimate beginner vine with heart-shaped leaves splashed with gold. Grows quickly in hanging baskets or trailing along bookshelves.',
     quickSpecs: {
       light: 'Low to bright indirect light',
@@ -302,7 +302,7 @@ export const PLANT_SPECIES_GUIDES: PlantSpeciesGuide[] = [
     family: 'Asparagaceae (Asparagus family)',
     nativeHabitat: 'Tropical and Southern Africa',
     difficulty: 'Beginner Friendly',
-    imageUrl: 'https://images.unsplash.com/photo-1572688484437-25826da81404?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1572688484438-313a6e50c333?auto=format&fit=crop&w=800&q=80',
     summary: 'A classic favorite with gracefully arching striped leaves. Famous for producing miniature baby plants ("spiderettes") on long trailing stems, and completely pet safe!',
     quickSpecs: {
       light: 'Medium to bright indirect sunlight',
@@ -355,7 +355,7 @@ export const PLANT_SPECIES_GUIDES: PlantSpeciesGuide[] = [
     family: 'Araceae (Arum family)',
     nativeHabitat: 'Tropical rainforests of Central and South America',
     difficulty: 'Easy Care',
-    imageUrl: 'https://images.unsplash.com/photo-1593691509543-c55fb32e7355?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1512428813834-c702c7702b78?auto=format&fit=crop&w=800&q=80',
     summary: 'A graceful tropical plant with deep green leaves and elegant white blooms (spathes). It clearly signals thirst by dramatically drooping, then bounces back quickly after water.',
     quickSpecs: {
       light: 'Low to medium indirect light',

@@ -1,20 +1,17 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { 
-  Sprout, 
   Camera, 
   Stethoscope, 
-  Droplets, 
-  Activity, 
-  Sparkles, 
-  Sun, 
+  BookOpen, 
   Calendar, 
-  FlaskConical, 
-  ShieldAlert, 
-  Layers,
-  ArrowRight,
-  TrendingUp,
-  Cpu
+  MessageSquare, 
+  ArrowRight, 
+  Droplets, 
+  Sun, 
+  ShieldCheck,
+  Sparkles,
+  Heart
 } from 'lucide-react';
 
 interface DashboardEmptyStateProps {
@@ -23,187 +20,219 @@ interface DashboardEmptyStateProps {
 }
 
 export const DashboardEmptyState: React.FC<DashboardEmptyStateProps> = ({
-  onNavigateToTab,
-  onLoadStarterPlants
+  onNavigateToTab
 }) => {
   return (
-    <div className="w-full max-w-6xl mx-auto pb-16 px-4 md:px-6 space-y-10">
-      {/* Hero Welcome Card */}
+    <div className="w-full max-w-5xl mx-auto pb-16 px-4 md:px-6 space-y-8">
+      {/* 1. Hero Welcome Banner (Modern, Clean Neutral Dark with Refined Accent) */}
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#081711] via-[#05110c] to-[#0a1f16] border border-emerald-500/30 p-6 md:p-10 shadow-2xl"
+        transition={{ duration: 0.35 }}
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#121926] via-[#0f1520] to-[#141d2b] border border-slate-700/60 p-6 md:p-10 shadow-xl"
       >
-        {/* Ambient atmospheric glows */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+        {/* Soft background ambient glow (warm slate & subtle mint) */}
+        <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 max-w-3xl space-y-5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-wider">
-            <Cpu className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Botanical Intelligence Engine</span>
+        <div className="relative z-10 max-w-2xl space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300 text-xs font-medium">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>Welcome to Floravia</span>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-display font-bold text-white tracking-tight leading-tight">
-            Welcome to Your Botanical Intelligence Dashboard
+          <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight leading-tight">
+            Bring your plants to life
           </h2>
 
-          <p className="text-slate-300 text-sm md:text-base leading-relaxed font-ui">
-            No plant is currently active or scanned. Floravia combines Gemini 2.5 multimodal vision with live microclimate weather telemetry to deliver real-time physiological diagnostics, foliar hydration metrics, and tailored care routines for your plants.
+          <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
+            Keep your house and garden plants healthy, thriving, and on schedule. Add your first plant to get personalized care routines, watering reminders, and health tracking.
           </p>
 
-          {/* Action CTAs */}
-          <div className="flex flex-wrap gap-3.5 pt-3">
+          <div className="flex flex-wrap items-center gap-3 pt-2">
             <button
               onClick={() => onNavigateToTab('identify')}
-              className="px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm flex items-center gap-2 shadow-lg shadow-emerald-500/25 transition-all cursor-pointer hover:scale-105 active:scale-95"
+              className="px-5 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-sm flex items-center gap-2 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer hover:translate-y-[-1px] active:translate-y-[0px]"
             >
               <Camera className="w-4 h-4" />
-              <span>Identify Your First Plant</span>
+              <span>Add Your First Plant</span>
+              <ArrowRight className="w-4 h-4 ml-0.5" />
             </button>
 
             <button
               onClick={() => onNavigateToTab('diagnose')}
-              className="px-6 py-3.5 rounded-xl bg-[#091b13] hover:bg-[#0e271c] border border-emerald-500/30 text-emerald-300 hover:text-emerald-200 font-bold text-sm flex items-center gap-2 transition-all cursor-pointer"
+              className="px-5 py-3 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 text-slate-200 hover:text-white font-medium text-sm flex items-center gap-2 transition-all cursor-pointer"
             >
-              <Stethoscope className="w-4 h-4 text-cyan-400" />
-              <span>Diagnose Leaf Disease</span>
+              <Stethoscope className="w-4 h-4 text-rose-400" />
+              <span>Diagnose a Sick Plant</span>
             </button>
-
-            {onLoadStarterPlants && (
-              <button
-                onClick={onLoadStarterPlants}
-                className="px-6 py-3.5 rounded-xl bg-[#0e2c1e] hover:bg-[#133a28] border border-emerald-500/40 text-emerald-200 hover:text-white font-bold text-sm flex items-center gap-2 transition-all cursor-pointer shadow-sm"
-              >
-                <Sparkles className="w-4 h-4 text-emerald-400" />
-                <span>Explore Sample Sanctuary</span>
-              </button>
-            )}
           </div>
         </div>
       </motion.div>
 
-      {/* Explanatory Section: What Appears Once Scanned */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg md:text-xl font-bold text-white tracking-wide">
-              What Appears in Your Dashboard Once a Plant is Active
+      {/* 2. Action Cards Grid (High contrast, distinct color roles, zero fluff) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {/* Card A: Scan & Identify */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.08 }}
+          onClick={() => onNavigateToTab('identify')}
+          className="group relative p-6 rounded-2xl bg-[#141b26] border border-slate-700/70 hover:border-emerald-500/50 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-md hover:shadow-emerald-950/30"
+        >
+          <div className="space-y-3">
+            <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
+              <Camera className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-white group-hover:text-emerald-300 transition-colors">
+              Scan & Identify
             </h3>
-            <p className="text-xs text-slate-400">
-              Each section provides dedicated physiological tracking calculated specifically for your botanical specimen.
+            <p className="text-sm text-slate-400 leading-relaxed">
+              Take or upload a photo of any leaf, flower, or succulent. Get the exact species name, care needs, and light requirements in seconds.
             </p>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[
-            {
-              icon: Camera,
-              title: "Neural Species Identification",
-              badge: "Gemini 2.5 Vision",
-              description: "High-precision Latin taxonomy, botanical family, native habitat climate zone, and genetic identification confidence percentage.",
-              color: "text-emerald-400",
-              border: "border-emerald-500/20",
-              bg: "bg-emerald-950/15"
-            },
-            {
-              icon: Activity,
-              title: "Physiological Health & Vigor",
-              badge: "Vitality Index",
-              description: "Continuous 0–100 health assessment evaluating foliar chlorosis, cellular turgor, leaf firmness, and light stress symptoms.",
-              color: "text-cyan-400",
-              border: "border-cyan-500/20",
-              bg: "bg-cyan-950/15"
-            },
-            {
-              icon: Droplets,
-              title: "Atmospheric-Adapted Watering",
-              badge: "Weather Synced",
-              description: "Dynamic irrigation countdowns that adjust automatically when ambient temperature spikes or local humidity drops below 40%.",
-              color: "text-teal-400",
-              border: "border-teal-500/20",
-              bg: "bg-teal-950/15"
-            },
-            {
-              icon: FlaskConical,
-              title: "Precision Nutrition Prescriptions",
-              badge: "NPK Ratio Engine",
-              description: "Stage-dependent fertilizer dilution recipes (seedling, vegetative, blooming, or dormant) to prevent root salt burn.",
-              color: "text-amber-400",
-              border: "border-amber-500/20",
-              bg: "bg-amber-950/15"
-            },
-            {
-              icon: ShieldAlert,
-              title: "Pathology & Pest Diagnostics",
-              badge: "Organic Regimens",
-              description: "Early detection of powdery mildew, root rot, spider mites, or thrips with step-by-step biological and chemical recovery protocols.",
-              color: "text-rose-400",
-              border: "border-rose-500/20",
-              bg: "bg-rose-950/15"
-            },
-            {
-              icon: Calendar,
-              title: "Google Calendar Synchronization",
-              badge: "Timezone Aligned",
-              description: "1-click push synchronization of watering and feeding alerts directly into your personal Google Calendar with customizable notifications.",
-              color: "text-purple-400",
-              border: "border-purple-500/20",
-              bg: "bg-purple-950/15"
-            }
-          ].map((item, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 + idx * 0.06 }}
-              className={`p-5 rounded-2xl border ${item.border} ${item.bg} flex flex-col justify-between gap-3 hover:border-emerald-500/40 transition-all`}
-            >
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className={`p-2.5 rounded-xl bg-[#06120c] border border-white/5 ${item.color}`}>
-                    <item.icon className="w-5 h-5" />
-                  </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-slate-300">
-                    {item.badge}
-                  </span>
-                </div>
-                <h4 className="text-sm font-bold text-white">{item.title}</h4>
-                <p className="text-xs text-slate-400 leading-relaxed font-ui">
-                  {item.description}
-                </p>
+          <div className="pt-5 flex items-center gap-1.5 text-xs font-semibold text-emerald-400 group-hover:translate-x-1 transition-transform">
+            <span>Scan a photo</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </div>
+        </motion.div>
+
+        {/* Card B: Plant Doctor */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.12 }}
+          onClick={() => onNavigateToTab('diagnose')}
+          className="group relative p-6 rounded-2xl bg-[#141b26] border border-slate-700/70 hover:border-rose-500/50 transition-all duration-200 cursor-pointer flex flex-col justify-between shadow-md hover:shadow-rose-950/20"
+        >
+          <div className="space-y-3">
+            <div className="w-12 h-12 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 group-hover:scale-105 transition-transform">
+              <Stethoscope className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-white group-hover:text-rose-300 transition-colors">
+              Plant Doctor & Health Check
+            </h3>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              Notice yellowing leaves, brown tips, or sudden wilting? Upload a close-up photo to check for root rot, pests, or nutrient deficiencies with treatment steps.
+            </p>
+          </div>
+
+          <div className="pt-5 flex items-center gap-1.5 text-xs font-semibold text-rose-400 group-hover:translate-x-1 transition-transform">
+            <span>Check symptoms</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </div>
+        </motion.div>
+      </div>
+
+      {/* 3. Helpful Tools & Resources (Warm, functional, clean) */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+          Helpful Plant Tools
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          <button
+            onClick={() => onNavigateToTab('guide')}
+            className="p-4 rounded-xl bg-[#111722] hover:bg-[#161f2e] border border-slate-800 hover:border-slate-700 text-left transition-all cursor-pointer group flex items-start gap-3.5"
+          >
+            <div className="p-2.5 rounded-lg bg-amber-500/15 text-amber-400 shrink-0">
+              <BookOpen className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-white group-hover:text-amber-300 transition-colors">
+                Plant Care Library
               </div>
-            </motion.div>
-          ))}
+              <p className="text-xs text-slate-400 mt-0.5 leading-snug">
+                Browse detailed watering, soil, and light specs for 50+ species.
+              </p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => onNavigateToTab('calendar')}
+            className="p-4 rounded-xl bg-[#111722] hover:bg-[#161f2e] border border-slate-800 hover:border-slate-700 text-left transition-all cursor-pointer group flex items-start gap-3.5"
+          >
+            <div className="p-2.5 rounded-lg bg-sky-500/15 text-sky-400 shrink-0">
+              <Calendar className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-white group-hover:text-sky-300 transition-colors">
+                Care Calendar
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5 leading-snug">
+                View your upcoming watering and feeding schedule in one place.
+              </p>
+            </div>
+          </button>
+
+          <button
+            onClick={() => onNavigateToTab('chat')}
+            className="p-4 rounded-xl bg-[#111722] hover:bg-[#161f2e] border border-slate-800 hover:border-slate-700 text-left transition-all cursor-pointer group flex items-start gap-3.5"
+          >
+            <div className="p-2.5 rounded-lg bg-indigo-500/15 text-indigo-400 shrink-0">
+              <MessageSquare className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-white group-hover:text-indigo-300 transition-colors">
+                Gardening Assistant
+              </div>
+              <p className="text-xs text-slate-400 mt-0.5 leading-snug">
+                Ask any question about repotting, pruning, sunlight, or fertilizers.
+              </p>
+            </div>
+          </button>
         </div>
       </div>
 
-      {/* Quick Navigation Footer Strip */}
-      <div className="p-5 rounded-2xl bg-[#07140e] border border-emerald-900/40 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3 text-xs text-slate-300">
-          <Sparkles className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>Need help getting started? Explore our specialized botanical tools:</span>
+      {/* 4. Common Houseplant Care Quick Tips (Provides instant visual value) */}
+      <div className="p-5 md:p-6 rounded-2xl bg-[#111722] border border-slate-800/80 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <h4 className="text-sm font-bold text-white">
+              Quick Houseplant Care Essentials
+            </h4>
+          </div>
+          <button 
+            onClick={() => onNavigateToTab('guide')}
+            className="text-xs text-slate-400 hover:text-emerald-400 transition-colors cursor-pointer flex items-center gap-1"
+          >
+            <span>View all guides</span>
+            <ArrowRight className="w-3 h-3" />
+          </button>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => onNavigateToTab('calculator')}
-            className="px-3 py-1.5 rounded-lg bg-[#0b1b13] border border-emerald-900/50 hover:border-emerald-500/40 text-xs font-semibold text-emerald-300 hover:text-white transition-colors cursor-pointer"
-          >
-            Fertilizer Calculator
-          </button>
-          <button
-            onClick={() => onNavigateToTab('calendar')}
-            className="px-3 py-1.5 rounded-lg bg-[#0b1b13] border border-emerald-900/50 hover:border-emerald-500/40 text-xs font-semibold text-emerald-300 hover:text-white transition-colors cursor-pointer"
-          >
-            Care Calendar
-          </button>
-          <button
-            onClick={() => onNavigateToTab('care')}
-            className="px-3 py-1.5 rounded-lg bg-[#0b1b13] border border-emerald-900/50 hover:border-emerald-500/40 text-xs font-semibold text-emerald-300 hover:text-white transition-colors cursor-pointer"
-          >
-            Plant Care Guides
-          </button>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="p-3.5 rounded-xl bg-[#161e2c]/70 border border-slate-800 space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
+              <Droplets className="w-3.5 h-3.5 text-sky-400" />
+              <span>Watering Rule of Thumb</span>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              When in doubt, wait one more day. Most indoor plants recover faster from slight dryness than from soggy root rot.
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-[#161e2c]/70 border border-slate-800 space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
+              <Sun className="w-3.5 h-3.5 text-amber-400" />
+              <span>Bright Indirect Light</span>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Position plants within 3–5 feet of an east or south window protected by sheer curtains to prevent leaf sunburn.
+            </p>
+          </div>
+
+          <div className="p-3.5 rounded-xl bg-[#161e2c]/70 border border-slate-800 space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-200">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Proper Drainage</span>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Always use pots with drainage holes and empty decorative drip saucers 20 minutes after watering.
+            </p>
+          </div>
         </div>
       </div>
     </div>

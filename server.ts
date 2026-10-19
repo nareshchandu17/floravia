@@ -16,6 +16,14 @@ import {
   OrderCreationError
 } from './src/server/paymentService';
 import { RazorpayWebhookEventSchema } from './src/services/paymentSchemas';
+import {
+  serverAnalyzePlantImage,
+  serverDiagnosePlantDisease,
+  serverGenerateSpeech,
+  serverTranscribeAudio,
+  serverGenerateThreadTitle,
+  serverChatWithGardeningExpertStream
+} from './src/server/geminiService';
 
 // Extend Express Request interface for raw body and auth user
 declare global {
@@ -36,7 +44,7 @@ async function startServer() {
 
   // JSON middleware with raw buffer capture for webhook HMAC verification
   app.use(express.json({
-    limit: '2mb',
+    limit: '15mb',
     verify: (req: any, _res, buf) => {
       req.rawBody = buf;
     }
@@ -152,6 +160,186 @@ messaging.onBackgroundMessage((payload) => {
   // Health check endpoint
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
+  // ==========================================
+  // Server-Side Gemini Intelligence Endpoints
+  // ==========================================
+
+  app.post('/api/gemini/analyze', async (req, res) => {
+    try {
+      const { image } = req.body;
+      if (!image) {
+        return res.status(400).json({ error: 'Image data is required for analysis.' });
+      }
+      const result = await serverAnalyzePlantImage(image);
+      res.json(result);
+    } catch (err: any) {
+      console.error('Gemini image analysis error:', err);
+      res.status(500).json({ error: err.message || 'Failed to analyze plant image.' });
+    }
+  });
+
+  app.post('/api/gemini/diagnose', async (req, res) => {
+    try {
+      const { image } = req.body;
+      if (!image) {
+        return res.status(400).json({ error: 'Image data is required for diagnosis.' });
+      }
+      const result = await serverDiagnosePlantDisease(image);
+      res.json(result);
+    } catch (err: any) {
+      console.error('Gemini plant diagnosis error:', err);
+      res.status(500).json({ error: err.message || 'Failed to diagnose plant disease.' });
+    }
+  });
+
+  app.post('/api/gemini/speech', async (req, res) => {
+    try {
+      const { text } = req.body;
+      if (!text) {
+        return res.status(400).json({ error: 'Text is required for speech synthesis.' });
+      }
+      const audio = await serverGenerateSpeech(text);
+      res.json({ audio });
+    } catch (err: any) {
+      console.error('Gemini speech error:', err);
+      res.status(500).json({ error: err.message || 'Failed to generate speech.' });
+    }
+  });
+
+  app.post('/api/gemini/transcribe', async (req, res) => {
+    try {
+      const { audio, mimeType } = req.body;
+      if (!audio) {
+        return res.status(400).json({ error: 'Audio data is required for transcription.' });
+      }
+      const text = await serverTranscribeAudio(audio, mimeType);
+      res.json({ text });
+    } catch (err: any) {
+      console.error('Gemini transcription error:', err);
+      res.status(500).json({ error: err.message || 'Failed to transcribe audio.' });
+    }
+  });
+
+  app.post('/api/gemini/title', async (req, res) => {
+    try {
+      const { message, image } = req.body;
+      const title = await serverGenerateThreadTitle(message || '', image);
+      res.json({ title });
+    } catch (err: any) {
+      console.error('Gemini title generation error:', err);
+      res.status(500).json({ error: err.message || 'Failed to generate thread title.' });
+    }
+  });
+
+  app.post('/api/gemini/chat', async (req, res) => {
+    try {
+      const { message, history = [], gardenContext = '', image, isVoiceActive = false } = req.body;
+      if (!message && !image) {
+        return res.status(400).json({ error: 'Message or image is required.' });
+      }
+
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+
+      const stream = await serverChatWithGardeningExpertStream(
+        message,
+        history,
+        gardenContext,
+        image,
+        isVoiceActive
+      );
+
+      for await (const chunk of stream) {
+        const text = chunk.text || '';
+        res.write(`data: ${JSON.stringify({ text })}\n\n`);
+      }
+
+      res.write('data: [DONE]\n\n');
+      res.end();
+    } catch (err: any) {
+      console.error('Gemini streaming chat error:', err);
+      if (!res.headersSent) {
+        res.status(500).json({ error: err.message || 'Chat service encountered an error.' });
+      } else {
+        res.write(`data: ${JSON.stringify({ error: err.message || 'Stream interrupted.' })}\n\n`);
+        res.end();
+      }
+    }
+  });
+
+  // ==========================================
+  // Server-Side Weather Proxy Endpoints
+  // ==========================================
+
+  app.get('/api/weather/current', async (req, res) => {
+    try {
+      const { lat, lon } = req.query;
+      if (!lat || !lon) {
+        return res.status(400).json({ error: 'Missing lat or lon query parameters.' });
+      }
+
+      const apiKey = process.env.OPENWEATHER_API_KEY || process.env.VITE_OPENWEATHER_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ error: 'Weather API key not configured on server.' });
+      }
+
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
+      );
+
+      if (!response.ok) {
+        return res.status(response.status).json({ error: 'Failed to fetch weather from provider.' });
+      }
+
+      const data = await response.json();
+      res.json({
+        temp: Math.round(data.main.temp),
+        condition: data.weather[0].main,
+        icon: data.weather[0].icon,
+        humidity: data.main.humidity,
+        city: data.name
+      });
+    } catch (err: any) {
+      console.error('Weather fetch error:', err);
+      res.status(500).json({ error: err.message || 'Internal weather service error.' });
+    }
+  });
+
+  app.get('/api/weather/forecast', async (req, res) => {
+    try {
+      const { lat, lon } = req.query;
+      if (!lat || !lon) {
+        return res.status(400).json({ error: 'Missing lat or lon query parameters.' });
+      }
+
+      const apiKey = process.env.OPENWEATHER_API_KEY || process.env.VITE_OPENWEATHER_API_KEY;
+      if (!apiKey) {
+        return res.json({ forecast: 'Forecast data unavailable (API key missing).' });
+      }
+
+      const response = await fetch(
+        `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
+      );
+
+      if (!response.ok) {
+        return res.json({ forecast: 'Forecast data currently unreachable.' });
+      }
+
+      const data = await response.json();
+      const dailyForecasts = data.list.slice(0, 24);
+      const avgHumidity = Math.round(dailyForecasts.reduce((acc: number, curr: any) => acc + curr.main.humidity, 0) / dailyForecasts.length);
+      const maxTemp = Math.max(...dailyForecasts.map((f: any) => f.main.temp));
+      const rainyIntervals = dailyForecasts.filter((f: any) => f.weather[0].main.toLowerCase().includes('rain')).length;
+
+      const forecast = `3-DAY_PROJECTION:\n  - EXPECTED_PEAK_TEMP: ${Math.round(maxTemp)}°C\n  - AGGREGATE_HUMIDITY_INDEX: ${avgHumidity}%\n  - PRECIPITATION_PROBABILITY: ${rainyIntervals > 0 ? "HIGH" : "LOW"}`;
+      res.json({ forecast });
+    } catch (err: any) {
+      console.error('Weather forecast fetch error:', err);
+      res.json({ forecast: 'Error synthesizing forecast data.' });
+    }
   });
 
   // 1. Razorpay Public Configuration

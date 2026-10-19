@@ -7,52 +7,23 @@ export interface WeatherData {
 }
 
 export async function getCurrentWeather(lat: number, lon: number): Promise<WeatherData> {
-  const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
-  if (!apiKey) {
-    throw new Error('OPENWEATHER_API_KEY is not set');
-  }
-
-  const response = await fetch(
-    `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
-  );
+  const response = await fetch(`/api/weather/current?lat=${lat}&lon=${lon}`);
 
   if (!response.ok) {
-    throw new Error('Failed to fetch weather data');
+    throw new Error('Failed to fetch weather data from server proxy');
   }
 
-  const data = await response.json();
-  
-  return {
-    temp: Math.round(data.main.temp),
-    condition: data.weather[0].main,
-    icon: data.weather[0].icon,
-    humidity: data.main.humidity,
-    city: data.name
-  };
+  return response.json() as Promise<WeatherData>;
 }
 
 export async function getWeatherForecast(lat: number, lon: number): Promise<string> {
-  const apiKey = import.meta.env.VITE_OPENWEATHER_API_KEY;
-  if (!apiKey) return "Forecast data unavailable (API key missing).";
-
   try {
-    const response = await fetch(
-      `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
-    );
+    const response = await fetch(`/api/weather/forecast?lat=${lat}&lon=${lon}`);
 
     if (!response.ok) return "Forecast data currently unreachable.";
 
     const data = await response.json();
-    // Summarize the next 3 days (approx 24 points if 3-hour intervals)
-    const dailyForecasts = data.list.slice(0, 24); 
-    const avgHumidity = Math.round(dailyForecasts.reduce((acc: number, curr: any) => acc + curr.main.humidity, 0) / dailyForecasts.length);
-    const maxTemp = Math.max(...dailyForecasts.map((f: any) => f.main.temp));
-    const rainyIntervals = dailyForecasts.filter((f: any) => f.weather[0].main.toLowerCase().includes('rain')).length;
-
-    return `3-DAY_PROJECTION:
-  - EXPECTED_PEAK_TEMP: ${Math.round(maxTemp)}°C
-  - AGGREGATE_HUMIDITY_INDEX: ${avgHumidity}%
-  - PRECIPITATION_PROBABILITY: ${rainyIntervals > 0 ? "HIGH" : "LOW"}`;
+    return data.forecast || "Error synthesizing forecast data.";
   } catch (err) {
     console.error("Forecast Error:", err);
     return "Error synthesizing forecast data.";

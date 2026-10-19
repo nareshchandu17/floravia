@@ -179,9 +179,9 @@ export const DEFAULT_PLANTS: DashboardPlant[] = [
     nickname: 'Serena',
     matchScore: 98.6,
     confidence: 'High Confidence',
-    imageUrl: 'https://images.unsplash.com/photo-1593482892290-f54927ae1bf6?auto=format&fit=crop&w=1000&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1512428813834-c702c7702b78?auto=format&fit=crop&w=1000&q=80',
     galleryImages: [
-      'https://images.unsplash.com/photo-1593482892290-f54927ae1bf6?auto=format&fit=crop&w=1200&q=85'
+      'https://images.unsplash.com/photo-1512428813834-c702c7702b78?auto=format&fit=crop&w=1200&q=85'
     ],
     healthScore: 88,
     vigorIndexLabel: 'Vigor Index',
